@@ -1,0 +1,10 @@
+Further changes
+Victoria’s motherly instincts make her easier to impress with gifts. Izzy is a college kid so she is more appreciative of higher value items. Add an Inventory button in the top row of icons with a backpack symbol. It shows all the gifts the player has in his/her inventory. 
+
+During normal encounters, outside of dates, a skunkgirl can choose to leave or need to leave at any time. This is based on their profession, their schedule and/or interest in the conversation. When a skunkgirl leaves the scene, the player enters Solo mode. Following a skunkgirl to her next location may be taken as creepy, especially if done more than once in a row. The skunkgirls don’t know that the player can see their location. 
+
+Add visual effects of skunkspray splashing onto the screen, covering it, then dripping away, when a spray is triggered, after the clear view of the slunkgirl model’s spray pose. Base the visual effects on what it would realistically look like if a skunk really sprayed someone who was wearing goggles or a camera lens. 
+
+Each skunkgirl fart has a lingering visual effect of wispy green clouds that lasts between one to three turns, depending on size of the fart. Most casual farts are small, some medium to large. Most intimate farts are large. Base this on the sound effect used for each specific fart. Assign them a value of 1-3. If a skunkgirl farts while previous gas effects are still lingering on screen, the effects layer on top of eachother. This can slowly fill the screen with thick green gas. The gas layer starts at the very bottom of the screen and very slowly fills the screen from bottom to top. A small fart adds a little bit of gas, a large fart adds more.
+
+If a stood-up skunkgirl crashes an ongoing date, the skunkgirl you’re currently on a date with will react strongly to it depending on her personality. Izzy will become suspicious of your intentions and lose trust in you after she sees how you treat others. Victoria is somewhat but less suspicious, while also somewhat flattered you chose her instead, and respects your cold decision making, which she can relate to as a business lady.

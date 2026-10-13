@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Skunkgirls",
+      "hasCanvas": false,
+      "bodyTextLen": 634,
+      "bodyTextHash": "398e50757dc2147cb8bfd34b392dfdffd6e0d1d8a477dc2b64993d02b391d3cb",
+      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Even odds. Design books, or th",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/fart-pace-dev.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Skunkgirls",
+      "hasCanvas": false,
+      "bodyTextLen": 634,
+      "bodyTextHash": "398e50757dc2147cb8bfd34b392dfdffd6e0d1d8a477dc2b64993d02b391d3cb",
+      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Even odds. Design books, or th",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/fart-pace-dev-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/fart-pace-dev.json"
+}
