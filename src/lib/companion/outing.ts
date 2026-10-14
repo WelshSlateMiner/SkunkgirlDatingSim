@@ -3,7 +3,7 @@ import { giftById, giftSpeech, giftSummary, presentLine, receptionDelta, recepti
 import { LOCATIONS } from "./locations";
 import { nextWeekday, parseMeetPlace, parseTimeOfDay, TIMES, WEEKDAYS } from "./time";
 import { SCENE_NAME_RE, SCENE_ORDER } from "./scene";
-import { RONNIE_SCHEDULE } from "./ronnie-bio";
+import { RONNIE_DATE_RULES, RONNIE_SCHEDULE } from "./ronnie-bio";
 import type {
   ActiveDate,
   DateDraft,
@@ -99,9 +99,9 @@ export function prefillDate(text: string, invite: LocationId | null, today: Week
   };
 }
 
-export function datePlaces(nth: number): LocationId[] {
+export function datePlaces(nth: number, girl?: GirlId): LocationId[] {
   return (Object.keys(LOCATIONS) as LocationId[]).filter(
-    (id) => !AWKWARD_DATES.has(id) && (nth >= 3 || !PRIVATE_DATES.has(id)),
+    (id) => !isAwkwardPlace(id, girl) && (nth >= 3 || !PRIVATE_DATES.has(id)),
   );
 }
 
@@ -118,8 +118,18 @@ export function dateIsDue(state: Pick<GameState, "scheduledDate" | "activeDate" 
   return plan.day === state.weekday && plan.time === state.timeOfDay;
 }
 
-export function isAwkwardPlace(id: LocationId) {
-  return AWKWARD_DATES.has(id);
+/** Ronnie's own poor-date list adds her workplace. Izzy and Vicky share the global list. */
+const GIRL_AWKWARD: Partial<Record<GirlId, ReadonlySet<LocationId>>> = {
+  ronnie: new Set<LocationId>(RONNIE_DATE_RULES.poorDatePlaces),
+};
+
+export function isAwkwardPlace(id: LocationId, girl?: GirlId) {
+  return AWKWARD_DATES.has(id) || Boolean(girl && GIRL_AWKWARD[girl]?.has(id));
+}
+
+/** Awkward for any of these girls. */
+export function awkwardForAny(id: LocationId, girls: readonly GirlId[]) {
+  return isAwkwardPlace(id) || girls.some((girl) => isAwkwardPlace(id, girl));
 }
 
 export type Duty = "class" | "work" | "free";
@@ -254,15 +264,12 @@ export interface InvitePlan {
 }
 
 function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
+  // Like Vicky, not Izzy: skipping is nuts to her. Work and class come first; no pressing.
   if (girl === "ronnie") {
-    if (insist) {
-      return duty === "class"
-        ? "Dude. I said class. Pushing harder doesn't make it optional."
-        : "I'm teaching. Those people paid. Ask me again and I'm going to make you do burpees.";
-    }
+    if (loss >= 8) return duty === "class" ? "Skip class? Are you nuts? No. And don't talk to me like that." : "Walk out on a class I'm teaching? Are you nuts? No. Work comes first.";
     return duty === "class"
-      ? "Can't, I've got class. Catch me after. I'm usually at the gym."
-      : "I'm on the clock at Second Wind. Grab a mat if you want to hang. Otherwise, after class.";
+      ? "Skip class? That's nuts. No way. Catch me after. I'm usually at the gym."
+      : "Ditch my own class at Second Wind? That's nuts. Work comes first. Grab a mat or catch me after.";
   }
   if (girl === "victoria") {
     if (loss >= 8) return "I said I am working. The desk is not optional. No. I am not leaving.";
@@ -280,6 +287,14 @@ function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
 }
 
 function awkwardLine(girl: GirlId, place: LocationId, loss: number) {
+  if (girl === "ronnie") {
+    if (place === "yogaStudio") {
+      return loss >= 8 ? "A date at my job? While I'm teaching? No. Hard no." : "Second Wind is where I work. That's not a date, that's you watching me teach. Pick somewhere else.";
+    }
+    if (place === "classroom" || place === "studyHall") return "A date in a lecture hall? Lame. I can do better than that and so can you.";
+    if (place === "sportingGoods") return "Trailhead's a store. I'll shop there with you. It's not a date.";
+    return "Line & Lumen is my mom's office. Absolutely not.";
+  }
   if (girl === "victoria") {
     if (place === "firm") {
       return loss >= 8
@@ -317,11 +332,11 @@ export function classifyInvite(
   const focus = state.focus ?? present[0]!;
   const targets = (group ? present : named.length === 1 ? named : [focus]).filter((id, i, all) => all.indexOf(id) === i);
   const loss = rudeness(text);
-  if (dating && isAwkwardPlace(dest)) {
+  if (dating && awkwardForAny(dest, targets)) {
     return {
       dest,
       going: [],
-      blocked: targets.map((girl) => ({
+      blocked: targets.filter((girl) => isAwkwardPlace(dest, girl)).map((girl) => ({
         girl,
         bondingDelta: -loss,
         line: awkwardLine(girl, dest, loss),
@@ -339,7 +354,7 @@ export function classifyInvite(
       going.push(girl);
       continue;
     }
-    if (girl === "izzy" || girl === "ronnie") {
+    if (girl === "izzy") {
       const insist = state.pressedDuty === girl;
       blocked.push({
         girl,

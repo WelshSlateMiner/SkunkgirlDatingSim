@@ -114,3 +114,99 @@ describe("old saves", () => {
     assert.equal(typeof loaded.scentFrom.ronnie, "number");
   });
 });
+
+import { START_ODDS, ronnieMorningDropIn, RONNIE_MORNING_DROP_IN, nextGirl, absentGirl } from "@/lib/companion/cast";
+import { classifyInvite, datePlaces, isAwkwardPlace } from "@/lib/companion/outing";
+
+describe("first-meeting odds table (exact)", () => {
+  const want = {
+    library: { izzy: 50, victoria: 25, ronnie: 25 },
+    studyHall: { izzy: 50, victoria: 10, ronnie: 40 },
+    trail: { izzy: 45, victoria: 10, ronnie: 45 },
+    animeStore: { izzy: 60, victoria: 10, ronnie: 30 },
+    craftStore: { izzy: 20, victoria: 50, ronnie: 30 },
+    gym: { izzy: 10, victoria: 30, ronnie: 60 },
+  } as const;
+  it("every start location is in the table", () => {
+    assert.deepEqual([...FIRST_MEETS].sort(), Object.keys(want).sort());
+    assert.deepEqual(START_ODDS, want);
+  });
+  for (const [place, odds] of Object.entries(want)) {
+    it(`${place} odds and roll bands`, () => {
+      const got = meetOdds(place as never);
+      for (const g of ["izzy", "victoria", "ronnie"] as const) assert.ok(Math.abs(got[g] - odds[g] / 100) < 1e-9);
+      const counts = { izzy: 0, victoria: 0, ronnie: 0 };
+      for (let i = 0; i < 1000; i++) counts[rollGirl(place as never, (i + 0.5) / 1000)]++;
+      for (const g of ["izzy", "victoria", "ronnie"] as const) assert.equal(counts[g], odds[g] * 10);
+    });
+  }
+});
+
+describe("Ronnie morning drop-in", () => {
+  it("only in the campus area", () => {
+    for (const p of ["library", "studyHall", "classroom", "cafe", "campus", "trail", "gym", "field"] as const) {
+      assert.equal(ronnieMorningDropIn(p, "izzy", "victoria", 0), true, p);
+    }
+    for (const p of ["mall", "yogaStudio", "craftStore", "animeStore", "dorm", "ronnieDorm", "firm"] as const) {
+      assert.equal(ronnieMorningDropIn(p, "izzy", "victoria", 0), false, p);
+    }
+  });
+  it("rolls against the chance and never drops in on herself", () => {
+    assert.equal(ronnieMorningDropIn("library", "izzy", "victoria", RONNIE_MORNING_DROP_IN + 0.01), false);
+    assert.equal(ronnieMorningDropIn("library", "ronnie", "izzy", 0), false);
+    assert.equal(ronnieMorningDropIn("library", "izzy", "ronnie", 0), false);
+  });
+});
+
+describe("poor dates are per girl", () => {
+  it("the yoga studio is a poor date for Ronnie only", () => {
+    assert.equal(isAwkwardPlace("yogaStudio", "ronnie"), true);
+    assert.equal(isAwkwardPlace("yogaStudio", "izzy"), false);
+    assert.equal(isAwkwardPlace("yogaStudio", "victoria"), false);
+    assert.equal(isAwkwardPlace("yogaStudio"), false);
+    assert.ok(!datePlaces(3, "ronnie").includes("yogaStudio"));
+    assert.ok(datePlaces(3, "izzy").includes("yogaStudio"));
+    assert.deepEqual(datePlaces(3, "izzy"), datePlaces(3, "victoria"));
+    assert.deepEqual(datePlaces(3, "izzy"), datePlaces(3));
+  });
+  it("asking Ronnie on a date at the studio is refused", () => {
+    const plan = classifyInvite(
+      { location: "gym", focus: "ronnie", present: ["ronnie"], izzyHere: true, weekday: "Monday", timeOfDay: "Evening", pressedDuty: null },
+      "want to go on a date at the yoga studio?",
+      "yogaStudio",
+      true,
+    );
+    assert.equal(plan?.blocked[0]?.girl, "ronnie");
+    assert.equal(plan?.going.length, 0);
+  });
+});
+
+describe("asked to skip work", () => {
+  const at = { location: "yogaStudio", focus: "ronnie", present: ["ronnie"], izzyHere: true, weekday: "Tuesday", timeOfDay: "Afternoon" } as const;
+  it("Ronnie refuses like Vicky: no press, work comes first", () => {
+    const plan = classifyInvite({ ...at, pressedDuty: null } as never, "come to the cafe with me", "cafe", false);
+    assert.equal(plan?.press, null);
+    assert.equal(plan?.blocked[0]?.girl, "ronnie");
+    assert.match(plan!.blocked[0]!.line, /nuts/i);
+    assert.match(plan!.blocked[0]!.line, /Work comes first/);
+  });
+  it("Izzy still gets pressed", () => {
+    const plan = classifyInvite(
+      { location: "sportingGoods", focus: "izzy", present: ["izzy"], izzyHere: true, weekday: "Monday", timeOfDay: "Afternoon", pressedDuty: null },
+      "come to the cafe with me",
+      "cafe",
+      false,
+    );
+    assert.equal(plan?.press, "izzy");
+  });
+});
+
+describe("debug cast cycling", () => {
+  it("change and add cover all three", () => {
+    assert.equal(nextGirl("izzy"), "victoria");
+    assert.equal(nextGirl("victoria"), "ronnie");
+    assert.equal(nextGirl("ronnie"), "izzy");
+    assert.equal(absentGirl(["izzy", "victoria"]), "ronnie");
+    assert.equal(absentGirl(["izzy", "victoria", "ronnie"]), null);
+  });
+});

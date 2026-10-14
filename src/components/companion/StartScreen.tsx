@@ -10,12 +10,12 @@ import type { GameMode, LocationId, PlayerFartRole, PlayerGender, RelationshipTy
 import { cn } from "@/lib/utils";
 
 const MEET_HOOK: Record<string, string> = {
-  library: "Anyone's guess. Design books, the history aisle, or a stack on insects.",
+  library: "Usually Izzy. Sometimes Vicky with design books, or Ronnie with a stack on insects.",
   studyHall: "Usually a student. Sometimes a woman studying for a promotion.",
-  trail: "Izzy knows these woods. Ronnie hunts bugs here. Victoria only comes to stop holding it in.",
+  trail: "Izzy knows these woods and Ronnie hunts bugs here, about even. Victoria only comes to stop holding it in.",
   animeStore: "Neko Shelf is Izzy's. Victoria is rarely here, and only for her daughter.",
   craftStore: "Fabric and frames. This is Victoria's store. Izzy almost never walks in.",
-  gym: "The weight room. Usually Ronnie, mid-set. Sometimes Izzy.",
+  gym: "The weight room. Usually Ronnie, mid-set. Sometimes Vicky on a treadmill.",
 };
 
 export function StartScreen() {

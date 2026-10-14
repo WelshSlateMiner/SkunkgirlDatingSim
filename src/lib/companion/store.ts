@@ -51,6 +51,7 @@ import {
   goodbyeSaid,
   inviteParty,
   isAwkwardPlace,
+  awkwardForAny,
   leaveChance,
   leaveCopy,
   leaveReason,
@@ -89,6 +90,9 @@ import {
   victoriaOpening,
   ronnieOpening,
   ronnieDropIn,
+  ronnieMorningDropIn,
+  nextGirl,
+  absentGirl,
   suitedPlace,
   withGirl,
 } from "./cast";
@@ -1388,7 +1392,7 @@ function applyTurn(
   let giftSpeechLine: string | null = null;
   if (askingDate) {
     const hinted = awkwardMention(dateBlob, asked);
-    if (hinted && isAwkwardPlace(hinted)) {
+    if (hinted && isAwkwardPlace(hinted, planGirl)) {
       dateNote = "refused";
       traveled = null;
       nextLocation = asLocationId(state.location) ?? "library";
@@ -2744,6 +2748,12 @@ function runDebugCommand(
 
   if (cmd.kind === "cycle_outfit") {
     const focus = s.focus ?? "izzy";
+    if (focus === "ronnie") {
+      const messages = systemNote(s, "Ronnie's outfit follows the place: athletic at the gym, studio, field, and trail; casual elsewhere. /travel to change it.");
+      set({ messages, draft: "" });
+      persist({ messages }, get);
+      return;
+    }
     if (focus === "victoria") {
       const messages = systemNote(s, "Outfit: office blouse and pencil skirt. Victoria doesn't change clothes.");
       const patch = { outfit: "work" as const, debugOutfitLock: true, messages };
@@ -2856,8 +2866,11 @@ function runDebugCommand(
 
   if (cmd.kind === "character_change") {
     const focus = s.focus ?? "izzy";
-    const other = otherGirl(focus);
-    const hadBoth = (s.present ?? []).includes("izzy") && (s.present ?? []).includes("victoria");
+    const here = s.present ?? [];
+    // Cycle through whoever is here; alone, cycle the whole cast.
+    const after = [nextGirl(focus), nextGirl(nextGirl(focus))];
+    const other = (here.length > 1 ? after.find((girl) => here.includes(girl)) : undefined) ?? nextGirl(focus);
+    const hadBoth = here.length > 1 && here.includes(other);
     let next = pullFocus(asGameState(s), other);
     const card = next.roster[other];
     next = {
@@ -2867,13 +2880,13 @@ function runDebugCommand(
       sprayKind: "none",
       otherSprayKind: "none",
       sprayPrompts: [],
-      outfit: other === "victoria" ? "work" : next.outfit,
+      outfit: other === "victoria" ? "work" : other === "ronnie" ? "casual" : next.outfit,
       roster: {
         ...next.roster,
         [other]: {
           ...card,
           met: true,
-          outfit: other === "victoria" ? "work" : card.outfit,
+          outfit: other === "victoria" ? "work" : other === "ronnie" ? "casual" : card.outfit,
         },
       },
     };
@@ -2901,10 +2914,10 @@ function runDebugCommand(
 
   if (cmd.kind === "character_add") {
     const focus = s.focus ?? "izzy";
-    const other = otherGirl(focus);
     const present = [...(s.present?.length ? s.present : [focus])];
-    if (present.includes(other)) {
-      const messages = systemNote(s, `${girlName(other)} is already here.`);
+    const other = absentGirl(present);
+    if (!other) {
+      const messages = systemNote(s, "Everyone is already here.");
       set({ messages, draft: "" });
       persist({ messages }, get);
       return;
@@ -2915,7 +2928,7 @@ function runDebugCommand(
     const roster = withGirl(base, other, {
       met: true,
       outfit: other === "victoria" ? "work" : card?.outfit,
-      expression: card?.met ? card.expression : other === "victoria" ? "shy" : "embarrassed",
+      expression: card?.met ? card.expression : other === "victoria" ? "shy" : other === "ronnie" ? "idle" : "embarrassed",
       trust: card?.met ? card.trust : Math.max(card?.trust ?? 0, 4),
       bonding: card?.met ? card.bonding : Math.max(card?.bonding ?? 0, 2),
     });
@@ -3518,7 +3531,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       const blob = `${say} ${action}`;
       const dating = isDateAsk(blob) && !state.activeDate && !state.scheduledDate && !state.dateDraft;
       const hinted = dating ? (awkwardMention(blob, invite) ?? invite) : invite;
-      const awkward = Boolean(dating && hinted && isAwkwardPlace(hinted));
+      const awkward = Boolean(dating && hinted && awkwardForAny(hinted, state.present ?? []));
       const plan = classifyInvite(state, blob, hinted, awkward);
       if (plan) {
         scriptInvite(asGameState(state), plan, payload, get, set);
@@ -4074,7 +4087,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const giftId = draft.giftId || "";
     if (giftId && !state.inventory.includes(giftId)) return;
     if (!slotOpen(state.weekday, state.timeOfDay, draft.day, draft.time)) return;
-    if (isAwkwardPlace(draft.place)) return;
+    if (isAwkwardPlace(draft.place, plan.girl)) return;
     const nth = plan.nth;
     if (nth < 3 && (draft.place === "dorm" || draft.place === "apartment" || draft.place === "vickyLiving" || draft.place === "vickyBedroom")) {
       return;
@@ -4737,17 +4750,41 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
             : "You found me. That's either sweet or creepy and I'm choosing sweet. What's up?",
       });
     }
-    const roster = withGirl(arrived, other, {
+    let roster = withGirl(arrived, other, {
       met: true,
       trust: Math.max(arrived.trust, first ? 6 : arrived.trust),
       bonding: Math.max(arrived.bonding, first ? 4 : arrived.bonding),
       expression: first ? "embarrassed" : "happy",
     });
+    const morningPresent: GirlId[] = [other];
+    if (ronnieMorningDropIn(place, scheduled, other)) {
+      const ronnieFirst = !s.roster?.ronnie?.met;
+      if (ronnieFirst) {
+        const lines = ronnieDropIn(where.name);
+        messages.push({ id: uid(), role: "narrator", at: Date.now(), text: lines.narrator });
+        messages.push({ id: uid(), role: "ronnie", at: Date.now(), expression: "happy", text: lines.line });
+      } else {
+        messages.push({ id: uid(), role: "narrator", at: Date.now(), text: "Ronnie jogs up between classes, water bottle in hand." });
+        messages.push({ id: uid(), role: "ronnie", at: Date.now(), expression: "happy", text: "Hey! Got ten minutes before my next class. What'd I miss?" });
+      }
+      const card = roster.ronnie;
+      roster = {
+        ...roster,
+        ronnie: {
+          ...card,
+          met: true,
+          trust: ronnieFirst ? Math.max(card.trust, 4) : card.trust,
+          bonding: ronnieFirst ? Math.max(card.bonding, 2) : card.bonding,
+          expression: "happy",
+        },
+      };
+      morningPresent.push("ronnie");
+    }
     const patch = {
       ...arrived,
       roster,
       location: place,
-      present: [other] as GirlId[],
+      present: morningPresent,
       izzyHere: true,
       morningDetour: true,
       dayPhase: "playing" as const,

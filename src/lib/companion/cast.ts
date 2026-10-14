@@ -159,9 +159,24 @@ export function initialCast(focus: GirlId = "izzy") {
   };
 }
 
-/** Who you meet first at a place, weighted by how much each girl likes it. `roll` is 0..1 (tests pass one). */
+/** First-meeting odds per start location, in percent (design table, not derived from affinity). */
+export const START_ODDS: Partial<Record<LocationId, Record<GirlId, number>>> = {
+  library: { izzy: 50, victoria: 25, ronnie: 25 },
+  studyHall: { izzy: 50, victoria: 10, ronnie: 40 },
+  trail: { izzy: 45, victoria: 10, ronnie: 45 },
+  animeStore: { izzy: 60, victoria: 10, ronnie: 30 },
+  craftStore: { izzy: 20, victoria: 50, ronnie: 30 },
+  gym: { izzy: 10, victoria: 30, ronnie: 60 },
+};
+
+function startWeights(place: LocationId): number[] {
+  const table = START_ODDS[place];
+  return GIRLS.map((girl) => (table ? table[girl] : affinity(girl, place)));
+}
+
+/** Who you meet first at a place: START_ODDS for start locations, affinity elsewhere. `roll` is 0..1 (tests pass one). */
 export function rollGirl(place: LocationId, roll = Math.random()): GirlId {
-  const weights = GIRLS.map((girl) => affinity(girl, place));
+  const weights = startWeights(place);
   const total = Math.max(1, weights.reduce((sum, w) => sum + w, 0));
   let pick = roll * total;
   for (let i = 0; i < GIRLS.length; i++) {
@@ -173,8 +188,9 @@ export function rollGirl(place: LocationId, roll = Math.random()): GirlId {
 
 /** Chance of meeting each girl first at a start location. */
 export function meetOdds(place: LocationId): Record<GirlId, number> {
-  const total = Math.max(1, GIRLS.reduce((sum, girl) => sum + affinity(girl, place), 0));
-  return { izzy: affinity("izzy", place) / total, victoria: affinity("victoria", place) / total, ronnie: affinity("ronnie", place) / total };
+  const w = startWeights(place);
+  const total = Math.max(1, w.reduce((sum, x) => sum + x, 0));
+  return { izzy: w[0]! / total, victoria: w[1]! / total, ronnie: w[2]! / total };
 }
 
 export function morningSpots(other: GirlId, avoid: LocationId | null): LocationId[] {
@@ -807,4 +823,28 @@ export function describeArrival(focus: GirlId, other: GirlId, place: LocationId,
 export function bondWord(bond: Bond) {
   if (bond === "romantic") return "together";
   return bond;
+}
+
+/** Chance Ronnie drops in on a morning detour scene. */
+export const RONNIE_MORNING_DROP_IN = 0.35;
+
+/**
+ * Ronnie drops in on a morning scene only in the campus area (locations with group "campus"),
+ * never when she is the scheduled girl or already the one you went to find.
+ */
+export function ronnieMorningDropIn(place: LocationId, scheduled: GirlId, arriving: GirlId, roll = Math.random()): boolean {
+  if (scheduled === "ronnie" || arriving === "ronnie") return false;
+  if (PRIVATE.has(place) || placeOf(place).group !== "campus") return false;
+  return roll < RONNIE_MORNING_DROP_IN;
+}
+
+/** Debug: the next girl in roster order (izzy -> victoria -> ronnie -> izzy). */
+export function nextGirl(girl: GirlId): GirlId {
+  const i = GIRLS.indexOf(girl);
+  return GIRLS[(i + 1) % GIRLS.length]!;
+}
+
+/** Debug: the first girl in roster order who is not in the scene, or null when all are here. */
+export function absentGirl(present: readonly GirlId[]): GirlId | null {
+  return GIRLS.find((girl) => !present.includes(girl)) ?? null;
 }

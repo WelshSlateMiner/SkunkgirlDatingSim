@@ -98,7 +98,7 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
               Ronnie runs track, lifts at the campus gym, and teaches at Second Wind on Tuesday, Wednesday,
               Thursday, and Saturday afternoons. She is proud of her gas, not embarrassed, and makes it a
               competition. Play along and she likes you more. Up to three girls can share a scene.
-              The place you start decides who you meet first. The gym is mostly Ronnie. The library is anyone's guess. Neko Shelf is mostly Izzy. Hearth & Hobby, the furniture showroom,
+              The place you start decides who you meet first. The gym is mostly Ronnie. The library leans Izzy. Neko Shelf is mostly Izzy. Hearth & Hobby, the furniture showroom,
               and the Italian restaurant are mostly Victoria. Line & Lumen is Victoria's desk on weekday
               afternoons. She'll talk design there, and not much else. Izzy is on campus in the morning and
               at Trailhead Outfitters on Monday, Wednesday, and Friday afternoons. Other times, she wanders.

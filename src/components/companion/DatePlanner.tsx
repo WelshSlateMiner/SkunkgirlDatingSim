@@ -16,12 +16,12 @@ function PlanForm({ draft }: { draft: DateDraft }) {
   const postponeDate = useCompanion((s) => s.postponeDate);
   const [time, setTime] = useState<TimeOfDay | "">(draft.time ?? "");
   const [place, setPlace] = useState<LocationId | "">(() => {
-    const allowed = datePlaces(draft.nth);
+    const allowed = datePlaces(draft.nth, draft.girl);
     return draft.place && allowed.includes(draft.place) ? draft.place : "";
   });
   const [day, setDay] = useState<Weekday | "">(draft.day ?? "");
   const [giftId, setGiftId] = useState(draft.giftId ?? "");
-  const places = datePlaces(draft.nth);
+  const places = datePlaces(draft.nth, draft.girl);
   const uniqueGifts = [...new Set(inventory)];
   const open = Boolean(time && place && day && slotOpen(weekday, timeOfDay, day, time));
   const late = Boolean(time && day && !slotOpen(weekday, timeOfDay, day, time));
