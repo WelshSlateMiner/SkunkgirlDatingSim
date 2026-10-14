@@ -4,7 +4,6 @@ import { portraitSrc, victoriaLingerieOn } from "@/lib/companion/portraits";
 import { useCompanion } from "@/lib/companion/store";
 import { MAX_SCENE_GIRLS, sceneLayout, sceneOrder, sceneOthers } from "@/lib/companion/scene";
 import type { GirlId } from "@/lib/companion/types";
-import { ronniePose } from "@/lib/companion/ronnie-art";
 import { ronnieInstructing } from "@/lib/companion/yoga";
 import { cn } from "@/lib/utils";
 
@@ -33,8 +32,6 @@ function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra
   const lingerie = girl === "victoria" && victoriaLingerieOn(location, intimate);
   const instructing = useCompanion((s) => girl === "ronnie" && ronnieInstructing(s));
   const src = portraitSrc(outfit, expression, sprayKind, girl, lingerie, location, instructing);
-  // The squat and yoga poses keep a bit of floor from the painting. Fade the edges so it sits in the scene.
-  const pose = girl === "ronnie" && sprayKind === "none" ? ronniePose(location, expression, instructing) : null;
   const gas = mine ? pulse.kind === "fart" || pulse.kind === "spray" : joinedFart || joinedSpray;
   const stink = gas && stinkUntil !== pulse.key;
   const fullSpray = mine
@@ -85,11 +82,6 @@ function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra
       <img
         key={src}
         src={src}
-        style={
-          pose
-            ? { maskImage: "radial-gradient(ellipse 70% 75% at 50% 50%, black 70%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse 70% 75% at 50% 50%, black 70%, transparent 100%)" }
-            : undefined
-        }
         alt={girl === "victoria" ? "Victoria" : girl === "ronnie" ? "Veronica" : "Isabella"}
         className={cn(
           "w-auto object-contain object-bottom drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
