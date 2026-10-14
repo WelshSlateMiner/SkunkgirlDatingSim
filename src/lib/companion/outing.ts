@@ -3,6 +3,7 @@ import { giftById, giftSpeech, giftSummary, presentLine, receptionDelta, recepti
 import { LOCATIONS } from "./locations";
 import { nextWeekday, parseMeetPlace, parseTimeOfDay, TIMES, WEEKDAYS } from "./time";
 import { SCENE_NAME_RE, SCENE_ORDER } from "./scene";
+import { RONNIE_SCHEDULE } from "./ronnie-bio";
 import type {
   ActiveDate,
   DateDraft,
@@ -39,6 +40,12 @@ const HANGOUT: Record<GirlId, Record<TimeOfDay, LocationId[]>> = {
     Evening: ["italian", "mall", "furniture", "perfume"],
     Night: ["italian", "perfume"],
   },
+  ronnie: {
+    Morning: ["gym", "field", "cafe", "trail"],
+    Afternoon: ["gym", "naturalFoods", "sportingGoods", "trail", "field", "trendy"],
+    Evening: ["gym", "theater", "field", "cafe", "trendy"],
+    Night: ["field", "trail", "theater"],
+  },
 };
 
 export function economySeed() {
@@ -63,7 +70,7 @@ export function economySeed() {
     otherSprayKind: "none" as SprayKind,
     sprayPrompts: [] as SprayPrompt[],
     stink: 0,
-    scentFrom: { izzy: 0, victoria: 0 },
+    scentFrom: { izzy: 0, victoria: 0, ronnie: 0 },
     stinkAsked: {} as Partial<Record<GirlId, number>>,
     stinkTalk: null as GameState["stinkTalk"],
     showersToday: 0,
@@ -119,6 +126,11 @@ export type Duty = "class" | "work" | "free";
 
 export function dutyOf(girl: GirlId, weekday: Weekday, time: TimeOfDay): Duty {
   const weekend = weekday === "Saturday" || weekday === "Sunday";
+  if (girl === "ronnie") {
+    if (!weekend && time === "Morning") return "class";
+    if (time === "Afternoon" && RONNIE_SCHEDULE.work.days.includes(weekday)) return "work";
+    return "free";
+  }
   if (girl === "izzy") {
     if (!weekend && time === "Morning") return "class";
     if (!weekend && time === "Afternoon" && (weekday === "Monday" || weekday === "Wednesday" || weekday === "Friday")) {
@@ -131,6 +143,7 @@ export function dutyOf(girl: GirlId, weekday: Weekday, time: TimeOfDay): Duty {
 }
 
 export function dutyPlace(girl: GirlId): LocationId {
+  if (girl === "ronnie") return RONNIE_SCHEDULE.work.place;
   return girl === "victoria" ? "firm" : "sportingGoods";
 }
 
@@ -142,6 +155,11 @@ export function dutyStop(girl: GirlId, weekday: Weekday, time: TimeOfDay): Locat
 }
 
 export function dutyWarn(girl: GirlId, duty: Exclude<Duty, "free">) {
+  if (girl === "ronnie") {
+    return duty === "class"
+      ? "Clock's ticking. I've got class and I'm not getting marked late. Last thing, go."
+      : "I've got a class to teach at Second Wind. Say it quick, then I'm out.";
+  }
   if (girl === "victoria") {
     return "The desk is open and it is mine. I'll hear you out once more. Then I have to go to Line & Lumen.";
   }
@@ -150,6 +168,9 @@ export function dutyWarn(girl: GirlId, duty: Exclude<Duty, "free">) {
 }
 
 export function dutyFarewell(girl: GirlId, duty: Exclude<Duty, "free">) {
+  if (girl === "ronnie") {
+    return duty === "class" ? "Okay, class. Later. Try to keep up next time." : "Shift time. Come take a class if you want. I'll make you sweat.";
+  }
   if (girl === "victoria") return "That's the end of it. Line & Lumen. I'll be at the desk.";
   if (duty === "class") return "Okay. That's me. Class. I'll see you when I'm not late.";
   return "I'm clocking in. If you need a pack, you know where the floor is. If you need me, later.";
@@ -233,6 +254,16 @@ export interface InvitePlan {
 }
 
 function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
+  if (girl === "ronnie") {
+    if (insist) {
+      return duty === "class"
+        ? "Dude. I said class. Pushing harder doesn't make it optional."
+        : "I'm teaching. Those people paid. Ask me again and I'm going to make you do burpees.";
+    }
+    return duty === "class"
+      ? "Can't, I've got class. Catch me after. I'm usually at the gym."
+      : "I'm on the clock at Second Wind. Grab a mat if you want to hang. Otherwise, after class.";
+  }
   if (girl === "victoria") {
     if (loss >= 8) return "I said I am working. The desk is not optional. No. I am not leaving.";
     if (loss <= 1) return "I can't leave the desk. If this is a design question, ask it here. Otherwise I will see you when the afternoon is over.";
@@ -308,15 +339,15 @@ export function classifyInvite(
       going.push(girl);
       continue;
     }
-    if (girl === "izzy") {
-      const insist = state.pressedDuty === "izzy";
+    if (girl === "izzy" || girl === "ronnie") {
+      const insist = state.pressedDuty === girl;
       blocked.push({
         girl,
         bondingDelta: insist ? -loss : 0,
         line: busyLine(girl, duty, insist, loss),
         expression: insist && loss >= 6 ? "angry" : "thinking",
       });
-      press = "izzy";
+      press = girl;
     } else {
       blocked.push({
         girl,
@@ -338,7 +369,7 @@ export function inviteParty(state: GameState, text: string, dest: LocationId): G
   const party = (group ? present.slice() : named.length === 1 ? [...named] : [focus]).filter(
     (id, i, all) => all.indexOf(id) === i,
   );
-  for (const girl of ["izzy", "victoria"] as GirlId[]) {
+  for (const girl of ["izzy", "victoria", "ronnie"] as GirlId[]) {
     if (party.includes(girl) || present.includes(girl)) continue;
     if (girlAt(state, girl) !== dest) continue;
     party.push(girl);
@@ -353,7 +384,7 @@ export function girlAt(state: GameState, girl: GirlId): LocationId {
   const plan = state.scheduledDate;
   if (plan?.girl === girl && dateIsDue(state)) return plan.place;
   if (state.timeOfDay === "Night" && girlIsOfficial(state, girl)) {
-    return girl === "victoria" ? "vickyLiving" : "dorm";
+    return girl === "victoria" ? "vickyLiving" : girl === "ronnie" ? "ronnieDorm" : "dorm";
   }
   if (state.departure?.girl === girl) return state.departure.place;
   const duty = dutyOf(girl, state.weekday, state.timeOfDay);
@@ -441,6 +472,7 @@ export const CRUEL = /whatever|don'?t care|dont care|shut up|get over it|not a b
 const ELSEWHERE: Record<GirlId, LocationId[]> = {
   izzy: ["library", "cafe", "campus", "studyHall", "mexican", "burger", "animeStore", "tabletop", "trail", "gameStore"],
   victoria: ["cafe", "grocery", "italian", "furniture", "craftStore", "mall", "perfume", "library"],
+  ronnie: ["gym", "field", "trail", "naturalFoods", "cafe", "library", "sportingGoods", "trendy", "theater", "collectibles"],
 };
 
 export function ageGas(gas: GasPuff[] | undefined): GasPuff[] {

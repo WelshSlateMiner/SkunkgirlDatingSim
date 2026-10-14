@@ -64,7 +64,7 @@ export type LocationId =
 export type PlayerGender = "male" | "female";
 export type PlayerFartRole = "into" | "not";
 export type GameMode = "slow" | "casual";
-export type GirlId = "izzy" | "victoria";
+export type GirlId = "izzy" | "victoria" | "ronnie";
 export type RelationshipType = "mono" | "harem";
 
 export interface GirlCard {
@@ -194,6 +194,7 @@ export interface DutyNotice {
 export interface ScentFrom {
   izzy: number;
   victoria: number;
+  ronnie: number;
 }
 
 /** She asked about the smell and may press once. */
@@ -414,9 +415,13 @@ export interface IzzyTurn {
   otherFx?: FxEvent;
   /** Hers alone. She can dominant-spray while the other intimate-sprays. */
   otherSprayKind?: SprayKind | null;
-  /** A third girl and beyond (see scene.ts). Unused until a third girl can be present. */
+  /** A third girl and beyond (see scene.ts). */
   extras?: SceneVoice<string>[];
+  /** Ronnie only: how the player took gas this turn. Scales her trust (RONNIE_FART_REACTIONS). */
+  fartReaction?: FartReaction;
 }
+
+export type FartReaction = "none" | "playful" | "cool" | "attracted" | "negative" | "bigIssue";
 
 export interface PlayerBeat {
   kind: "say" | "act" | "think";

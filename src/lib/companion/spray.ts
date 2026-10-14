@@ -277,8 +277,8 @@ export function finishTanks(
   extra: Record<GirlId, number>,
 ): { tanks: Record<GirlId, GlandTank>; emptied: GirlId[] } {
   const emptied: GirlId[] = [];
-  const next: Record<GirlId, GlandTank> = { izzy: tanks.izzy, victoria: tanks.victoria };
-  for (const girl of ["izzy", "victoria"] as const) {
+  const next: Record<GirlId, GlandTank> = { izzy: tanks.izzy, victoria: tanks.victoria, ronnie: tanks.ronnie };
+  for (const girl of ["izzy", "victoria", "ronnie"] as const) {
     let tank = next[girl];
     const more = extra[girl] ?? 0;
     for (let i = 0; i < more; i++) {

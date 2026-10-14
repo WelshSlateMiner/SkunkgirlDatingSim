@@ -180,7 +180,7 @@ export function redirectCopy(state: Pick<GameState, "playerGender">): {
 }
 
 export function recentLines(messages: { role: string; text: string }[], girl: GirlId) {
-  const role = girl === "victoria" ? "victoria" : "izzy";
+  const role = girl;
   return messages
     .filter((message) => message.role === role)
     .slice(-3)

@@ -42,6 +42,20 @@ const LINES: Record<GirlId, Record<NightBend, { text: string; expression: Expres
       text: "They're closing. I'm going home. Good night.",
     },
   },
+  ronnie: {
+    invite: {
+      expression: "flirty",
+      text: "They're kicking us out. Lame. My dorm's close, or your place. Pick one, I'm not standing on the curb all night.",
+    },
+    continue: {
+      expression: "happy",
+      text: "They're closing. Field's still open, so's the trail and the Quad. I've got energy to burn if you've got somewhere.",
+    },
+    goodnight: {
+      expression: "happy",
+      text: "That's closing time. I've got an early run anyway. Night. Don't be weird about it.",
+    },
+  },
 };
 
 export interface NightSpeaker {
