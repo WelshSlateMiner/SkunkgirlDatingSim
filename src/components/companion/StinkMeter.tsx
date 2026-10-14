@@ -7,7 +7,8 @@ export function StinkMeter() {
   const stink = useCompanion((s) => Math.max(0, Math.min(100, Math.round(s.stink ?? 0))));
   const izzy = useCompanion((s) => (typeof s.scentFrom?.izzy === "number" ? s.scentFrom.izzy : 0));
   const victoria = useCompanion((s) => (typeof s.scentFrom?.victoria === "number" ? s.scentFrom.victoria : 0));
-  const who = markedLabel(stink, { izzy, victoria });
+  const ronnie = useCompanion((s) => (typeof s.scentFrom?.ronnie === "number" ? s.scentFrom.ronnie : 0));
+  const who = markedLabel(stink, { izzy, victoria, ronnie });
   return (
     <aside className="stink-meter" aria-label={`Stink meter ${stink}. Currently marked by ${who}.`}>
       <p className="stink-meter-label">

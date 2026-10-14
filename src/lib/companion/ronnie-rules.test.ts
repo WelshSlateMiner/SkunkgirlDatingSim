@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { promptModifier, rangeMax, ronnieFartAllowed, ronnieNextDebt, ronnieRangeSpan, ronnieRivalHeld, yogaClassBonus } from "./fart.ts";
 import { ronnieInstructing, ronnieOnClock } from "./yoga.ts";
 
-describe("Ronnie fart rules (dormant)", () => {
+describe("Ronnie fart rules", () => {
   it("streak narrows by 2, quiet opens by 1", () => {
     assert.equal(ronnieNextDebt(0, true), 2);
     assert.equal(ronnieNextDebt(2, true), 4);

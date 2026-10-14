@@ -13,7 +13,7 @@ export function DebugBar() {
   if (!debug) return null;
   const here = sceneOrder(present ?? []);
   const both = here.length === 2;
-  const who = focus === "victoria" ? "Victoria" : "Izzy";
+  const who = focus === "victoria" ? "Victoria" : focus === "ronnie" ? "Ronnie" : "Izzy";
 
   return (
     <div className="rounded-lg border border-cream/40 bg-bg/70 px-3 py-2 backdrop-blur-sm">
