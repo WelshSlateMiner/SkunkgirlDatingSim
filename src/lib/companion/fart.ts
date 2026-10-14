@@ -102,9 +102,10 @@ export function playerAskedFart(text: string) {
   return FART_WORD.test(text) && ASK_WORD.test(text);
 }
 
-/** Applied once, for this roll only. Never stored. Izzy +1. Victoria −2 in public, otherwise none. */
+/** Applied once, for this roll only. Never stored. Izzy +1. Victoria −2 in public, otherwise none. Ronnie +2 anywhere. */
 export function promptModifier(girl: GirlId | "ronnie", place: LocationId): number {
   if (girl === "izzy") return 1;
+  if (girl === "ronnie") return 2;
   if (girl === "victoria" && !isPrivatePlace(place)) return -2;
   return 0;
 }
@@ -328,4 +329,71 @@ export function dropFartProse(girl: GirlId, narration: string, dialogue: string)
     narration: narr,
     dialogue: kept || (girl === "victoria" ? "I'm listening. Go on." : "I'm here. Keep going."),
   };
+}
+/*
+ * Ronnie's gut. Dormant: she is not a GirlId yet, so nothing in a turn calls these.
+ * They are the rules from the dev doc, ready to wire in when she joins the roster.
+ */
+
+/** Her default window is 1-3. Same food, intimacy, and yoga bonuses as the other girls. */
+export const RONNIE_BASE_RANGE = 3;
+
+/** Each fart in a row narrows her next window by two, not one. A quiet reply clears the whole streak. */
+export const RONNIE_STREAK_STEP = 2;
+
+export function ronnieNextDebt(debt: number, farted: boolean): number {
+  const current = Math.max(0, Math.round(debt));
+  return farted ? current + RONNIE_STREAK_STEP : 0;
+}
+
+/**
+ * +1 once another skunkgirl farts in the scene with her. It stays until she is the only skunkgirl in a scene.
+ * Returns the new held flag.
+ */
+export function ronnieRivalHeld(held: boolean, otherGirlsPresent: number, otherGirlFarted: boolean): boolean {
+  if (otherGirlsPresent <= 0) return false;
+  return held || otherGirlFarted;
+}
+
+/** +1 for every girl when the player attends a yoga class Ronnie is teaching. */
+export function yogaClassBonus(place: LocationId, ronnieInstructing: boolean): number {
+  return place === "yogaStudio" && ronnieInstructing ? 1 : 0;
+}
+
+export function ronnieRangeSpan(opts: {
+  stops: LocationId[];
+  debt: number;
+  place: LocationId;
+  intimate?: boolean;
+  rivalHeld?: boolean;
+  instructing?: boolean;
+  prompted?: boolean;
+}): number {
+  const stops = withStop(opts.stops, opts.place);
+  const food = stops.reduce((sum, place) => sum + foodBonus(place), 0);
+  const max =
+    RONNIE_BASE_RANGE +
+    food +
+    (opts.intimate ? 2 : 0) +
+    (opts.rivalHeld ? 1 : 0) +
+    yogaClassBonus(opts.place, Boolean(opts.instructing));
+  const span = max - Math.max(0, opts.debt) + (opts.prompted ? promptModifier("ronnie", opts.place) : 0);
+  return Math.max(0, span);
+}
+
+export type RonnieFartKind = "casual" | "intimate";
+
+/**
+ * Public: every casual fart, plus intimate farts with no moan up to size 2.
+ * Semi-private and private: anything goes, and she laughs after. Strangers do not change this.
+ */
+export function ronnieFartAllowed(place: LocationId, kind: RonnieFartKind, size: number, moan: boolean): boolean {
+  if (isPrivatePlace(place)) return true;
+  if (kind === "casual") return true;
+  return !moan && size <= 2;
+}
+
+/** Fart play outside a relationship opens above 50 on both. */
+export function ronnieFartPlayOpen(trust: number, bonding: number): boolean {
+  return trust > 50 && bonding > 50;
 }

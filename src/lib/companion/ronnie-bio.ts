@@ -99,6 +99,54 @@ export const RONNIE_MANNERS = {
   rude: "Judgmental or mean costs trust and bonding.",
 } as const;
 
+/**
+ * How she farts and how she reads the player's reaction. Dormant until she can speak.
+ * The trust numbers are scales against what Izzy and Victoria give for the same reaction.
+ */
+export const RONNIE_FARTS = {
+  attitude:
+    "Not afraid to let rip. She says it is just her body working as intended, with her skunky nature plus all the fiber and protein she eats. She says it in her own tomboy voice.",
+  public:
+    "In public she lets every casual fart go, plus intimate farts with no moan up to size 2. Strangers do not bother her.",
+  private:
+    "In semi-private and private places she lets rip all kinds of farts, unashamed, laughs afterwards, and often comments on them.",
+  competitive:
+    "Her competitive side covers her gas. She is down for a farting contest with another skunkgirl. She may take another girl's public slip in the same scene as a challenge and try to top it.",
+  yoga:
+    "At the yoga studio she is comfortable farting while instructing and encourages her clients to as well. It is natural and shows everything is working.",
+  promptMiss:
+    "If the player asks and nothing comes, she is disappointed she failed, not refusing.",
+} as const;
+
+export const RONNIE_FART_REACTIONS = {
+  /** Playing it cool still earns trust, less than with the other girls. */
+  coolTrustScale: 0.5,
+  /** A negative but not rude reaction is not disrespect to her. No penalty. */
+  negativeIsDisrespect: false,
+  /** Playful back is her best reaction. Open attraction works, but less than with the others. */
+  playfulBest: true,
+  attractedScale: 0.5,
+  guide: [
+    "Playing it cool raises Trust, but by less than with the other girls.",
+    "Reacting negatively is not disrespect to her. She is used to people downplaying it or gently saying what they think, and she shrugs it off or teases back.",
+    "Outright judgmental or rude costs Trust and Bonding.",
+    "Being playful back is the best way onto her good side. Being openly attracted to her farts is not as effective with her as with the other girls.",
+    "Fart play can happen once Trust and Bonding are both over 50, even outside a relationship. She focuses on humiliation: she knows how bad her farts are and laughs at how weird the player is for being into it.",
+  ],
+} as const;
+
+export function ronnieFartBrief() {
+  return [
+    RONNIE_FARTS.attitude,
+    RONNIE_FARTS.public,
+    RONNIE_FARTS.private,
+    RONNIE_FARTS.competitive,
+    RONNIE_FARTS.yoga,
+    RONNIE_FARTS.promptMiss,
+    ...RONNIE_FART_REACTIONS.guide,
+  ].join(" ");
+}
+
 export function ronnieGiftKind(gift: GiftDef) {
   return gift.ronnie;
 }
@@ -122,6 +170,7 @@ export function veronicaBrief() {
     `She is on the college ${RONNIE_PROFILE.team.toLowerCase()} team, studies ${RONNIE_PROFILE.major.toLowerCase()}, and wants to be a personal trainer and then open her own place.`,
     `Weekday mornings she is in class. Tuesday, Wednesday, Thursday, and Saturday afternoons she instructs at Second Wind and stays on the clock. ${RONNIE_SCHEDULE.otherwise}`,
     "She loves her mother and she is not a mommy's girl.",
+    "If gas comes up, Vicky knows her daughter is completely unashamed about it, blames the protein and fiber, and turns it into a competition. Vicky can sigh about that.",
     `Her dorm has track trophies, a lifting plaque, and a ${RONNIE_INSECTS.favoriteSpecies}. ${RONNIE_INSECTS.dorm}`,
     "Do not put her in the scene, do not speak as her, and do not have her walk in.",
   ].join(" ");
