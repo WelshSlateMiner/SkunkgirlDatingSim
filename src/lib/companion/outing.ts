@@ -2,6 +2,7 @@ import { girlIsOfficial, girlName } from "./cast";
 import { giftById, giftSpeech, giftSummary, presentLine, receptionDelta, receptionOf, type GiftReception } from "./gifts";
 import { LOCATIONS } from "./locations";
 import { nextWeekday, parseMeetPlace, parseTimeOfDay, TIMES, WEEKDAYS } from "./time";
+import { SCENE_NAME_RE, SCENE_ORDER } from "./scene";
 import type {
   ActiveDate,
   DateDraft,
@@ -167,11 +168,9 @@ export function isGroupAddress(text: string) {
 }
 
 export function addressedGirls(text: string, present: GirlId[]): GirlId[] {
-  const named: GirlId[] = [];
-  if (/\b(izzy|isabella)\b/i.test(text)) named.push("izzy");
-  if (/\b(vicky|victoria)\b/i.test(text)) named.push("victoria");
   if (isGroupAddress(text)) return present.filter((id, i, all) => all.indexOf(id) === i);
-  return named.filter((id) => present.includes(id));
+  const named = SCENE_ORDER.filter((id) => SCENE_NAME_RE[id].test(text));
+  return named.filter((id): id is GirlId => (present as string[]).includes(id));
 }
 
 export function goodbyeSaid(text: string) {

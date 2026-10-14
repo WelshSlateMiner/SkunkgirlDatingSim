@@ -153,6 +153,7 @@ import type {
   ChatMessage,
 } from "./types";
 import { clamp, uid } from "@/lib/utils";
+import { logSceneFarts, readSceneFarts, resolveSceneExtras, sceneGirls, sceneOthers, type SceneVoice } from "./scene";
 
 interface CompanionStore extends GameState {
   hydrated: boolean;
@@ -168,6 +169,10 @@ interface CompanionStore extends GameState {
     otherFartSrc?: string;
     intimate?: boolean;
     otherKind?: FxEvent;
+    /** Third and later girls in the scene, by id. */
+    extraKinds?: Partial<Record<string, FxEvent>>;
+    extraFartSrcs?: Partial<Record<string, string>>;
+    extraSprayKinds?: Partial<Record<string, SprayKind>>;
   };
   debugFartIndex: number;
   debugPoseIndex: number;
@@ -293,6 +298,7 @@ function asGameState(s: CompanionStore): GameState {
     trailStreak: typeof s.trailStreak === "number" ? s.trailStreak : 0,
     trailGirl: s.trailGirl === "izzy" || s.trailGirl === "victoria" ? s.trailGirl : null,
     sceneTurns: typeof s.sceneTurns === "number" ? s.sceneTurns : 0,
+    sceneFarts: readSceneFarts(s.sceneFarts),
     shiftsWorked: typeof s.shiftsWorked === "number" ? s.shiftsWorked : 0,
     workedToday: Boolean(s.workedToday),
     pressedDuty: s.pressedDuty === "izzy" || s.pressedDuty === "victoria" ? s.pressedDuty : null,
@@ -596,6 +602,40 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       };
     }
   }
+  // Third and later girls. Same die, same prompt modifier, one voice each in `extras`.
+  const extraGirls = sceneOthers(present, focus).filter((girl) => girl !== other);
+  if (extraGirls.length) {
+    const voices = [...(next.extras ?? [])];
+    for (const girl of extraGirls) {
+      const at = voices.findIndex((v) => v.girl === girl);
+      const voice = at >= 0 ? voices[at]! : { girl, dialogue: "", fx: "none" as FxEvent };
+      if (voice.fx === "spray") continue;
+      const card = state.roster?.[girl];
+      const shaped = shapeSpontaneousFart(
+        girl,
+        card?.trust ?? 0,
+        place,
+        readStops(card),
+        readDebt(card),
+        voice.fx ?? "none",
+        "",
+        voice.dialogue ?? "",
+        modeFor(girl),
+        undefined,
+        intimate,
+      );
+      if (shaped.fx !== "fart" && voice.fx !== "fart" && modeFor(girl) !== "prompt" && at < 0) continue;
+      const updated = {
+        ...voice,
+        fx: shaped.fx === "fart" ? ("fart" as const) : ("none" as const),
+        dialogue: shaped.dialogue || (shaped.fx === "fart" ? "That one was mine." : ""),
+        expression: shaped.expression ?? (shaped.fx === "fart" ? (voice.expression ?? "embarrassed") : voice.expression),
+      };
+      if (at >= 0) voices[at] = updated;
+      else voices.push(updated);
+    }
+    next = { ...next, extras: voices };
+  }
   return next;
 }
 
@@ -681,6 +721,22 @@ async function runTurn(
     if (otherKind === "fart") events.push({ girl: otherId, amount: fartSizeFor(otherFartSrc ?? "") });
     if (patch.sprayKind && patch.sprayKind !== "none") events.push({ girl: focusId, amount: 10 });
     if (patch.otherSprayKind && patch.otherSprayKind !== "none") events.push({ girl: otherId, amount: 10 });
+    const extraFx: Partial<Record<GirlId, FxEvent>> = {};
+    const extraFartSrcs: Partial<Record<GirlId, string>> = {};
+    const extraSprays: Partial<Record<GirlId, SprayKind>> = {};
+    for (const girl of sceneOthers(patch.present ?? snapshot.present ?? [], focusId).filter((id) => id !== otherId)) {
+      const line = [...fresh].reverse().find((m) => m.role === speakerRole(girl) && (m.fx === "fart" || m.fx === "spray"));
+      if (!line?.fx) continue;
+      extraFx[girl] = line.fx;
+      if (line.fx === "spray" && line.sprayKind) extraSprays[girl] = line.sprayKind;
+      if (line.fx === "fart") {
+        const src = pickFartSrc(clipKind);
+        const size = fartSizeFor(src);
+        extraFartSrcs[girl] = src;
+        gas = [...gas, { id: uid(), size, turns: size }];
+        events.push({ girl, amount: size });
+      } else events.push({ girl, amount: 10 });
+    }
     let level = clampStink(snapshot.stink ?? 0);
     let from = normalizeScent(snapshot.scentFrom);
     const hadGas = (snapshot.gas ?? []).some((puff) => puff.turns > 0);
@@ -1033,6 +1089,7 @@ async function runTurn(
     const farted: GirlId[] = [];
     if (fx === "fart" && fartSrc) farted.push(focusId);
     if (otherKind === "fart" && otherFartSrc && !farted.includes(otherId)) farted.push(otherId);
+    for (const girl of Object.keys(extraFartSrcs) as GirlId[]) if (!farted.includes(girl)) farted.push(girl);
     if (plan.girl && plan.fart && !farted.includes(plan.girl)) farted.push(plan.girl);
     patch.roster = settleGuts(
       glandRoster,
@@ -1050,6 +1107,11 @@ async function runTurn(
       });
     }
     patch.messages = messages;
+    patch.sceneFarts = logSceneFarts(
+      snapshot.sceneFarts ?? [],
+      patch.izzyHere === false ? [] : [...(patch.present ?? snapshot.present ?? [])],
+      farted,
+    );
     set({
       ...patch,
       gas,
@@ -1064,6 +1126,7 @@ async function runTurn(
         otherKind: pulseOther,
         fartSrc: pulseFart,
         otherFartSrc: pulseOtherFart,
+        ...(Object.keys(extraFx).length ? { extraKinds: extraFx, extraFartSrcs, extraSprayKinds: extraSprays } : {}),
       },
     });
     persist({ ...patch, gas }, get);
@@ -1787,6 +1850,49 @@ function applyTurn(
           expression: otherExpression,
           met: true,
           knowsAboutSpray: card.knowsAboutSpray || otherFx === "spray",
+        });
+      }
+    }
+  }
+  if (sceneGirls({ present, izzyHere: true }).length > 2) {
+    const covered: GirlId[] = [focusNow, otherGirl(focusNow)];
+    const holdGas = Boolean(warned || calmed || blockedEmpty || call.blocked || call.redirect || suppressScent);
+    const extras = resolveSceneExtras<GirlId>({
+      voices: turn.extras as SceneVoice<GirlId>[] | undefined,
+      present,
+      covered,
+      holdGas,
+      dry: (girl) => (tanks[girl]?.glandDry ?? 0) > 0,
+      mentionsFart,
+      dryLine: emptyGlandLine,
+    });
+    for (const out of extras) {
+      if (out.fx === "spray" && tanks[out.girl]) {
+        const spent = spendTank(tanks[out.girl]);
+        tanks[out.girl] = spent.tank;
+        if (spent.emptied) emptiedGirls.push(out.girl);
+      }
+      msgs.push({
+        id: uid(),
+        role: speakerRole(out.girl),
+        at: Date.now(),
+        text: out.text,
+        expression: out.expression,
+        fx: out.fx,
+        ...(out.sprayKind ? { sprayKind: out.sprayKind } : {}),
+      });
+      girlReplies += 1;
+      const card = roster[out.girl];
+      if (card) {
+        const nextTrust = Math.max(0, Math.min(100, card.trust + out.trustDelta));
+        const nextBond = Math.max(0, Math.min(100, card.bonding + out.bondingDelta));
+        roster = withGirl({ ...state, roster }, out.girl, {
+          trust: nextTrust,
+          bonding: nextBond,
+          bond: bondFromScores(nextTrust, nextBond, card.romanceAccepted),
+          expression: out.expression,
+          met: true,
+          knowsAboutSpray: card.knowsAboutSpray || out.fx === "spray",
         });
       }
     }

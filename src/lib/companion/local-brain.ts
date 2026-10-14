@@ -11,6 +11,7 @@ import {
 } from "./spray";
 import { bothHere, duetFallback, otherGirl, romanceBlocked } from "./cast";
 import { addressedGirls, isGroupAddress } from "./outing";
+import { localSceneExtras, sceneGirls } from "./scene";
 import {
   holdCopy,
   intimacyAllowed,
@@ -605,7 +606,14 @@ function localVictoriaTurn(state: GameState, input: TurnInput): IzzyTurn {
   });
 }
 
+/** Offline reply for the focus girl, plus one short line from any third-or-later girl the player addressed. */
 export function localIzzyTurn(state: GameState, input: TurnInput): IzzyTurn {
+  const turn = localFocusTurn(state, input);
+  const extras = localSceneExtras(sceneGirls(state), state.focus ?? "izzy", hay(input));
+  return extras ? { ...turn, extras: [...(turn.extras ?? []), ...extras] } : turn;
+}
+
+function localFocusTurn(state: GameState, input: TurnInput): IzzyTurn {
   if ((state.focus ?? "izzy") === "victoria") return localVictoriaTurn(state, input);
   const text = hay(input);
   const pos = hits(text, POS);

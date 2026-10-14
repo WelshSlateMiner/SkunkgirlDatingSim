@@ -5,6 +5,7 @@ import { FIRST_MEETS, asLocationId, placeOf } from "./locations";
 import { asOutfitId } from "./portraits";
 import { initialCast, oneGreeting } from "./cast";
 import { economySeed } from "./outing";
+import { readSceneFarts } from "./scene";
 import { readTank } from "./spray";
 
 export const SAVE_KEY = "izzy-companion-save";
@@ -478,6 +479,7 @@ function migrate(raw: GameState): GameState {
     relationshipType: raw.relationshipType === "harem" ? "harem" : "mono",
     focus,
     present: present.length ? present : [focus],
+    sceneFarts: readSceneFarts(raw.sceneFarts),
     roster,
     planGirl: asGirl(raw.planGirl) ?? focus,
     morningDetour: Boolean(raw.morningDetour),

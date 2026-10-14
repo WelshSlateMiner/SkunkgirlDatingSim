@@ -10,7 +10,7 @@ import { markedBy } from "./stink";
 import { gutBrief } from "./fart";
 import { readTank } from "./spray";
 import { veronicaBrief } from "./ronnie-bio";
-import { sceneCastBrief, sceneGirls } from "./scene";
+import { extrasContract, sceneCastBrief, sceneGirls } from "./scene";
 import { instructorBrief } from "./yoga";
 
 export const SYSTEM_PROMPT = `You are Isabella "Izzy", an adult (early 20s) chubby skunk-neko college student in a 2D companion simulator. Stay in first person as Izzy except for an optional short narrator beat.
@@ -453,6 +453,8 @@ export function systemPrompt(state: GameState) {
 
 /** Third-girl cast line and Ronnie's on-the-clock guidance. Empty, so the prompt is unchanged, until she can be present. */
 function sceneExtrasBrief(state: GameState): string {
-  const lines = [sceneCastBrief(sceneGirls(state), state.focus ?? "izzy"), instructorBrief(state)].filter(Boolean);
+  const here = sceneGirls(state);
+  const focus = state.focus ?? "izzy";
+  const lines = [sceneCastBrief(here, focus), extrasContract(here, focus), instructorBrief(state)].filter(Boolean);
   return lines.length ? `\n${lines.join("\n")}` : "";
 }

@@ -5,6 +5,7 @@ import { asLocationId } from "./locations";
 import { asOutfitId } from "./portraits";
 import { stateBlock, systemPrompt } from "./prompts";
 import { bothHere } from "./cast";
+import { parseExtras } from "./scene";
 
 const EXPRESSIONS = new Set([
   "embarrassed",
@@ -78,6 +79,7 @@ function coerceTurn(raw: unknown): IzzyTurn {
       o.otherSprayKind === "dominant"
         ? o.otherSprayKind
         : null,
+    extras: parseExtras(o.extras),
   };
   turn.fx = resolveFx(turn);
   return turn;
