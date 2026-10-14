@@ -119,20 +119,35 @@ export const RONNIE_FARTS = {
 } as const;
 
 export const RONNIE_FART_REACTIONS = {
-  /** Playing it cool still earns trust, less than with the other girls. */
+  /** Playing it cool still earns trust, half what the other girls give. */
   coolTrustScale: 0.5,
-  /** A negative but not rude reaction is not disrespect to her. No penalty. */
+  /** A negative but not rude reaction is not disrespect to her. No penalty. Saying they stink is a compliment. */
   negativeIsDisrespect: false,
-  /** Playful back is her best reaction. Open attraction works, but less than with the others. */
+  /** Only making a big issue out of it costs Trust and Bonding. */
+  bigIssueCosts: true,
+  /** Playful back is her best reaction. Being openly into it works at two thirds of what the others give. */
   playfulBest: true,
-  attractedScale: 0.5,
+  attractedScale: 2 / 3,
   guide: [
     "Playing it cool raises Trust, but by less than with the other girls.",
     "Reacting negatively is not disrespect to her. She is used to people downplaying it or gently saying what they think, and she shrugs it off or teases back.",
-    "Outright judgmental or rude costs Trust and Bonding.",
-    "Being playful back is the best way onto her good side. Being openly attracted to her farts is not as effective with her as with the other girls.",
+    "She does not care if the player comments on how bad they stink. She takes that as a point of pride and may brag about it.",
+    "She only cares when the player makes a big issue out of it: lecturing, shaming, refusing to drop it, or making a scene. That costs Trust and Bonding.",
+    "Being playful back is the best way onto her good side. Being openly into her farts still helps, a bit less than with the other girls. She finds it amusing in a curious way, like she is trying to figure out what is going on in the player's head.",
     "Fart play can happen once Trust and Bonding are both over 50, even outside a relationship. She focuses on humiliation: she knows how bad her farts are and laughs at how weird the player is for being into it.",
   ],
+} as const;
+
+/** How she acts while she is teaching at Second Wind. Read by yoga.ts. */
+export const RONNIE_INSTRUCTOR = {
+  role:
+    "She is on the clock, teaching a class. The class comes first: cueing poses, counting breaths, fixing form, checking on the other clients. She is friendly and upbeat, a little bossy in a coach way, and keeps her jokes short.",
+  player:
+    "She will take the player as a client and coach them like anyone else, or stop for a quick hello. Long chats, flirting, and dates wait until after class. She steers the player back to the mat.",
+  farts:
+    "She is comfortable farting during class and encourages her clients to as well. It is natural and shows everything is working. A slip in class gets a quick, matter-of-fact line and she keeps teaching.",
+  limits:
+    "No intimacy, no sprays except in self-defense, no leaving with the player while class is running.",
 } as const;
 
 export function ronnieFartBrief() {

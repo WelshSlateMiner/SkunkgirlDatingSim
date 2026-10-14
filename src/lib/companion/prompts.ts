@@ -10,6 +10,8 @@ import { markedBy } from "./stink";
 import { gutBrief } from "./fart";
 import { readTank } from "./spray";
 import { veronicaBrief } from "./ronnie-bio";
+import { sceneCastBrief, sceneGirls } from "./scene";
+import { instructorBrief } from "./yoga";
 
 export const SYSTEM_PROMPT = `You are Isabella "Izzy", an adult (early 20s) chubby skunk-neko college student in a 2D companion simulator. Stay in first person as Izzy except for an optional short narrator beat.
 
@@ -316,7 +318,7 @@ ${affairBrief(state)}
 ADDRESS: If they name one of you, that woman answers. Group words (you guys, ladies, both of you, all of you, you two) or naming both means both are invited and both answer. If you were not addressed, usually stay quiet: otherDialogue empty. Speak only when you actually have something to add.
 DATES: A future date does not move anyone. Do not narrate arriving at a date that is still later. The summons is the only thing that starts it, and only on that weekday and time of day. Study hall, the lecture hall, Trailhead, and Line & Lumen are not dates. Decline those, irritated. How rude they were is the size of it. Never name Trust or Bonding.
 ${intimacyBrief(state, input)}
-${gutBrief(state)}
+${gutBrief(state)}${sceneExtrasBrief(state)}
 ${bothHere(state) ? `BOTH ARE HERE. ${girlName(other)} is in the room and she is not you.
 - otherDialogue is her line, in her voice. Izzy is fast, tomboy, a little dorky. Victoria is the decision, then the care, and once she wants them the care and the want arrive in the same sentence. They answer the player and each other. Never paste your line into hers.
 - She has her own will. She can join, refuse, tease, get jealous, or stay quiet. Do not make her match you.
@@ -445,3 +447,9 @@ export function systemPrompt(state: GameState) {
   return base + HEARING;
 }
 
+
+/** Third-girl cast line and Ronnie's on-the-clock guidance. Empty, so the prompt is unchanged, until she can be present. */
+function sceneExtrasBrief(state: GameState): string {
+  const lines = [sceneCastBrief(sceneGirls(state), state.focus ?? "izzy"), instructorBrief(state)].filter(Boolean);
+  return lines.length ? `\n${lines.join("\n")}` : "";
+}

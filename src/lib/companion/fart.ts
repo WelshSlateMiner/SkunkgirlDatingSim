@@ -2,6 +2,7 @@ import type { Expression, FxEvent, GameState, GirlCard, GirlId, IzzyTurn, Locati
 import { isPrivatePlace } from "./cast";
 import { intimacyCall } from "./intimacy";
 import { placeOf } from "./locations";
+import { ronnieInstructing } from "./yoga";
 
 const FART_RE =
   /\b(fart(?:ed|ing|s)?|toot(?:ed|ing|s)?|poot(?:ed|ing|s)?|flatulence|flatu(?:s|lent)|passed (?:gas|wind)|passing gas|rips? (?:one|it|a)|ripped (?:one|it|a)|let(?:s|ting)?(?: one| it)? (?:rip|go|slip|out)|a (?:quiet |wet |little |soft |short |unbothered )?(?:puff|toot|brap)\b|puffs?\b|puffed\b|lift(?:s|ed|ing)? (?:a |her )?cheek|unclench(?:ed|es|ing)?|couldn'?t hold it|hold it in|from (?:her )?behind|digestive tract|stomach (?:voted|joined|won|made)|beans? (?:hit|landed|won)|season(?:ed)? .{0,24}(?:aisle|shelf|store)|gassed (?:the |this )?|that one had architecture|aisle will never recover|open a window for the civilians|lean(?:s|ed)? .{0,40}(?:cheek|rip|toot|fart))\b|p+f+t+|br+a+p+|thbb?t+|pbb+t+|\*+[^*]{0,40}(fart|toot|poot|pfft|brap|puff)[^*]{0,40}\*+/i;
@@ -69,9 +70,10 @@ export function baseRange(girl: GirlId, trust: number): number {
   return trusted ? 3 : 2;
 }
 
-export function rangeMax(girl: GirlId, trust: number, stops: LocationId[], intimate = false): number {
+/** classBonus is the yoga-class +1 (see yoga.ts). It is 0 unless Ronnie is teaching the class the player is in. */
+export function rangeMax(girl: GirlId, trust: number, stops: LocationId[], intimate = false, classBonus = 0): number {
   const bonus = stops.reduce((sum, place) => sum + foodBonus(place), 0);
-  return baseRange(girl, trust) + bonus + (intimate ? 2 : 0);
+  return baseRange(girl, trust) + bonus + (intimate ? 2 : 0) + classBonus;
 }
 
 /** Upper end of 1–N for this reply. Debt is how many farts in a row have narrowed it. */
@@ -82,8 +84,9 @@ export function rangeSpan(
   debt: number,
   place: LocationId,
   intimate = false,
+  classBonus = 0,
 ): number {
-  const max = rangeMax(girl, trust, withStop(stops, place), intimate);
+  const max = rangeMax(girl, trust, withStop(stops, place), intimate, classBonus);
   return Math.max(0, max - Math.max(0, debt));
 }
 
@@ -295,12 +298,13 @@ export function gutBrief(state: GameState): string {
   const present = state.izzyHere === false ? [] : (state.present ?? []);
   const girls = (present.length ? present : [state.focus ?? "izzy"]) as GirlId[];
   const intimate = Boolean(state.flags.intimateScene);
+  const yoga = yogaClassBonus(state.location, ronnieInstructing(state));
   return girls
     .map((girl) => {
       const card = state.roster?.[girl];
       const trust = girl === (state.focus ?? "izzy") ? state.trust : (card?.trust ?? 0);
       const stops = withStop(readStops(card), state.location);
-      const max = rangeMax(girl, trust, stops, intimate);
+      const max = rangeMax(girl, trust, stops, intimate, yoga);
       const span = Math.max(0, max - readDebt(card));
       const window = span > 0 ? `This reply hits on 1-${span}.` : "This reply's window is closed, so an unasked fart cannot hit.";
       const who = girl === "victoria" ? "Victoria" : "Izzy";
@@ -338,12 +342,14 @@ export function dropFartProse(girl: GirlId, narration: string, dialogue: string)
 /** Her default window is 1-3. Same food, intimacy, and yoga bonuses as the other girls. */
 export const RONNIE_BASE_RANGE = 3;
 
-/** Each fart in a row narrows her next window by two, not one. A quiet reply clears the whole streak. */
+/** Each fart in a row narrows her next window by two, not one. Each quiet reply opens it back by one. */
 export const RONNIE_STREAK_STEP = 2;
+export const RONNIE_QUIET_STEP = 1;
 
 export function ronnieNextDebt(debt: number, farted: boolean): number {
   const current = Math.max(0, Math.round(debt));
-  return farted ? current + RONNIE_STREAK_STEP : 0;
+  if (farted) return current + RONNIE_STREAK_STEP;
+  return Math.max(0, current - RONNIE_QUIET_STEP);
 }
 
 /**
@@ -356,8 +362,8 @@ export function ronnieRivalHeld(held: boolean, otherGirlsPresent: number, otherG
 }
 
 /** +1 for every girl when the player attends a yoga class Ronnie is teaching. */
-export function yogaClassBonus(place: LocationId, ronnieInstructing: boolean): number {
-  return place === "yogaStudio" && ronnieInstructing ? 1 : 0;
+export function yogaClassBonus(place: LocationId, instructing: boolean): number {
+  return place === "yogaStudio" && instructing ? 1 : 0;
 }
 
 export function ronnieRangeSpan(opts: {
