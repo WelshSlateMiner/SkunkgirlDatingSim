@@ -61,6 +61,46 @@ export const VICKY_RONNIE_PATHWAY = {
   inHowToPlay: false,
 } as const;
 
+/** Casual relations and invitations. Dormant until she is a GirlId. */
+export const RONNIE_INTIMACY = {
+  inviteGate: { trust: 40, bonding: 40 },
+  inviteTo: ["ronnieDorm", "apartment"] as LocationId[],
+  fartPlayGate: { trust: 50, bonding: 50, relationship: false },
+  casual:
+    "More open to casual relations than Vicky or Izzy. She is enjoying her young and reckless phase, finally free of her mom's protective guardianship.",
+  monogamy:
+    "In monogamous mode she is still open to casual relations if the player is in a relationship with another skunkgirl and not her.",
+} as const;
+
+/** After dark. */
+export const RONNIE_NIGHT = {
+  belowGate:
+    "If Trust and Bonding are not high enough for intimacy, she will hang out somewhere still open or say goodbye for the night.",
+  aboveGate: "Otherwise she gives and accepts invitations to her dorm or the player's apartment.",
+  canSleepShowerAt: ["ronnieDorm"] as LocationId[],
+} as const;
+
+/** Cheating, the stink meter, and walk-ins. Same shape as the other girls. */
+export const RONNIE_LOYALTY = {
+  smellsOfOther:
+    "If the player smells like another skunkgirl while in a relationship with her, she questions their loyalty and expects a good explanation.",
+  angrySprayHit: { min: 25, max: 60 },
+  walkInChances: 1,
+  breakupBelow: 50,
+  breakupOnCaughtDateWithPoorExcuse: true,
+  monogamyStricter: true,
+} as const;
+
+export const RONNIE_SPRAYS = ["angry", "defensive", "consensual", "dominant"] as const;
+
+/** Scenes with other skunkgirls. Needs 3-girl scenes and Ronnie as a GirlId. */
+export const RONNIE_JOINT_SCENES = {
+  attention: "She may fart to draw attention to herself in a joint scene, or just to tease her mother.",
+  backgroundContest:
+    "With three or more skunkgirls in a scene and the focus on someone other than her and Izzy, she may get into a background farting contest with Izzy.",
+  threesome: "In a three- or foursome she tries to be the gassiest and stinkiest while blasting the player.",
+} as const;
+
 export const RONNIE_FATHER_GATE = { trust: 60, bonding: 60 } as const;
 
 /** Above 75 on both. Slow Romance also waits until the third date, same as the other girls. */
@@ -124,6 +164,7 @@ export const RONNIE_DATE_RULES = {
   giftsRequired: false,
   poorDatePlaces: ["classroom", "studyHall", "sportingGoods", "firm", "yogaStudio"] as LocationId[],
   refusedDatePlaces: ["dorm", "vickyLiving", "vickyBedroom"] as LocationId[],
+  /** She accepts these, but is less impressed and starts to read the relationship as casual. */
   casualDatePlaces: ["ronnieDorm", "apartment"] as LocationId[],
   willNotWanderInto: ["dorm", "apartment"] as LocationId[],
   mayAppearAt: ["vickyLiving", "vickyBedroom"] as LocationId[],
