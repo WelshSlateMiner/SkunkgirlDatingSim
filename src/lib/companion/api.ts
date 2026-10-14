@@ -80,6 +80,9 @@ function coerceTurn(raw: unknown): IzzyTurn {
         ? o.otherSprayKind
         : null,
     extras: parseExtras(o.extras),
+    fartReaction: (["playful", "cool", "attracted", "negative", "bigIssue"].includes(String(o.fartReaction ?? ""))
+      ? String(o.fartReaction)
+      : "none") as IzzyTurn["fartReaction"],
   };
   turn.fx = resolveFx(turn);
   return turn;

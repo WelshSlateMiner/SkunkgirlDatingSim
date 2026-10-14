@@ -254,16 +254,29 @@ export function ronnieGiftSpeech(gift: GiftDef) {
   return `${name}. That's you asking me to cover up. Not a gift.`;
 }
 
-/** What Victoria is allowed to know out loud. Ronnie herself still does not appear. */
+/** What Victoria is allowed to know out loud about her daughter. */
 export function veronicaBrief() {
   return [
-    `Veronica "Ronnie" is ${RONNIE_PROFILE.age}, Vicky's daughter, a skunkgirl, and not in this scene. She is not a romance option. Mention her only if family, gifts, or responsibility comes up.`,
+    `Veronica "Ronnie" is ${RONNIE_PROFILE.age}, Vicky's daughter, a skunkgirl. Unless STATE lists her as present, she is not in this scene; mention her only if family, gifts, or responsibility comes up.`,
     RONNIE_PROFILE.hair,
     `She is on the college ${RONNIE_PROFILE.team.toLowerCase()} team, studies ${RONNIE_PROFILE.major.toLowerCase()}, and wants to be a personal trainer and then open her own place.`,
     `Weekday mornings she is in class. Tuesday, Wednesday, Thursday, and Saturday afternoons she instructs at Second Wind and stays on the clock. ${RONNIE_SCHEDULE.otherwise}`,
     "She loves her mother and she is not a mommy's girl.",
     "If gas comes up, Vicky knows her daughter is completely unashamed about it, blames the protein and fiber, and turns it into a competition. Vicky can sigh about that.",
     `Her dorm has track trophies, a lifting plaque, and a ${RONNIE_INSECTS.favoriteSpecies}. ${RONNIE_INSECTS.dorm}`,
-    "Do not put her in the scene, do not speak as her, and do not have her walk in.",
+    "Only the game brings her into a scene. If she is not present, do not speak as her and do not have her walk in.",
   ].join(" ");
+}
+
+/**
+ * Ronnie's trust weights for how the player takes gas (RONNIE_FART_REACTIONS).
+ * Playful: full. Cool (fine with it, no play): half the gain. Attracted: two thirds of the gain.
+ * Negative: not disrespect, so a dislike costs at most 2. Making it a big issue costs the full drop, at least 4.
+ */
+export function ronnieReactionTrust(delta: number, reaction: string | undefined): number {
+  if (reaction === "cool" && delta > 0) return Math.round(delta * RONNIE_FART_REACTIONS.coolTrustScale);
+  if (reaction === "attracted" && delta > 0) return Math.round(delta * RONNIE_FART_REACTIONS.attractedScale);
+  if (reaction === "negative") return Math.max(-2, Math.min(0, delta));
+  if (reaction === "bigIssue") return Math.min(-4, delta);
+  return delta;
 }
