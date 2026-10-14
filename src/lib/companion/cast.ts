@@ -49,9 +49,13 @@ const AFFINITY: Record<LocationId, Record<GirlId, number>> = {
   italian: { izzy: 34, victoria: 90 },
   furniture: { izzy: 14, victoria: 96 },
   firm: { izzy: 8, victoria: 98 },
+  gym: { izzy: 82, victoria: 12 },
+  yogaStudio: { izzy: 24, victoria: 36 },
+  field: { izzy: 74, victoria: 14 },
+  ronnieDorm: { izzy: 0, victoria: 0 },
 };
 
-const PRIVATE = new Set<LocationId>(["dorm", "apartment", "vickyLiving", "vickyBedroom"]);
+const PRIVATE = new Set<LocationId>(["dorm", "apartment", "vickyLiving", "vickyBedroom", "ronnieDorm"]);
 
 export function otherGirl(id: GirlId): GirlId {
   return id === "izzy" ? "victoria" : "izzy";

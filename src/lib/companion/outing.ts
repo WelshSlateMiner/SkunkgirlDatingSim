@@ -421,7 +421,7 @@ export function buildReview(date: ActiveDate, trustAfter: number, bondAfter: num
     nextChance,
     farts: date.farts,
     smell: smellSummary(date.smell),
-    gift: gift ? giftSummary(date.girl, gift) : "The gift never made it out of the bag.",
+    gift: gift ? giftSummary(date.girl, gift) : "No gift. She didn't need one.",
     askNext: date.nth < 3 && nextChance !== "no",
   };
 }

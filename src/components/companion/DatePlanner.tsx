@@ -23,7 +23,7 @@ function PlanForm({ draft }: { draft: DateDraft }) {
   const [giftId, setGiftId] = useState(draft.giftId ?? "");
   const places = datePlaces(draft.nth);
   const uniqueGifts = [...new Set(inventory)];
-  const open = Boolean(time && place && day && giftId && slotOpen(weekday, timeOfDay, day, time));
+  const open = Boolean(time && place && day && slotOpen(weekday, timeOfDay, day, time));
   const late = Boolean(time && day && !slotOpen(weekday, timeOfDay, day, time));
 
   return (
@@ -31,7 +31,7 @@ function PlanForm({ draft }: { draft: DateDraft }) {
       <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
         <p className="font-display text-xl text-fg">Plan the date</p>
         <p className="mt-1 text-sm text-muted">
-          {girlName(draft.girl)} said yes. Date {draft.nth} needs a day, a time, a place, and a gift.
+          {girlName(draft.girl)} said yes. Date {draft.nth} needs a day, a time, and a place. A gift is welcome. It is not required.
           {draft.nth < 3 ? " Home isn't an option until the third date." : " Her home and your apartment are open."}
         </p>
         <label className="mt-4 block text-xs uppercase tracking-[0.14em] text-subtle">
@@ -86,7 +86,7 @@ function PlanForm({ draft }: { draft: DateDraft }) {
             value={giftId}
             onChange={(e) => setGiftId(e.target.value)}
           >
-            <option value="">{uniqueGifts.length ? "Choose" : "Nothing in your bag"}</option>
+            <option value="">No gift</option>
             {uniqueGifts.map((id) => (
               <option key={id} value={id}>
                 {giftById(id)?.name ?? id}
@@ -95,21 +95,18 @@ function PlanForm({ draft }: { draft: DateDraft }) {
           </select>
         </label>
         {late ? <p className="mt-3 text-sm text-muted">That time has already passed today. Pick a later slot.</p> : null}
-        {!uniqueGifts.length ? (
-          <p className="mt-3 text-sm text-muted">A date needs a gift. Buy one, then ask her again.</p>
-        ) : null}
         <Button
           className="mt-4 w-full"
           disabled={!open}
           onClick={() => {
-            if (!time || !place || !day || !giftId) return;
+            if (!time || !place || !day) return;
             confirmDate({ time, place, day, giftId });
           }}
         >
           Set the date
         </Button>
         <Button className="mt-2 w-full" variant="outline" onClick={postponeDate}>
-          I'll get the gift first
+          Not yet
         </Button>
       </div>
     </div>

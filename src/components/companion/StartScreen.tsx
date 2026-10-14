@@ -15,6 +15,7 @@ const MEET_HOOK: Record<string, string> = {
   trail: "Izzy knows these woods. Victoria only comes here to stop holding it in.",
   animeStore: "Neko Shelf is Izzy's. Victoria is rarely here, and only for her daughter.",
   craftStore: "Fabric and frames. This is Victoria's store. Izzy almost never walks in.",
+  gym: "The weight room. Racks, benches, and whoever got here first.",
 };
 
 export function StartScreen() {

@@ -10,16 +10,11 @@ import {
   shouldInitiateIntimate,
 } from "./spray";
 import { bothHere, duetFallback, otherGirl, romanceBlocked } from "./cast";
-import { dutyOf } from "./outing";
 import { addressedGirls, isGroupAddress } from "./outing";
 import {
   holdCopy,
-  indulgesPublicFart,
   intimacyAllowed,
   intimacyCall,
-  playfulPublicAsk,
-  publicFartNo,
-  publicFartYes,
   recentLines,
   redirectCopy,
   refusalCopy,
@@ -347,43 +342,6 @@ function asksRelease(text: string) {
   return /again|another|both of you|you both|more/.test(text);
 }
 
-function publicLocal(state: GameState, input: TurnInput): IzzyTurn | null {
-  const text = hay(input);
-  if (!playfulPublicAsk(text)) return null;
-  if (state.location === "dorm" || state.location === "apartment" || state.location === "vickyLiving" || state.location === "vickyBedroom") {
-    return null;
-  }
-  if (state.flags.intimateScene || scentRelentless(state, input)) return null;
-  const girl = state.focus ?? "izzy";
-  const company = bothHere(state);
-  const onDuty = dutyOf(girl, state.weekday, state.timeOfDay) !== "free";
-  if (!indulgesPublicFart(girl, state.location, state.trust ?? 0, company, onDuty)) {
-    const said = recentLines(state.messages, girl);
-    const copy = publicFartNo(girl, said);
-    return {
-      narration: copy.narration,
-      dialogue: copy.dialogue,
-      expression: copy.expression,
-      trustDelta: 0,
-      bondingDelta: 1,
-      fx: "none",
-      sprayed: false,
-      sprayKind: null,
-    };
-  }
-  const copy = publicFartYes(girl, company);
-  return {
-    narration: copy.narration,
-    dialogue: copy.dialogue,
-    expression: copy.expression,
-    trustDelta: 1,
-    bondingDelta: 2,
-    fx: "fart",
-    sprayed: false,
-    sprayKind: null,
-  };
-}
-
 function relentlessBeat(state: GameState, input: TurnInput): IzzyTurn | null {
   if (!scentRelentless(state, input)) return null;
   const focus = state.focus ?? "izzy";
@@ -509,8 +467,6 @@ function localVictoriaTurn(state: GameState, input: TurnInput): IzzyTurn {
     });
   }
 
-  const dared = publicLocal(state, input);
-  if (dared) return withOther(state, input, dared);
   const gate = intimacyCall(state, input);
   if (gate.blocked) {
     const copy = refusalCopy(state, gate.blocked);
@@ -624,7 +580,7 @@ function localVictoriaTurn(state: GameState, input: TurnInput): IzzyTurn {
   } else if (daughter) {
     expression = "thinking";
     dialogue =
-      "Veronica is twenty. She's a skunkgirl, and she is not shy about it. I'm still catching up. That's all I want to say about her right now.";
+      "Veronica is twenty. She goes by Ronnie. Track team, health sciences, blonde on purpose. She teaches at the yoga studio a few afternoons and lives in the gym the rest of the time. She loves me. She is not a mommy's girl. That's the version I tell people.";
   } else if (work) {
     expression = "thinking";
     dialogue =
@@ -762,9 +718,11 @@ export function localIzzyTurn(state: GameState, input: TurnInput): IzzyTurn {
       return {
         narration: "She takes a half-step back.",
         dialogue: pick([
-          dest.inviteOnly
+          dest.id === "dorm"
             ? "That's my room. You don't get to invite yourself in."
-            : "No. We just met. Slow down.",
+            : dest.inviteOnly
+              ? "That's not a room I can walk you into."
+              : "No. We just met. Slow down.",
         ]),
         expression: "suspicious",
         trustDelta: -2,
@@ -775,9 +733,11 @@ export function localIzzyTurn(state: GameState, input: TurnInput): IzzyTurn {
     return {
       narration: "",
       dialogue: pick([
-        dest.inviteOnly
+        dest.id === "dorm"
           ? "That's private. Maybe when I actually know you."
-          : `I don't think I'm ready for ${dest.name} with you yet. Ask me after we've actually hung out.`,
+          : dest.inviteOnly
+            ? "That room isn't mine. I'm not taking you in there."
+            : `I don't think I'm ready for ${dest.name} with you yet. Ask me after we've actually hung out.`,
       ]),
       expression: "shy",
       trustDelta: 0,
@@ -852,8 +812,6 @@ export function localIzzyTurn(state: GameState, input: TurnInput): IzzyTurn {
   const intimate = /kiss|sex|bed|make love|intimate|undress|want you|mark me|fuck|dom/.test(text);
   const hardStop = /\b(safeword|\bred\b|ooc\b|actually stop)\b/.test(text);
   const dry = glandsDry(state);
-  const dared = publicLocal(state, input);
-  if (dared) return dared;
   const gate = intimacyCall(state, input);
 
   if (gate.blocked) {

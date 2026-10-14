@@ -47,8 +47,8 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
             <h3 className="font-display text-base text-fg">Gamemodes</h3>
             <p className="mt-1">
               Casual is the regular game. Slow Romance cuts how fast Trust and Bonding rise. You can ask her
-              on a date once both are at least 20. A tip shows up when you're there. She won't go without a
-              gift. Fill in the day, the time, and the place. Homes and your apartment wait until the third
+              on a date once both are at least 20. A tip shows up when you're there. A gift is welcome, not
+              required. Fill in the day, the time, and the place. Homes and your apartment wait until the third
               date. The first date lasts one part of the day. The second and third last two. After it, you
               see how Trust and Bonding moved. One date opens the meters to 50, a second to 75, a third to 100.
               Standing her up hurts badly. If she walks in on a date with the other woman, Izzy loses trust
@@ -64,16 +64,18 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
               $20. Once a day, and not at night. If you aren't home, it tells you to travel there first.
               Reading at the Campus Library and Studying at the Study Hall each move the clock forward one
               part of the day, and you can do either again. Zzz is Sleep. It only lights up at your apartment,
-              Izzy's dorm, or Vicky's bedroom, and only from Evening on. Sleep opens a recap of the day.
+              Izzy's dorm, Vicky's bedroom, or Ronnie's dorm, and only from Evening on. The shower button works
+              in the room you're in, including her dorm. Sleep opens a recap of the day.
               Continue fades out and back in over a few seconds. You wake the next Morning, a little less
               stinky, and Monday adds your paycheck. At Night almost everywhere closes. Still open: the Quad,
-              the Nature Trail, Marquee House, the dorm, your apartment, and Vicky's living room and bedroom.
+              the Nature Trail, West Field, Marquee House, the dorm, Ronnie's dorm, your apartment, and Vicky's living room and bedroom.
               If you're alone when a place locks up, Places opens and marks what is closed. If she's with you,
               she says so, and she decides whether to invite you somewhere private, keep going somewhere still
               open, or say good night.
-              At a shop, the dollar button buys a gift. The backpack shows what you're carrying. Setting
-              the date takes that gift out of the bag. Miss it or stand her up and it comes back. Once
-              she has it, it's gone. Victoria is easier to please with a gift. Izzy, who is still in college, cares more when the gift
+              At a shop, the dollar button buys a gift. The backpack shows what you're carrying. Trailhead
+              Outfitters sells track shoes for $50. If you bring a gift, it stays in the bag until you meet
+              her. Miss the date or stand her up and it comes back. Once she has it, it's gone. You can also
+              go without one. Victoria is easier to please with a gift. Izzy, who is still in college, cares more when the gift
               clearly cost something. Places shows where each of them is. They don't know you can see that.
               Invite fills the box. Travel goes there yourself. Leave without a goodbye and Bonding drops.
               Their homes stay shut unless you're already together. She may leave for class, work, her

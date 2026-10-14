@@ -196,6 +196,22 @@ const OPENINGS: Record<string, Beat[]> = {
       second: "The florals are that way if you want distance. I will be over here, surviving.",
     },
   ],
+  gym: [
+    {
+      narrator:
+        "The campus weight room smells like rubber and iron. A loaded rack, two bench presses, mirrors. Then a skunky note that isn't the chalk. A chubby skunk-neko girl in a campus hoodie is sitting on the end of a bench, caught between a set and an apology.",
+      first:
+        "Oh. Hi. Izzy. I came in to hide from a reading and then I… yeah. The smell is me. I don't even lift. I just needed a room that wasn't the library.",
+      second: "You can take the other bench. I'll be quiet. Or I'll try. My stomach has its own opinions.",
+    },
+    {
+      narrator:
+        "Afternoon in the weight room. Plates on the rack, a bar on the nearer bench, nobody else around until you walk in on a chubby skunk-neko girl who has clearly just let one go and is pretending the mirrors didn't witness it.",
+      first:
+        "Don't— hi. I'm Izzy. That was me. I was going to do one set so I could say I went to the gym, and my body filed a different workout.",
+      second: "The exit's behind you if a first impression should not include chalk and skunk. Fair.",
+    },
+  ],
 };
 
 export function openingState(

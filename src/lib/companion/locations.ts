@@ -316,6 +316,47 @@ export const LOCATIONS: Record<LocationId, LocationDef> = {
     image: "/art/places/firm.jpg",
     defaultOutfit: "work",
   },
+  gym: {
+    id: "gym",
+    name: "Campus Gym",
+    what: "The college weight room. A loaded free-weight rack, two bench-press benches, mirrors, and rubber floors. It locks up at night.",
+    blurb: "Racks, benches, and someone already mid-set.",
+    group: "campus",
+    minTrust: 0,
+    image: "/art/places/gym.jpg",
+    defaultOutfit: "campus",
+  },
+  yogaStudio: {
+    id: "yogaStudio",
+    name: "Second Wind",
+    what: "A yoga and pilates studio just off campus. Oak floors, a barre, mats, and soft north light. Veronica works here. It closes at night.",
+    blurb: "Mats, a barre, and a quiet floor.",
+    group: "work",
+    minTrust: 0,
+    image: "/art/places/yogaStudio.jpg",
+    defaultOutfit: "campus",
+  },
+  field: {
+    id: "field",
+    name: "West Field",
+    what: "The campus athletic field. A red running track around a grass infield, empty bleachers, light poles. It stays open after dark.",
+    blurb: "Lanes, grass, and late sun.",
+    group: "campus",
+    minTrust: 8,
+    image: "/art/places/field.jpg",
+    defaultOutfit: "campus",
+  },
+  ronnieDorm: {
+    id: "ronnieDorm",
+    name: "Ronnie's Dorm",
+    what: "Veronica's dorm room. A trophy shelf of track awards and a lifting plaque, finish-line and medal photos, a blue-morpho and a birdwing in frames, an insect terrarium, and a jester-hood plush on the bed.",
+    blurb: "Trophies, butterflies, and her bed.",
+    group: "private",
+    minTrust: 45,
+    image: "/art/places/ronnieDorm.jpg",
+    defaultOutfit: "lounge",
+    inviteOnly: true,
+  },
 };
 
 export const LOCATION_GROUPS: { id: LocationDef["group"]; label: string }[] = [
@@ -325,7 +366,7 @@ export const LOCATION_GROUPS: { id: LocationDef["group"]; label: string }[] = [
   { id: "private", label: "Private" },
 ];
 
-export const FIRST_MEETS: LocationId[] = ["library", "studyHall", "trail", "animeStore", "craftStore"];
+export const FIRST_MEETS: LocationId[] = ["library", "studyHall", "trail", "animeStore", "craftStore", "gym"];
 
 export function placeImage(id: LocationId) {
   return LOCATIONS[id]?.image ?? "/art/places/library.jpg";
@@ -436,6 +477,26 @@ const EXTRA_ALIASES: Record<string, LocationId> = {
   "victoria's work": "firm",
   "her office": "firm",
   office: "firm",
+  gym: "gym",
+  "campus gym": "gym",
+  "weight room": "gym",
+  "the gym": "gym",
+  yoga: "yogaStudio",
+  pilates: "yogaStudio",
+  "yoga studio": "yogaStudio",
+  "pilates studio": "yogaStudio",
+  "second wind": "yogaStudio",
+  field: "field",
+  track: "field",
+  "the track": "field",
+  "athletic field": "field",
+  "west field": "field",
+  "running track": "field",
+  "ronnie dorm": "ronnieDorm",
+  "ronnies dorm": "ronnieDorm",
+  "ronnie's dorm": "ronnieDorm",
+  "veronica dorm": "ronnieDorm",
+  "veronica's dorm": "ronnieDorm",
 };
 
 function norm(s: string) {
@@ -487,14 +548,16 @@ export function placeOf(id: string | null | undefined) {
 const NIGHT_OPEN = new Set<LocationId>([
   "trail",
   "campus",
+  "field",
   "dorm",
+  "ronnieDorm",
   "apartment",
   "vickyLiving",
   "vickyBedroom",
   "theater",
 ]);
 
-const SLEEP_AT = new Set<LocationId>(["apartment", "dorm", "vickyBedroom"]);
+const SLEEP_AT = new Set<LocationId>(["apartment", "dorm", "vickyBedroom", "ronnieDorm"]);
 
 export function openTonight(id: LocationId, time: TimeOfDay = "Night") {
   if (time !== "Night") return true;

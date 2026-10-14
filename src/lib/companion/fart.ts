@@ -1,4 +1,6 @@
-import type { FxEvent, GameState, GirlCard, GirlId, IzzyTurn, LocationId, Roster, TurnInput } from "./types";
+import type { Expression, FxEvent, GameState, GirlCard, GirlId, IzzyTurn, LocationId, Roster, TurnInput } from "./types";
+import { isPrivatePlace } from "./cast";
+import { intimacyCall } from "./intimacy";
 import { placeOf } from "./locations";
 
 const FART_RE =
@@ -60,22 +62,123 @@ export function withStop(stops: LocationId[], place: LocationId): LocationId[] {
   return [...stops, place];
 }
 
-/** Izzy starts at 2. Victoria starts at 1. Trust above 20 opens one more number. */
+/** Izzy starts at 2. Victoria starts at 1. Trust above 20 opens one more number. Intimacy adds two. */
 export function baseRange(girl: GirlId, trust: number): number {
   const trusted = trust > 20;
   if (girl === "victoria") return trusted ? 2 : 1;
   return trusted ? 3 : 2;
 }
 
-export function rangeMax(girl: GirlId, trust: number, stops: LocationId[]): number {
+export function rangeMax(girl: GirlId, trust: number, stops: LocationId[], intimate = false): number {
   const bonus = stops.reduce((sum, place) => sum + foodBonus(place), 0);
-  return baseRange(girl, trust) + bonus;
+  return baseRange(girl, trust) + bonus + (intimate ? 2 : 0);
 }
 
 /** Upper end of 1–N for this reply. Debt is how many farts in a row have narrowed it. */
-export function rangeSpan(girl: GirlId, trust: number, stops: LocationId[], debt: number, place: LocationId): number {
-  const max = rangeMax(girl, trust, withStop(stops, place));
+export function rangeSpan(
+  girl: GirlId,
+  trust: number,
+  stops: LocationId[],
+  debt: number,
+  place: LocationId,
+  intimate = false,
+): number {
+  const max = rangeMax(girl, trust, withStop(stops, place), intimate);
   return Math.max(0, max - Math.max(0, debt));
+}
+
+const FART_PROMPT =
+  /\b(?:fart (?:for|on|in) (?:me|us|my)|let one (?:go|rip|out|slip)|rip one|toot for me|pass gas|another fart|keep farting|don'?t hold it|do not hold it|cut one)\b/i;
+const FART_WORD = /\b(?:farts?|farting|toots?|poots?|pass gas|let one|rip one|cut one)\b/i;
+const ASK_WORD =
+  /\b(?:please|can you|could you|will you|would you|i want you to|for me|i dare|dare you|come on|c'mon|go on|do it|right now)\b/i;
+const FART_PROMPT_NO =
+  /\b(?:stop fart|no more fart|don'?t fart|do not fart|don't you fart|eww|\bew\b|gross|disgusting)\b/i;
+
+/** A direct request for a fart this turn. Not a mention, and not a request to stop. */
+export function playerAskedFart(text: string) {
+  if (FART_PROMPT_NO.test(text)) return false;
+  if (FART_PROMPT.test(text)) return true;
+  return FART_WORD.test(text) && ASK_WORD.test(text);
+}
+
+/** Applied once, for this roll only. Never stored. Izzy +1. Victoria −2 in public, otherwise none. */
+export function promptModifier(girl: GirlId | "ronnie", place: LocationId): number {
+  if (girl === "izzy") return 1;
+  if (girl === "victoria" && !isPrivatePlace(place)) return -2;
+  return 0;
+}
+
+export function sceneIsIntimate(state: GameState, input: TurnInput) {
+  const call = intimacyCall(state, input);
+  return Boolean(call.scene && !call.blocked && !call.concluded);
+}
+
+function pickLine<T>(items: readonly T[]): T {
+  return items[Math.floor(Math.random() * items.length)]!;
+}
+
+/** Spoken only when a prompted roll misses. Ronnie's lines wait until she can speak. */
+export function promptedFartMiss(girl: GirlId | "ronnie"): {
+  narration: string;
+  dialogue: string;
+  expression: Expression;
+} {
+  if (girl === "victoria") {
+    return pickLine([
+      {
+        narration: "She sets a hand on her stomach, checks, and takes it away. The smile is small and not sorry.",
+        dialogue: "No. I am not going to strain for one I don't have. Ask when there's actually something there.",
+        expression: "thinking",
+      },
+      {
+        narration: "She almost laughs, then doesn't give them the show.",
+        dialogue: "Cute. The tank is empty. That's the answer, not a negotiation.",
+        expression: "suspicious",
+      },
+      {
+        narration: "One brow lifts. She does not shift her weight or try again.",
+        dialogue: "I checked. Nothing queued. I don't fake a fart to be polite.",
+        expression: "shy",
+      },
+    ]);
+  }
+  if (girl === "ronnie") {
+    return pickLine([
+      {
+        narration: "She braces, tries, and nothing comes. The grin drops into a real frown.",
+        dialogue: "I tried. I actually tried. There's nothing in there. That's annoying.",
+        expression: "embarrassed",
+      },
+      {
+        narration: "She pushes, waits, and lets her shoulders fall.",
+        dialogue: "Ugh. I wanted that one. I'm out of gas. Don't look at me like I chickened out.",
+        expression: "shy",
+      },
+      {
+        narration: "A second try. Still nothing. She clicks her tongue and looks off.",
+        dialogue: "Failed. Not a refusal. My stomach just doesn't have it. Disappointing.",
+        expression: "thinking",
+      },
+    ]);
+  }
+  return pickLine([
+    {
+      narration: "She grins, gives it a real try, and comes up empty. Ears twitch.",
+      dialogue: "Heh. I pushed. Nothing's queued. My guts declined the invitation.",
+      expression: "laughing",
+    },
+    {
+      narration: "She pats her stomach like it betrayed her and shrugs, still playful.",
+      dialogue: "You asked nice. I'm out of gas. That's the whole scandal.",
+      expression: "embarrassed",
+    },
+    {
+      narration: "She leans in like she's going to, then snorts and straightens up.",
+      dialogue: "Tank's empty. I'd toot on command if I had one. Rude of my own body.",
+      expression: "shy",
+    },
+  ]);
 }
 
 export function rollD12(): number {
@@ -145,8 +248,8 @@ function withSlip(girl: GirlId, narration: string, dialogue: string) {
 }
 
 /**
- * Unasked farts come from a d12. Force keeps a fart the player asked for.
- * A miss strips a fart the model wrote on its own.
+ * Unasked farts come from a d12. A prompt is the same die with a one-turn modifier.
+ * Force is only for the scripted fart test.
  */
 export function shapeSpontaneousFart(
   girl: GirlId,
@@ -157,16 +260,29 @@ export function shapeSpontaneousFart(
   fx: FxEvent,
   narration: string,
   dialogue: string,
-  mode: "force" | "roll",
+  mode: "force" | "roll" | "prompt",
   roll?: number,
-): { fx: FxEvent; narration: string; dialogue: string } {
+  intimate = false,
+): { fx: FxEvent; narration: string; dialogue: string; expression?: Expression } {
   if (fx === "spray") return { fx, narration, dialogue };
   if (mode === "force") {
     return { fx: "fart", ...withSlip(girl, narration, dialogue) };
   }
-  const span = rangeSpan(girl, trust, stops, debt, place);
+  let span = rangeSpan(girl, trust, stops, debt, place, intimate);
+  if (mode === "prompt") span = Math.max(0, span + promptModifier(girl, place));
   const face = roll ?? rollD12();
   if (dieHits(span, face)) return { fx: "fart", ...withSlip(girl, narration, dialogue) };
+  if (mode === "prompt") {
+    const miss = promptedFartMiss(girl);
+    const scrubbed = dropFartProse(girl, narration, dialogue);
+    const kept = scrubbed.dialogue.trim();
+    return {
+      fx: "none",
+      narration: miss.narration,
+      dialogue: kept ? `${kept} ${miss.dialogue}` : miss.dialogue,
+      expression: miss.expression,
+    };
+  }
   if (fx === "fart" || mentionsFart(`${narration} ${dialogue}`)) {
     const scrubbed = dropFartProse(girl, narration, dialogue);
     return { fx: "none", narration: scrubbed.narration, dialogue: scrubbed.dialogue };
@@ -177,12 +293,13 @@ export function shapeSpontaneousFart(
 export function gutBrief(state: GameState): string {
   const present = state.izzyHere === false ? [] : (state.present ?? []);
   const girls = (present.length ? present : [state.focus ?? "izzy"]) as GirlId[];
+  const intimate = Boolean(state.flags.intimateScene);
   return girls
     .map((girl) => {
       const card = state.roster?.[girl];
       const trust = girl === (state.focus ?? "izzy") ? state.trust : (card?.trust ?? 0);
       const stops = withStop(readStops(card), state.location);
-      const max = rangeMax(girl, trust, stops);
+      const max = rangeMax(girl, trust, stops, intimate);
       const span = Math.max(0, max - readDebt(card));
       const window = span > 0 ? `This reply hits on 1-${span}.` : "This reply's window is closed, so an unasked fart cannot hit.";
       const who = girl === "victoria" ? "Victoria" : "Izzy";
@@ -191,7 +308,8 @@ export function gutBrief(state: GameState): string {
         state.location === "mexican"
           ? " A fart in this restaurant uses a large clip with no moan."
           : "";
-      return `GUT ${who}: d12. ${window} Today's max is 1-${max}. Do not set fx fart and do not describe letting one go unless they directly asked you to fart right now. The game rolls and adds the fart when it hits. After a fart, the next reply's window is one number smaller. A quiet reply opens the next window by one, back toward the max. Food today: ${meals}. Each different place that sells food is +1 once. Osteria Vale is +1. Casa Luna is +2. Repeats do not stack.${table}`;
+      const room = intimate ? " Intimacy is raising today's max by two. That bonus leaves when the scene does." : "";
+      return `GUT ${who}: d12. ${window} Today's max is 1-${max}.${room} Do not set fx fart and do not describe letting one go, even if they just asked. The game rolls. A direct ask uses this same window for one roll only, then the modifier is gone: Izzy +1, Victoria -2 if the place is public. Prompts do not stack. A hit still narrows the next reply by one. A miss does not fart, and she explains in her own voice. A quiet reply opens the next window by one, back toward the max. Food today: ${meals}. Each different place that sells food is +1 once. Osteria Vale is +1. Casa Luna is +2. Repeats do not stack.${table}`;
     })
     .join("\n");
 }

@@ -22,7 +22,7 @@ export function SleepButton() {
       ? "Not right now."
       : timeOfDay === "Morning" || timeOfDay === "Afternoon"
         ? "Sleep is from Evening on."
-        : "Sleep is only at your apartment, Izzy's dorm, or Vicky's bedroom.";
+        : "Sleep is only at your apartment, Izzy's dorm, Vicky's bedroom, or Ronnie's dorm.";
 
   const sheet = open ? (
     <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-bg/75 p-3 pt-12 sm:items-center sm:pt-3">

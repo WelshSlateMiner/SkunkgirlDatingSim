@@ -54,7 +54,11 @@ export type LocationId =
   | "craftStore"
   | "italian"
   | "furniture"
-  | "firm";
+  | "firm"
+  | "gym"
+  | "yogaStudio"
+  | "field"
+  | "ronnieDorm";
 
 export type PlayerGender = "male" | "female";
 export type PlayerFartRole = "into" | "not";

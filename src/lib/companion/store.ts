@@ -10,7 +10,7 @@ import {
   type DebugCommand,
 } from "./debug";
 import { fartClipAt, fartSizeFor, pickFartSrc } from "./audio";
-import { clearFed, intimateFetishFart, mentionsFart, readDebt, readStops, resolveFx, settleGuts, shapeSpontaneousFart } from "./fart";
+import { clearFed, intimateFetishFart, mentionsFart, playerAskedFart, readDebt, readStops, resolveFx, sceneIsIntimate, settleGuts, shapeSpontaneousFart } from "./fart";
 import {
   holdCopy,
   indulgesPublicFart,
@@ -520,18 +520,22 @@ function seatAfterExit(
   };
 }
 
-const FART_REQUEST =
-  /\b(?:fart (?:for|on|in) (?:me|us)|let one (?:go|rip|out)|rip one|toot for me|pass gas|another fart|keep farting|don'?t hold it|do not hold it)\b/i;
-
-/** The d12 is the only unasked fart. A direct private request still happens. A public dare is her choice, later. */
+/** Unasked farts are a d12. A direct request is the same die, with a one-turn modifier. */
 function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): IzzyTurn {
   const place = state.location;
   const blob = `${input.say} ${input.action}`;
-  const publicAsk = playfulPublicAsk(blob) && !isPrivatePlace(place);
-  const privateAsk = !publicAsk && FART_REQUEST.test(blob) && !/\b(?:don'?t|do not|stop fart|no more|ew|gross|disgusting)\b/i.test(blob);
   const present = state.izzyHere === false ? [] : (state.present ?? []);
   const focus = state.focus ?? "izzy";
+  const asked = playerAskedFart(blob);
+  const named = asked ? addressedGirls(blob, present) : [];
+  const prompted = asked ? new Set(named.length ? named : present) : null;
+  const intimate = sceneIsIntimate(state, input);
   let next = turn;
+  const modeFor = (girl: GirlId): "force" | "roll" | "prompt" => {
+    if (girl === focus && next.testId === "fart-test") return "force";
+    if (prompted?.has(girl)) return "prompt";
+    return "roll";
+  };
   if (present.includes(focus) && next.fx !== "spray" && !next.sprayed) {
     const card = state.roster?.[focus];
     const shaped = shapeSpontaneousFart(
@@ -543,9 +547,17 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       next.fx ?? "none",
       next.narration ?? "",
       next.dialogue ?? "",
-      privateAsk || next.testId === "fart-test" ? "force" : "roll",
+      modeFor(focus),
+      undefined,
+      intimate,
     );
-    next = { ...next, fx: shaped.fx, narration: shaped.narration, dialogue: shaped.dialogue };
+    next = {
+      ...next,
+      fx: shaped.fx,
+      narration: shaped.narration,
+      dialogue: shaped.dialogue,
+      expression: shaped.expression ?? next.expression,
+    };
   }
   const other = otherGirl(focus);
   if (present.includes(other) && next.otherFx !== "spray" && !next.otherSprayKind) {
@@ -559,7 +571,9 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       next.otherFx ?? "none",
       "",
       next.otherDialogue ?? "",
-      privateAsk ? "force" : "roll",
+      modeFor(other),
+      undefined,
+      intimate,
     );
     let otherDialogue = shaped.dialogue;
     if (shaped.fx === "fart" && !mentionsFart(otherDialogue)) {
@@ -571,12 +585,14 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
           : "And that one was mine.";
       otherDialogue = otherDialogue.trim() ? `${otherDialogue.trim()} ${tail}` : tail;
     }
-    if (shaped.fx === "fart" || next.otherFx === "fart") {
+    if (shaped.fx === "fart" || next.otherFx === "fart" || modeFor(other) === "prompt") {
       next = {
         ...next,
         otherFx: shaped.fx === "fart" ? "fart" : "none",
         otherDialogue,
-        otherExpression: shaped.fx === "fart" ? (next.otherExpression ?? (other === "victoria" ? "shy" : "embarrassed")) : next.otherExpression,
+        otherExpression:
+          shaped.expression ??
+          (shaped.fx === "fart" ? (next.otherExpression ?? (other === "victoria" ? "shy" : "embarrassed")) : next.otherExpression),
       };
     }
   }
@@ -1068,7 +1084,7 @@ function takeOne(items: string[], id: string | null | undefined) {
 }
 
 function giveBack(items: string[], id: string | null | undefined, held: boolean | undefined) {
-  if (!id || held === false || items.includes(id)) return items;
+  if (!id || held !== true) return items;
   return [...items, id];
 }
 
@@ -1298,7 +1314,6 @@ function applyTurn(
   let giftTrust = 0;
   let giftBond = 0;
   let giftSpeechLine: string | null = null;
-  let giftTakenName: string | null = null;
   if (askingDate) {
     const hinted = awkwardMention(dateBlob, asked);
     if (hinted && isAwkwardPlace(hinted)) {
@@ -1330,22 +1345,11 @@ function applyTurn(
       giftTrust = reaction.delta.trust;
       giftBond = reaction.delta.bonding;
       giftSpeechLine = reaction.speech;
-      if (activeDate.giftHeld !== true) {
-        const nextBag = takeOne(inventory, activeDate.giftId);
-        if (nextBag.length !== inventory.length) {
-          inventory = nextBag;
-          giftTakenName = giftById(activeDate.giftId)?.name ?? activeDate.giftId;
-        }
-      }
       activeDate = { ...activeDate, presented: true, giftHeld: true };
     }
   }
   if (activeDate) {
     activeDate = { ...activeDate, smell: nextSmell(activeDate.smell, dateBlob) };
-  }
-  if (activeDate?.presented && activeDate.giftHeld !== true) {
-    inventory = takeOne(inventory, activeDate.giftId);
-    activeDate = { ...activeDate, giftHeld: true };
   }
   if (state.gameMode === "slow" && dateOpen && nextLocation === dateOpen && !openedThisTurn && dates < 3) {
     dates += 1;
@@ -1462,11 +1466,11 @@ function applyTurn(
         : "No. You already have a girlfriend. I'm not doing that.";
     expression = "angry";
   } else if (dateNote === "planner") {
-    narration = "She is willing. Nothing is set until the day, the time, the place, and a gift are filled in.";
+    narration = "She is willing. Nothing is set until the day, the time, and the place are filled in. A gift is welcome. It is not required.";
     dialogue =
       (state.focus ?? "izzy") === "victoria"
-        ? "I'll go. Fill in the card. Day, time, place. And don't show up empty-handed."
-        : "Yeah, I'll go. Fill it in. Day, time, place. You have to bring me something. That's the rule.";
+        ? "I'll go. Fill in the card. Day, time, place. Bring something if you want. Don't bring it because you think you have to."
+        : "Yeah, I'll go. Fill it in. Day, time, place. A gift is nice. It's not the date.";
     expression = "flirty";
   } else if (dateNote === "planned" && planTime && planPlace) {
     narration = "She files it away like it matters.";
@@ -1637,7 +1641,8 @@ function applyTurn(
   }
   let forcedFx: "none" | "fart" | null = null;
   const playerBlob = `${input.say} ${input.action}`;
-  const askedPublic = playfulPublicAsk(playerBlob) && !isPrivatePlace(nextLocation) && !relentless;
+  const askedPublic =
+    !playerAskedFart(playerBlob) && playfulPublicAsk(playerBlob) && !isPrivatePlace(nextLocation) && !relentless;
   if (askedPublic && !warned && !calmed && !sprayed && !suppressScent && !call.blocked && !call.redirect) {
     const onDuty = dutyOf(focusNow, state.weekday, state.timeOfDay) !== "free";
     const company = present.includes("izzy") && present.includes("victoria");
@@ -1684,14 +1689,6 @@ function applyTurn(
   if (giftSpeechLine && activeDate) {
     const given = giftById(activeDate.giftId);
     const mentioned = given ? dialogue.toLowerCase().includes(given.name.split(" ")[0]!.toLowerCase()) : false;
-    if (giftTakenName) {
-      msgs.push({
-        id: uid(),
-        role: "narrator",
-        at: Date.now(),
-        text: `You give her the ${giftTakenName}. It's out of your bag.`,
-      });
-    }
     if (!mentioned) {
       msgs.push({
         id: uid(),
@@ -3370,7 +3367,10 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     let action = turn.action.trim();
     const thought = turn.thought?.trim() ?? "";
     let beats = turn.beats?.length ? turn.beats.map((beat) => ({ ...beat })) : undefined;
-    const pendingGift = state.activeDate && !state.activeDate.presented ? giftReaction(state.activeDate) : null;
+    const pendingGift =
+      state.activeDate && !state.activeDate.presented && state.activeDate.giftHeld
+        ? giftReaction(state.activeDate)
+        : null;
     if (pendingGift) {
       action = [action, pendingGift.line].filter(Boolean).join("; ");
       const giftBeat = { kind: "act" as const, text: pendingGift.line, seen: pendingGift.line };
@@ -3931,8 +3931,9 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const state = get();
     const plan = state.dateDraft;
     if (!plan) return;
-    if (!draft.time || !draft.place || !draft.day || !draft.giftId) return;
-    if (!state.inventory.includes(draft.giftId)) return;
+    if (!draft.time || !draft.place || !draft.day) return;
+    const giftId = draft.giftId || "";
+    if (giftId && !state.inventory.includes(giftId)) return;
     if (!slotOpen(state.weekday, state.timeOfDay, draft.day, draft.time)) return;
     if (isAwkwardPlace(draft.place)) return;
     const nth = plan.nth;
@@ -3941,16 +3942,16 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     }
     const voice = speakerRole(plan.girl);
     const where = placeOf(draft.place);
-    const giftName = giftById(draft.giftId)?.name ?? draft.giftId;
-    const inventory = takeOne(state.inventory ?? [], draft.giftId);
-    const giftHeld = inventory.length !== (state.inventory ?? []).length;
+    const giftName = giftId ? (giftById(giftId)?.name ?? giftId) : "";
     const messages = [
       ...state.messages,
       {
         id: uid(),
         role: "narrator" as const,
         at: Date.now(),
-        text: `${draft.day} ${draft.time}, ${where.name}. She has the plan. The ${giftName} comes out of your bag for the date. Then she's gone, and you can go where you need to.`,
+        text: giftName
+          ? `${draft.day} ${draft.time}, ${where.name}. She has the plan. The ${giftName} stays in your bag until you meet her. Then she's gone, and you can go where you need to.`
+          : `${draft.day} ${draft.time}, ${where.name}. She has the plan. No gift. Then she's gone, and you can go where you need to.`,
       },
       {
         id: uid(),
@@ -3959,8 +3960,12 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         expression: "happy" as const,
         text:
           plan.girl === "victoria"
-            ? `${draft.day}. ${draft.time}. ${where.name}. I'll be there. Don't make me wait.`
-            : `${draft.day}, ${draft.time}, ${where.name}. I'll be there. Bring the thing. I mean it.`,
+            ? giftName
+              ? `${draft.day}. ${draft.time}. ${where.name}. I'll be there. Keep that in the bag until you see me.`
+              : `${draft.day}. ${draft.time}. ${where.name}. I'll be there. You don't need to bring anything.`
+            : giftName
+              ? `${draft.day}, ${draft.time}, ${where.name}. I'll be there. Bring the thing if you still want to. I mean it.`
+              : `${draft.day}, ${draft.time}, ${where.name}. I'll be there. Don't stress a gift.`,
       },
     ];
     const patch = {
@@ -3972,10 +3977,9 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         time: draft.time,
         place: draft.place,
         day: draft.day,
-        giftId: draft.giftId,
-        giftHeld,
+        giftId,
+        giftHeld: false,
       },
-      inventory,
       present: [] as GirlId[],
       izzyHere: false,
       dayPhase: "playing" as const,
@@ -3998,8 +4002,8 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         expression: "thinking" as const,
         text:
           plan.girl === "victoria"
-            ? "Go get it, then. I'm not holding a table for a person with empty hands."
-            : "Okay. Go buy the thing. Ask me again when you actually have it.",
+            ? "Go on, then. Ask me again when you actually have a plan."
+            : "Okay. Ask me again when you're ready to fill it in.",
       },
     ];
     const patch = {
@@ -4019,13 +4023,23 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const arrived = pullFocus({ ...asGameState(state), location: plan.place }, plan.girl);
     const where = placeOf(plan.place);
     const voice = speakerRole(plan.girl);
+    let inventory = [...(state.inventory ?? [])];
+    let giftHeld = plan.giftHeld === true;
+    if (!giftHeld && plan.giftId) {
+      const nextBag = takeOne(inventory, plan.giftId);
+      if (nextBag.length !== inventory.length) {
+        inventory = nextBag;
+        giftHeld = true;
+      }
+    }
+    const giftName = giftHeld ? (giftById(plan.giftId)?.name ?? "") : "";
     const messages = [
       ...state.messages,
       {
         id: uid(),
         role: "narrator" as const,
         at: Date.now(),
-        text: `You meet ${girlName(plan.girl)} at ${where.name}. ${where.blurb} The date starts now.`,
+        text: `You meet ${girlName(plan.girl)} at ${where.name}. ${where.blurb} The date starts now.${giftName ? ` The ${giftName} comes out of your bag.` : ""}`,
       },
       {
         id: uid(),
@@ -4040,6 +4054,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     ];
     const patch = {
       ...arrived,
+      inventory,
       location: plan.place,
       present: [plan.girl] as GirlId[],
       izzyHere: true,
@@ -4049,7 +4064,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         nth: plan.nth,
         place: plan.place,
         giftId: plan.giftId,
-        giftHeld: plan.giftHeld,
+        giftHeld,
         cyclesLeft: cyclesFor(plan.nth),
         startTrust: arrived.trust,
         startBonding: arrived.bonding,
@@ -4085,7 +4100,9 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         id: uid(),
         role: "narrator" as const,
         at: Date.now(),
-        text: `You don't go. ${girlName(girl)} will know. The gift stays in your bag, and so does the damage.`,
+        text: plan.giftId
+          ? `You don't go. ${girlName(girl)} will know. The gift stays in your bag, and so does the damage.`
+          : `You don't go. ${girlName(girl)} will know.`,
       },
     ];
     const patch = {

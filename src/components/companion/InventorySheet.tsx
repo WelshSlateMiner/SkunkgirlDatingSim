@@ -36,7 +36,7 @@ export function InventorySheet({ onClose }: { onClose: () => void }) {
             })}
           </ul>
         ) : (
-          <p className="mt-4 text-sm text-muted">Buy something at a shop. A date needs a gift from this bag.</p>
+          <p className="mt-4 text-sm text-muted">Buy something at a shop if you want to bring a gift. A date does not require one.</p>
         )}
       </div>
     </div>
