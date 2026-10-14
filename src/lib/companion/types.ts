@@ -1,3 +1,4 @@
+import type { SceneVoice } from "./scene";
 export type Expression =
   | "embarrassed"
   | "happy"
@@ -409,6 +410,8 @@ export interface IzzyTurn {
   otherFx?: FxEvent;
   /** Hers alone. She can dominant-spray while the other intimate-sprays. */
   otherSprayKind?: SprayKind | null;
+  /** A third girl and beyond (see scene.ts). Unused until a third girl can be present. */
+  extras?: SceneVoice[];
 }
 
 export interface PlayerBeat {

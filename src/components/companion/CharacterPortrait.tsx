@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { StinkLines } from "@/components/companion/StinkLines";
 import { portraitSrc, victoriaLingerieOn } from "@/lib/companion/portraits";
 import { useCompanion } from "@/lib/companion/store";
+import { MAX_SCENE_GIRLS, sceneLayout, sceneOrder } from "@/lib/companion/scene";
 import type { GirlId } from "@/lib/companion/types";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ function GirlSprite({ girl, count }: { girl: GirlId; count: number }) {
     <div
       className={cn(
         "pointer-events-none relative flex h-full items-end justify-center",
-        count >= 3 ? "w-1/3" : count === 2 ? "w-1/2" : "w-full",
+        sceneLayout(count).width,
         "izzy-idle",
         expression === "embarrassed" && "izzy-embarrassed",
         expression === "laughing" && "izzy-laugh",
@@ -71,11 +72,7 @@ function GirlSprite({ girl, count }: { girl: GirlId; count: number }) {
           "w-auto object-contain object-bottom drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
           showSpot
             ? "h-[min(98dvh,1080px)] max-w-[min(100%,720px)]"
-            : count >= 3
-              ? "h-[min(68dvh,760px)] max-w-full"
-              : count === 2
-                ? "h-[min(78dvh,860px)] max-w-full"
-                : "h-[min(92dvh,980px)] max-w-[min(100%,640px)]",
+            : sceneLayout(count).height,
           spraying || stink
             ? "transition-none"
             : "transition-[height,opacity,filter] duration-[var(--motion-slow)] ease-[var(--ease-smooth-out)]",
@@ -90,9 +87,8 @@ function GirlSprite({ girl, count }: { girl: GirlId; count: number }) {
 export function CharacterPortrait() {
   const present = useCompanion((s) => s.present);
   const focus = useCompanion((s) => s.focus ?? "izzy");
-  const ids = (present?.length ? present : [focus]).filter((id, i, all) => all.indexOf(id) === i);
-  const count = Math.min(3, ids.length || 1);
-  const order: GirlId[] = ids.includes("izzy") && ids.includes("victoria") ? ["izzy", "victoria"] : ids;
+  const order: GirlId[] = sceneOrder(present?.length ? present : [focus]);
+  const count = Math.min(MAX_SCENE_GIRLS, order.length || 1);
 
   return (
     <div className="pointer-events-none relative flex h-full w-full items-end justify-center">
