@@ -45,20 +45,21 @@ OUTFITS = {"athletic", "casual"}
 HEIGHT = 1800
 KINDS = {"defensive", "angry", "consent", "dominant"}
 
-args = sys.argv[1:]
-if not args or len(args) % 3:
-    sys.exit(__doc__)
-for i in range(0, len(args), 3):
-    outfit, kind, raw = args[i : i + 3]
-    assert outfit in OUTFITS and kind in KINDS, (outfit, kind)
-    dst = ROOT / "public/art/ronnie" / outfit / f"spray-{kind}.webp"
-    with tempfile.TemporaryDirectory() as tmp:
-        src = Path(tmp) / "raw.png"
-        Image.open(raw).convert("RGB").save(src)
-        png = Path(tmp) / "keyed.png"
-        key_file(src, png)
-        out = Image.open(png)
-        if out.height != HEIGHT:
-            out = out.resize((round(out.width * HEIGHT / out.height), HEIGHT), Image.LANCZOS)
-        out.save(dst, "WEBP", quality=90, method=6)
-    print("wrote", dst.relative_to(ROOT))
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if not args or len(args) % 3:
+        sys.exit(__doc__)
+    for i in range(0, len(args), 3):
+        outfit, kind, raw = args[i : i + 3]
+        assert outfit in OUTFITS and kind in KINDS, (outfit, kind)
+        dst = ROOT / "public/art/ronnie" / outfit / f"spray-{kind}.webp"
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "raw.png"
+            Image.open(raw).convert("RGB").save(src)
+            png = Path(tmp) / "keyed.png"
+            key_file(src, png)
+            out = Image.open(png)
+            if out.height != HEIGHT:
+                out = out.resize((round(out.width * HEIGHT / out.height), HEIGHT), Image.LANCZOS)
+            out.save(dst, "WEBP", quality=90, method=6)
+        print("wrote", dst.relative_to(ROOT))
