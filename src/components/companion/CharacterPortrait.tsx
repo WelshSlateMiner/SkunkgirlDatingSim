@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { StinkLines } from "@/components/companion/StinkLines";
 import { portraitSrc, victoriaLingerieOn } from "@/lib/companion/portraits";
 import { useCompanion } from "@/lib/companion/store";
-import { MAX_SCENE_GIRLS, sceneLayout, sceneOrder } from "@/lib/companion/scene";
+import { MAX_SCENE_GIRLS, sceneLayout, sceneOrder, sceneOthers } from "@/lib/companion/scene";
 import type { GirlId } from "@/lib/companion/types";
 import { cn } from "@/lib/utils";
 
-function GirlSprite({ girl, count }: { girl: GirlId; count: number }) {
+function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra: boolean }) {
   const focus = useCompanion((s) => s.focus ?? "izzy");
   const liveOutfit = useCompanion((s) => s.outfit);
   const liveExpression = useCompanion((s) => s.expression);
@@ -22,31 +22,42 @@ function GirlSprite({ girl, count }: { girl: GirlId; count: number }) {
 
   const mine = girl === focus;
   const outfit = mine ? liveOutfit : (card?.outfit ?? (girl === "victoria" ? "work" : "casual"));
-  const joinedSpray = !mine && otherSpray !== "none";
-  const joinedFart = !mine && pulse.otherKind === "fart";
+  // An "extra" is a third-or-later girl. She reads her own pulse instead of the shared "other" one.
+  const extraKind = extra ? pulse.extraKinds?.[girl] : undefined;
+  const joinedSpray = extra ? extraKind === "spray" : !mine && otherSpray !== "none";
+  const joinedFart = extra ? extraKind === "fart" : !mine && pulse.otherKind === "fart";
   const expression = joinedSpray ? "spray" : mine ? liveExpression : (card?.expression ?? "idle");
-  const sprayKind = mine ? liveSpray : joinedSpray ? otherSpray : "none";
+  const sprayKind = mine ? liveSpray : joinedSpray ? (extra ? (pulse.extraSprayKinds?.[girl] ?? "defensive") : otherSpray) : "none";
   const lingerie = girl === "victoria" && victoriaLingerieOn(location, intimate);
   const src = portraitSrc(outfit, expression, sprayKind, girl, lingerie);
   const gas = mine ? pulse.kind === "fart" || pulse.kind === "spray" : joinedFart || joinedSpray;
   const stink = gas && stinkUntil !== pulse.key;
   const fullSpray = mine
     ? pulse.kind === "spray" || (spotlight && liveSpray !== "none")
-    : pulse.otherKind === "spray" || (spotlight && joinedSpray);
+    : extra
+      ? extraKind === "spray"
+      : pulse.otherKind === "spray" || (spotlight && joinedSpray);
   const spraying = fullSpray;
   const duetSpray = liveSpray !== "none" && otherSpray !== "none";
   const showSpot = mine && spotlight && pulse.kind === "spray" && !duetSpray;
 
   useEffect(() => {
     if (!gas && !mine) return;
-    if (pulse.kind !== "fart" && pulse.kind !== "spray" && pulse.otherKind !== "fart" && pulse.otherKind !== "spray") return;
+    if (
+      pulse.kind !== "fart" &&
+      pulse.kind !== "spray" &&
+      pulse.otherKind !== "fart" &&
+      pulse.otherKind !== "spray" &&
+      !extraKind
+    )
+      return;
     if (!gas) return;
     const t = window.setTimeout(
       () => setStinkUntil(pulse.key),
       pulse.kind === "spray" || pulse.otherKind === "spray" ? 4200 : pulse.intimate ? 6800 : 3600,
     );
     return () => window.clearTimeout(t);
-  }, [pulse, mine, gas]);
+  }, [pulse, mine, gas, extraKind]);
 
   return (
     <div
@@ -62,6 +73,8 @@ function GirlSprite({ girl, count }: { girl: GirlId; count: number }) {
         stink && "izzy-fart",
         showSpot && "izzy-spotlight",
         busy && mine && "opacity-95",
+        // Three on screen: the girl being talked to stands forward, the others ease back a touch.
+        count >= 3 && (mine ? "z-10" : "scale-[0.94] opacity-90"),
       )}
     >
       <img
@@ -89,11 +102,13 @@ export function CharacterPortrait() {
   const focus = useCompanion((s) => s.focus ?? "izzy");
   const order: GirlId[] = sceneOrder(present?.length ? present : [focus]);
   const count = Math.min(MAX_SCENE_GIRLS, order.length || 1);
+  // The first non-focus girl uses the existing "other" fields. Anyone after her is an extra.
+  const others = sceneOthers(order, focus);
 
   return (
     <div className="pointer-events-none relative flex h-full w-full items-end justify-center">
       {order.map((id) => (
-        <GirlSprite key={id} girl={id} count={count} />
+        <GirlSprite key={id} girl={id} count={count} extra={id !== focus && id !== others[0]} />
       ))}
     </div>
   );

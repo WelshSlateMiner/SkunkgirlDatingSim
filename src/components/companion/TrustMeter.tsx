@@ -1,4 +1,5 @@
 import { girlShort } from "@/lib/companion/cast";
+import { sceneOrder } from "@/lib/companion/scene";
 import { bondLabel } from "@/lib/companion/trust";
 import { useCompanion } from "@/lib/companion/store";
 import type { Bond, GirlId } from "@/lib/companion/types";
@@ -84,10 +85,10 @@ export function TrustMeter() {
   const focus = useCompanion((s) => s.focus ?? "izzy");
   const present = useCompanion((s) => s.present);
   const roster = useCompanion((s) => s.roster);
-  const both = (present ?? []).includes("izzy") && (present ?? []).includes("victoria");
+  const order: GirlId[] = sceneOrder(present ?? []);
   const slow = mode === "slow";
 
-  if (!both) {
+  if (order.length < 2) {
     return (
       <Block
         name={girlShort(focus)}
@@ -100,9 +101,8 @@ export function TrustMeter() {
     );
   }
 
-  const order: GirlId[] = ["izzy", "victoria"];
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className={cn("grid gap-3", order.length >= 3 ? "grid-cols-3" : "grid-cols-2")}>
       {order.map((id) => {
         const card = roster?.[id];
         const live = id === focus;
