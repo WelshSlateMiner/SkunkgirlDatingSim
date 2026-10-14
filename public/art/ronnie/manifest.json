@@ -26,14 +26,36 @@
     "squat": {
       "src": "/art/ronnie/athletic/squat.jpg",
       "outfit": "athletic",
-      "locations": ["gym"],
+      "locations": [
+        "gym"
+      ],
       "when": "First time she is encountered in the gym, or when she wants to show off her strength."
     },
     "yoga": {
       "src": "/art/ronnie/athletic/yoga.jpg",
       "outfit": "athletic",
-      "locations": ["yogaStudio"],
+      "locations": [
+        "yogaStudio"
+      ],
       "when": "Only while she is instructing class at the studio."
+    }
+  },
+  "spray": {
+    "defensive": {
+      "athletic": "/art/ronnie/athletic/spray-defensive.webp",
+      "casual": "/art/ronnie/casual/spray-defensive.webp"
+    },
+    "angry": {
+      "athletic": "/art/ronnie/athletic/spray-angry.webp",
+      "casual": "/art/ronnie/casual/spray-angry.webp"
+    },
+    "consent": {
+      "athletic": "/art/ronnie/athletic/spray-consent.webp",
+      "casual": "/art/ronnie/casual/spray-consent.webp"
+    },
+    "dominant": {
+      "athletic": "/art/ronnie/athletic/spray-dominant.webp",
+      "casual": "/art/ronnie/casual/spray-dominant.webp"
     }
   }
 }
