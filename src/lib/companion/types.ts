@@ -1,3 +1,4 @@
+import type { SceneGirl, SceneVoice } from "./scene";
 export type Expression =
   | "embarrassed"
   | "happy"
@@ -63,7 +64,7 @@ export type LocationId =
 export type PlayerGender = "male" | "female";
 export type PlayerFartRole = "into" | "not";
 export type GameMode = "slow" | "casual";
-export type GirlId = "izzy" | "victoria";
+export type GirlId = "izzy" | "victoria" | "ronnie";
 export type RelationshipType = "mono" | "harem";
 
 export interface GirlCard {
@@ -193,6 +194,7 @@ export interface DutyNotice {
 export interface ScentFrom {
   izzy: number;
   victoria: number;
+  ronnie: number;
 }
 
 /** She asked about the smell and may press once. */
@@ -220,7 +222,7 @@ export interface GasPuff {
 
 export type InviteReply = "accept" | "decline";
 
-export type ChatRole = "player" | "izzy" | "victoria" | "narrator" | "system";
+export type ChatRole = "player" | SceneGirl | "narrator" | "system";
 
 export interface ChatMessage {
   id: string;
@@ -233,6 +235,8 @@ export interface ChatMessage {
   expression?: Expression;
   trustDelta?: number;
   bondingDelta?: number;
+  /** Set on a third-or-later girl's spray line. */
+  sprayKind?: SprayKind;
   fx?: FxEvent;
   at: number;
 }
@@ -276,6 +280,8 @@ export interface GameState {
   focus: GirlId;
   /** Who is physically in the scene. */
   present: GirlId[];
+  /** Girls who have farted in this scene since it was down to one. See scene.ts. */
+  sceneFarts?: string[];
   roster: Roster;
   /** The girl the current plan is with. */
   planGirl: GirlId;
@@ -409,7 +415,13 @@ export interface IzzyTurn {
   otherFx?: FxEvent;
   /** Hers alone. She can dominant-spray while the other intimate-sprays. */
   otherSprayKind?: SprayKind | null;
+  /** A third girl and beyond (see scene.ts). */
+  extras?: SceneVoice<string>[];
+  /** Ronnie only: how the player took gas this turn. Scales her trust (RONNIE_FART_REACTIONS). */
+  fartReaction?: FartReaction;
 }
+
+export type FartReaction = "none" | "playful" | "cool" | "attracted" | "negative" | "bigIssue";
 
 export interface PlayerBeat {
   kind: "say" | "act" | "think";

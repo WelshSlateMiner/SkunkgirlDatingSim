@@ -17,8 +17,10 @@ const HOLD: Record<FxEvent, number> = {
 export function FxLayer() {
   const pulse = useCompanion((s) => s.fxPulse);
   const [hiddenKey, setHiddenKey] = useState<number | null>(null);
+  const extras = Object.values(pulse.extraKinds ?? {});
+  const extraGas = extras.some((kind) => kind === "fart" || kind === "spray");
   const active =
-    pulse.kind !== "none" || pulse.otherKind === "fart" || pulse.otherKind === "spray";
+    pulse.kind !== "none" || pulse.otherKind === "fart" || pulse.otherKind === "spray" || extraGas;
   const visible = active && hiddenKey !== pulse.key;
 
   useLayoutEffect(() => {
@@ -35,8 +37,10 @@ export function FxLayer() {
       else if (typeof pulse.fartIndex === "number" && pulse.kind === "fart") playFartAt(pulse.fartIndex);
       else playFart(Boolean(pulse.intimate));
     }
+    for (const src of Object.values(pulse.extraFartSrcs ?? {})) if (src) playFartSrc(src);
     if (twoSprays) playSprayPair();
     else if (pulse.kind === "spray" || pulse.otherKind === "spray") playSpray();
+    else if (Object.values(pulse.extraKinds ?? {}).includes("spray")) playSpray();
     const hold = pulse.kind === "fart" && pulse.intimate ? 6800 : HOLD[pulse.kind] || 2800;
     const t = window.setTimeout(() => setHiddenKey(pulse.key), hold);
     return () => window.clearTimeout(t);
@@ -44,7 +48,8 @@ export function FxLayer() {
 
   if (!visible) return null;
 
-  const stink = pulse.kind === "fart" || pulse.kind === "spray" || pulse.otherKind === "fart" || pulse.otherKind === "spray";
+  const stink =
+    pulse.kind === "fart" || pulse.kind === "spray" || pulse.otherKind === "fart" || pulse.otherKind === "spray" || extraGas;
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>

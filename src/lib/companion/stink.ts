@@ -12,15 +12,20 @@ export const FRESHEN: Record<string, number> = {
 
 export const SHOWER_PLACES = new Set<LocationId>(["apartment", "dorm", "vickyBedroom"]);
 
+const SCENT_GIRLS: GirlId[] = ["izzy", "victoria", "ronnie"];
+const SCENT_NAME: Record<GirlId, string> = { izzy: "Izzy", victoria: "Victoria", ronnie: "Ronnie" };
+
 export function emptyScent(): ScentFrom {
-  return { izzy: 0, victoria: 0 };
+  return { izzy: 0, victoria: 0, ronnie: 0 };
 }
 
 export function normalizeScent(raw: Partial<ScentFrom> | null | undefined): ScentFrom {
-  const izzy = typeof raw?.izzy === "number" && Number.isFinite(raw.izzy) ? Math.max(0, Math.round(raw.izzy)) : 0;
-  const victoria =
-    typeof raw?.victoria === "number" && Number.isFinite(raw.victoria) ? Math.max(0, Math.round(raw.victoria)) : 0;
-  return { izzy, victoria };
+  const out = emptyScent();
+  for (const girl of SCENT_GIRLS) {
+    const n = raw?.[girl];
+    out[girl] = typeof n === "number" && Number.isFinite(n) ? Math.max(0, Math.round(n)) : 0;
+  }
+  return out;
 }
 
 export function clampStink(n: number) {
@@ -28,19 +33,31 @@ export function clampStink(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
+/** The girl with strictly the largest share, or null on a tie or nothing. */
+export function topScent(scent: ScentFrom): GirlId | null {
+  let best: GirlId | null = null;
+  let tie = false;
+  for (const girl of SCENT_GIRLS) {
+    const n = scent[girl] ?? 0;
+    if (best === null || n > (scent[best] ?? 0)) {
+      best = girl;
+      tie = false;
+    } else if (n === (scent[best] ?? 0)) tie = true;
+  }
+  return best && !tie ? best : null;
+}
+
 /** Who the player currently smells like. Off at 20 or below, and off on a tie. */
 export function markedBy(stink: number, scent: ScentFrom): GirlId | null {
   if (stink <= 20) return null;
-  if (scent.izzy > 20 && scent.izzy > scent.victoria) return "izzy";
-  if (scent.victoria > 20 && scent.victoria > scent.izzy) return "victoria";
-  return null;
+  const top = topScent(scent);
+  return top && (scent[top] ?? 0) > 20 ? top : null;
 }
 
 export function markedLabel(stink: number, scent: ScentFrom) {
   if (stink <= 0) return "Nobody";
-  if (scent.izzy > scent.victoria && scent.izzy > 0) return "Izzy";
-  if (scent.victoria > scent.izzy && scent.victoria > 0) return "Victoria";
-  return "Nobody";
+  const top = topScent(scent);
+  return top && (scent[top] ?? 0) > 0 ? SCENT_NAME[top] : "Nobody";
 }
 
 export function reduceStink(stink: number, scent: ScentFrom, cut: number) {
@@ -49,15 +66,20 @@ export function reduceStink(stink: number, scent: ScentFrom, cut: number) {
   const next = level - amount;
   if (next <= 0) return { stink: 0, scent: emptyScent() };
   const from = normalizeScent(scent);
-  const total = from.izzy + from.victoria;
+  const total = SCENT_GIRLS.reduce((sum, girl) => sum + from[girl], 0);
   if (total <= 0) return { stink: next, scent: emptyScent() };
-  let izzy = Math.round((from.izzy / total) * next);
-  let victoria = next - izzy;
-  if (victoria < 0) {
-    izzy = next;
-    victoria = 0;
+  // Round every share but the last non-empty one, which takes the remainder.
+  const holders = SCENT_GIRLS.filter((girl) => from[girl] > 0);
+  const last = holders[holders.length - 1]!;
+  const out = emptyScent();
+  let left = next;
+  for (const girl of holders) {
+    if (girl === last) continue;
+    out[girl] = Math.min(left, Math.round((from[girl] / total) * next));
+    left -= out[girl];
   }
-  return { stink: next, scent: { izzy, victoria } };
+  out[last] = Math.max(0, left);
+  return { stink: next, scent: out };
 }
 
 export interface ScentEvent {
@@ -90,7 +112,7 @@ export function expose(stink: number, scent: ScentFrom, events: ScentEvent[]) {
 export function displaceScent(stink: number, scent: ScentFrom, girl: GirlId, amount: number) {
   const level = clampStink(stink);
   const from = normalizeScent(scent);
-  const other: GirlId = girl === "izzy" ? "victoria" : "izzy";
+  const other: GirlId = SCENT_GIRLS.filter((id) => id !== girl).reduce((a, b) => (from[b] > from[a] ? b : a));
   const moved = Math.max(0, Math.min(from[other], Math.round(amount)));
   if (moved <= 0) return { stink: level, scent: from, switched: null as { girl: GirlId; applied: number } | null };
   const next = { ...from, [other]: from[other] - moved, [girl]: from[girl] + moved };

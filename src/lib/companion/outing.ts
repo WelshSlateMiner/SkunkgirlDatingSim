@@ -2,6 +2,8 @@ import { girlIsOfficial, girlName } from "./cast";
 import { giftById, giftSpeech, giftSummary, presentLine, receptionDelta, receptionOf, type GiftReception } from "./gifts";
 import { LOCATIONS } from "./locations";
 import { nextWeekday, parseMeetPlace, parseTimeOfDay, TIMES, WEEKDAYS } from "./time";
+import { SCENE_NAME_RE, SCENE_ORDER } from "./scene";
+import { RONNIE_DATE_RULES, RONNIE_SCHEDULE } from "./ronnie-bio";
 import type {
   ActiveDate,
   DateDraft,
@@ -38,6 +40,12 @@ const HANGOUT: Record<GirlId, Record<TimeOfDay, LocationId[]>> = {
     Evening: ["italian", "mall", "furniture", "perfume"],
     Night: ["italian", "perfume"],
   },
+  ronnie: {
+    Morning: ["gym", "field", "cafe", "trail"],
+    Afternoon: ["gym", "naturalFoods", "sportingGoods", "trail", "field", "trendy"],
+    Evening: ["gym", "theater", "field", "cafe", "trendy"],
+    Night: ["field", "trail", "theater"],
+  },
 };
 
 export function economySeed() {
@@ -62,7 +70,7 @@ export function economySeed() {
     otherSprayKind: "none" as SprayKind,
     sprayPrompts: [] as SprayPrompt[],
     stink: 0,
-    scentFrom: { izzy: 0, victoria: 0 },
+    scentFrom: { izzy: 0, victoria: 0, ronnie: 0 },
     stinkAsked: {} as Partial<Record<GirlId, number>>,
     stinkTalk: null as GameState["stinkTalk"],
     showersToday: 0,
@@ -91,9 +99,9 @@ export function prefillDate(text: string, invite: LocationId | null, today: Week
   };
 }
 
-export function datePlaces(nth: number): LocationId[] {
+export function datePlaces(nth: number, girl?: GirlId): LocationId[] {
   return (Object.keys(LOCATIONS) as LocationId[]).filter(
-    (id) => !AWKWARD_DATES.has(id) && (nth >= 3 || !PRIVATE_DATES.has(id)),
+    (id) => !isAwkwardPlace(id, girl) && (nth >= 3 || !PRIVATE_DATES.has(id)),
   );
 }
 
@@ -110,14 +118,29 @@ export function dateIsDue(state: Pick<GameState, "scheduledDate" | "activeDate" 
   return plan.day === state.weekday && plan.time === state.timeOfDay;
 }
 
-export function isAwkwardPlace(id: LocationId) {
-  return AWKWARD_DATES.has(id);
+/** Ronnie's own poor-date list adds her workplace. Izzy and Vicky share the global list. */
+const GIRL_AWKWARD: Partial<Record<GirlId, ReadonlySet<LocationId>>> = {
+  ronnie: new Set<LocationId>(RONNIE_DATE_RULES.poorDatePlaces),
+};
+
+export function isAwkwardPlace(id: LocationId, girl?: GirlId) {
+  return AWKWARD_DATES.has(id) || Boolean(girl && GIRL_AWKWARD[girl]?.has(id));
+}
+
+/** Awkward for any of these girls. */
+export function awkwardForAny(id: LocationId, girls: readonly GirlId[]) {
+  return isAwkwardPlace(id) || girls.some((girl) => isAwkwardPlace(id, girl));
 }
 
 export type Duty = "class" | "work" | "free";
 
 export function dutyOf(girl: GirlId, weekday: Weekday, time: TimeOfDay): Duty {
   const weekend = weekday === "Saturday" || weekday === "Sunday";
+  if (girl === "ronnie") {
+    if (!weekend && time === "Morning") return "class";
+    if (time === "Afternoon" && RONNIE_SCHEDULE.work.days.includes(weekday)) return "work";
+    return "free";
+  }
   if (girl === "izzy") {
     if (!weekend && time === "Morning") return "class";
     if (!weekend && time === "Afternoon" && (weekday === "Monday" || weekday === "Wednesday" || weekday === "Friday")) {
@@ -130,6 +153,7 @@ export function dutyOf(girl: GirlId, weekday: Weekday, time: TimeOfDay): Duty {
 }
 
 export function dutyPlace(girl: GirlId): LocationId {
+  if (girl === "ronnie") return RONNIE_SCHEDULE.work.place;
   return girl === "victoria" ? "firm" : "sportingGoods";
 }
 
@@ -141,6 +165,11 @@ export function dutyStop(girl: GirlId, weekday: Weekday, time: TimeOfDay): Locat
 }
 
 export function dutyWarn(girl: GirlId, duty: Exclude<Duty, "free">) {
+  if (girl === "ronnie") {
+    return duty === "class"
+      ? "Clock's ticking. I've got class and I'm not getting marked late. Last thing, go."
+      : "I've got a class to teach at Second Wind. Say it quick, then I'm out.";
+  }
   if (girl === "victoria") {
     return "The desk is open and it is mine. I'll hear you out once more. Then I have to go to Line & Lumen.";
   }
@@ -149,6 +178,9 @@ export function dutyWarn(girl: GirlId, duty: Exclude<Duty, "free">) {
 }
 
 export function dutyFarewell(girl: GirlId, duty: Exclude<Duty, "free">) {
+  if (girl === "ronnie") {
+    return duty === "class" ? "Okay, class. Later. Try to keep up next time." : "Shift time. Come take a class if you want. I'll make you sweat.";
+  }
   if (girl === "victoria") return "That's the end of it. Line & Lumen. I'll be at the desk.";
   if (duty === "class") return "Okay. That's me. Class. I'll see you when I'm not late.";
   return "I'm clocking in. If you need a pack, you know where the floor is. If you need me, later.";
@@ -167,11 +199,9 @@ export function isGroupAddress(text: string) {
 }
 
 export function addressedGirls(text: string, present: GirlId[]): GirlId[] {
-  const named: GirlId[] = [];
-  if (/\b(izzy|isabella)\b/i.test(text)) named.push("izzy");
-  if (/\b(vicky|victoria)\b/i.test(text)) named.push("victoria");
   if (isGroupAddress(text)) return present.filter((id, i, all) => all.indexOf(id) === i);
-  return named.filter((id) => present.includes(id));
+  const named = SCENE_ORDER.filter((id) => SCENE_NAME_RE[id].test(text));
+  return named.filter((id): id is GirlId => (present as string[]).includes(id));
 }
 
 export function goodbyeSaid(text: string) {
@@ -231,9 +261,18 @@ export interface InvitePlan {
   going: GirlId[];
   blocked: InviteRefusal[];
   press: GirlId | null;
+  /** A group date where only some girls find the place awkward: they decline, the rest still go on the date. */
+  dateGoes?: boolean;
 }
 
 function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
+  // Like Vicky, not Izzy: skipping is nuts to her. Work and class come first; no pressing.
+  if (girl === "ronnie") {
+    if (loss >= 8) return duty === "class" ? "Skip class? Are you nuts? No. And don't talk to me like that." : "Walk out on a class I'm teaching? Are you nuts? No. Work comes first.";
+    return duty === "class"
+      ? "Skip class? That's nuts. No way. Catch me after. I'm usually at the gym."
+      : "Ditch my own class at Second Wind? That's nuts. Work comes first. Grab a mat or catch me after.";
+  }
   if (girl === "victoria") {
     if (loss >= 8) return "I said I am working. The desk is not optional. No. I am not leaving.";
     if (loss <= 1) return "I can't leave the desk. If this is a design question, ask it here. Otherwise I will see you when the afternoon is over.";
@@ -250,6 +289,14 @@ function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
 }
 
 function awkwardLine(girl: GirlId, place: LocationId, loss: number) {
+  if (girl === "ronnie") {
+    if (place === "yogaStudio") {
+      return loss >= 8 ? "A date at my job? While I'm teaching? No. Hard no." : "Second Wind is where I work. That's not a date, that's you watching me teach. Pick somewhere else.";
+    }
+    if (place === "classroom" || place === "studyHall") return "A date in a lecture hall? Lame. I can do better than that and so can you.";
+    if (place === "sportingGoods") return "Trailhead's a store. I'll shop there with you. It's not a date.";
+    return "Line & Lumen is my mom's office. Absolutely not.";
+  }
   if (girl === "victoria") {
     if (place === "firm") {
       return loss >= 8
@@ -287,11 +334,13 @@ export function classifyInvite(
   const focus = state.focus ?? present[0]!;
   const targets = (group ? present : named.length === 1 ? named : [focus]).filter((id, i, all) => all.indexOf(id) === i);
   const loss = rudeness(text);
-  if (dating && isAwkwardPlace(dest)) {
+  if (dating && awkwardForAny(dest, targets)) {
+    const willing = targets.filter((girl) => !isAwkwardPlace(dest, girl));
     return {
       dest,
-      going: [],
-      blocked: targets.map((girl) => ({
+      going: willing,
+      dateGoes: willing.length > 0,
+      blocked: targets.filter((girl) => isAwkwardPlace(dest, girl)).map((girl) => ({
         girl,
         bondingDelta: -loss,
         line: awkwardLine(girl, dest, loss),
@@ -310,14 +359,14 @@ export function classifyInvite(
       continue;
     }
     if (girl === "izzy") {
-      const insist = state.pressedDuty === "izzy";
+      const insist = state.pressedDuty === girl;
       blocked.push({
         girl,
         bondingDelta: insist ? -loss : 0,
         line: busyLine(girl, duty, insist, loss),
         expression: insist && loss >= 6 ? "angry" : "thinking",
       });
-      press = "izzy";
+      press = girl;
     } else {
       blocked.push({
         girl,
@@ -339,7 +388,7 @@ export function inviteParty(state: GameState, text: string, dest: LocationId): G
   const party = (group ? present.slice() : named.length === 1 ? [...named] : [focus]).filter(
     (id, i, all) => all.indexOf(id) === i,
   );
-  for (const girl of ["izzy", "victoria"] as GirlId[]) {
+  for (const girl of ["izzy", "victoria", "ronnie"] as GirlId[]) {
     if (party.includes(girl) || present.includes(girl)) continue;
     if (girlAt(state, girl) !== dest) continue;
     party.push(girl);
@@ -354,7 +403,7 @@ export function girlAt(state: GameState, girl: GirlId): LocationId {
   const plan = state.scheduledDate;
   if (plan?.girl === girl && dateIsDue(state)) return plan.place;
   if (state.timeOfDay === "Night" && girlIsOfficial(state, girl)) {
-    return girl === "victoria" ? "vickyLiving" : "dorm";
+    return girl === "victoria" ? "vickyLiving" : girl === "ronnie" ? "ronnieDorm" : "dorm";
   }
   if (state.departure?.girl === girl) return state.departure.place;
   const duty = dutyOf(girl, state.weekday, state.timeOfDay);
@@ -442,6 +491,7 @@ export const CRUEL = /whatever|don'?t care|dont care|shut up|get over it|not a b
 const ELSEWHERE: Record<GirlId, LocationId[]> = {
   izzy: ["library", "cafe", "campus", "studyHall", "mexican", "burger", "animeStore", "tabletop", "trail", "gameStore"],
   victoria: ["cafe", "grocery", "italian", "furniture", "craftStore", "mall", "perfume", "library"],
+  ronnie: ["gym", "field", "trail", "naturalFoods", "cafe", "library", "sportingGoods", "trendy", "theater", "collectibles"],
 };
 
 export function ageGas(gas: GasPuff[] | undefined): GasPuff[] {

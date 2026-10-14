@@ -10,7 +10,8 @@ import {
   type DebugCommand,
 } from "./debug";
 import { fartClipAt, fartSizeFor, pickFartSrc } from "./audio";
-import { clearFed, intimateFetishFart, mentionsFart, playerAskedFart, readDebt, readStops, resolveFx, sceneIsIntimate, settleGuts, shapeSpontaneousFart } from "./fart";
+import { ronnieReactionTrust } from "./ronnie-bio";
+import { clearFed, intimateFetishFart, mentionsFart, playerAskedFart, readDebt, readStops, resolveFx, sceneIsIntimate, settleGuts, shapeSpontaneousFart, windowBonus } from "./fart";
 import {
   holdCopy,
   indulgesPublicFart,
@@ -50,6 +51,7 @@ import {
   goodbyeSaid,
   inviteParty,
   isAwkwardPlace,
+  awkwardForAny,
   leaveChance,
   leaveCopy,
   leaveReason,
@@ -86,6 +88,12 @@ import {
   speakerRole,
   victoriaDropIn,
   victoriaOpening,
+  ronnieOpening,
+  ronnieDropIn,
+  ronnieMorningDropIn,
+  ronnieDropInChance,
+  nextGirl,
+  absentGirl,
   suitedPlace,
   withGirl,
 } from "./cast";
@@ -153,6 +161,8 @@ import type {
   ChatMessage,
 } from "./types";
 import { clamp, uid } from "@/lib/utils";
+import { topScent } from "./stink";
+import { logSceneFarts, readSceneFarts, resolveSceneExtras, sceneGirls, sceneOthers, type SceneVoice } from "./scene";
 
 interface CompanionStore extends GameState {
   hydrated: boolean;
@@ -168,6 +178,10 @@ interface CompanionStore extends GameState {
     otherFartSrc?: string;
     intimate?: boolean;
     otherKind?: FxEvent;
+    /** Third and later girls in the scene, by id. */
+    extraKinds?: Partial<Record<string, FxEvent>>;
+    extraFartSrcs?: Partial<Record<string, string>>;
+    extraSprayKinds?: Partial<Record<string, SprayKind>>;
   };
   debugFartIndex: number;
   debugPoseIndex: number;
@@ -270,14 +284,14 @@ function asGameState(s: CompanionStore): GameState {
     debug: Boolean(s.debug),
     debugOutfitLock: Boolean(s.debugOutfitLock),
     relationshipType: s.relationshipType === "harem" ? "harem" : "mono",
-    focus: s.focus === "victoria" ? "victoria" : "izzy",
-    present: Array.isArray(s.present) && s.present.length ? s.present : [s.focus === "victoria" ? "victoria" : "izzy"],
+    focus: s.focus === "victoria" || s.focus === "ronnie" ? s.focus : "izzy",
+    present: Array.isArray(s.present) && s.present.length ? s.present : [s.focus === "victoria" || s.focus === "ronnie" ? s.focus : "izzy"],
     roster: s.roster ?? initialCast().roster,
-    planGirl: s.planGirl === "victoria" ? "victoria" : s.focus === "victoria" ? "victoria" : "izzy",
+    planGirl: s.planGirl === "victoria" || s.planGirl === "ronnie" ? s.planGirl : s.focus === "victoria" || s.focus === "ronnie" ? s.focus : "izzy",
     morningDetour: Boolean(s.morningDetour),
     queuedMeet: s.queuedMeet ?? null,
     meetKind: s.meetKind === "queue" ? "queue" : "plan",
-    partner: s.partner === "izzy" || s.partner === "victoria" ? s.partner : null,
+    partner: s.partner === "izzy" || s.partner === "victoria" || s.partner === "ronnie" ? s.partner : null,
     affairKnown: Boolean(s.affairKnown),
     money: typeof s.money === "number" ? s.money : 100,
     inventory: Array.isArray(s.inventory) ? s.inventory : [],
@@ -285,25 +299,27 @@ function asGameState(s: CompanionStore): GameState {
     scheduledDate: s.scheduledDate ?? null,
     activeDate: s.activeDate ?? null,
     dateReview: s.dateReview ?? null,
-    confronting: s.confronting === "izzy" || s.confronting === "victoria" ? s.confronting : null,
+    confronting: s.confronting === "izzy" || s.confronting === "victoria" || s.confronting === "ronnie" ? s.confronting : null,
     grudge: s.grudge ?? {},
     dateTipOff: s.dateTipOff ?? {},
     gas: Array.isArray(s.gas) ? s.gas.filter((puff) => puff && (puff.size === 1 || puff.size === 2 || puff.size === 3) && puff.turns > 0) : [],
-    departure: s.departure?.girl === "izzy" || s.departure?.girl === "victoria" ? s.departure : null,
+    departure: s.departure?.girl === "izzy" || s.departure?.girl === "victoria" || s.departure?.girl === "ronnie" ? s.departure : null,
     trailStreak: typeof s.trailStreak === "number" ? s.trailStreak : 0,
-    trailGirl: s.trailGirl === "izzy" || s.trailGirl === "victoria" ? s.trailGirl : null,
+    trailGirl: s.trailGirl === "izzy" || s.trailGirl === "victoria" || s.trailGirl === "ronnie" ? s.trailGirl : null,
     sceneTurns: typeof s.sceneTurns === "number" ? s.sceneTurns : 0,
+    sceneFarts: readSceneFarts(s.sceneFarts),
     shiftsWorked: typeof s.shiftsWorked === "number" ? s.shiftsWorked : 0,
     workedToday: Boolean(s.workedToday),
-    pressedDuty: s.pressedDuty === "izzy" || s.pressedDuty === "victoria" ? s.pressedDuty : null,
+    pressedDuty: s.pressedDuty === "izzy" || s.pressedDuty === "victoria" || s.pressedDuty === "ronnie" ? s.pressedDuty : null,
     stink: typeof s.stink === "number" ? s.stink : 0,
     scentFrom: {
       izzy: typeof s.scentFrom?.izzy === "number" ? s.scentFrom.izzy : 0,
       victoria: typeof s.scentFrom?.victoria === "number" ? s.scentFrom.victoria : 0,
+      ronnie: typeof s.scentFrom?.ronnie === "number" ? s.scentFrom.ronnie : 0,
     },
     stinkAsked: s.stinkAsked ?? {},
     stinkTalk:
-      s.stinkTalk && (s.stinkTalk.girl === "izzy" || s.stinkTalk.girl === "victoria")
+      s.stinkTalk && (s.stinkTalk.girl === "izzy" || s.stinkTalk.girl === "victoria" || s.stinkTalk.girl === "ronnie")
         ? { girl: s.stinkTalk.girl, presses: s.stinkTalk.presses ?? 0 }
         : null,
     showersToday: typeof s.showersToday === "number" ? s.showersToday : 0,
@@ -383,7 +399,7 @@ function rejectedReply(current: GameState["messages"], prior: GameState["message
     .slice(0, 700);
 }
 
-function deDupeLine(state: GameState, role: "izzy" | "victoria", line: string, asked: string) {
+function deDupeLine(state: GameState, role: GirlId, line: string, asked: string) {
   const trimmed = line.trim();
   if (!trimmed) return line;
   if (/say that again|repeat that|one more time|what was that|what did you say/i.test(asked)) return line;
@@ -550,6 +566,7 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       modeFor(focus),
       undefined,
       intimate,
+      windowBonus(state, focus),
     );
     next = {
       ...next,
@@ -559,7 +576,7 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       expression: shaped.expression ?? next.expression,
     };
   }
-  const other = otherGirl(focus);
+  const other = otherGirl(focus, present);
   if (present.includes(other) && next.otherFx !== "spray" && !next.otherSprayKind) {
     const card = state.roster?.[other];
     const shaped = shapeSpontaneousFart(
@@ -574,6 +591,7 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       modeFor(other),
       undefined,
       intimate,
+      windowBonus(state, other),
     );
     let otherDialogue = shaped.dialogue;
     if (shaped.fx === "fart" && !mentionsFart(otherDialogue)) {
@@ -595,6 +613,41 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
           (shaped.fx === "fart" ? (next.otherExpression ?? (other === "victoria" ? "shy" : "embarrassed")) : next.otherExpression),
       };
     }
+  }
+  // Third and later girls. Same die, same prompt modifier, one voice each in `extras`.
+  const extraGirls = sceneOthers(present, focus).filter((girl) => girl !== other);
+  if (extraGirls.length) {
+    const voices = [...(next.extras ?? [])];
+    for (const girl of extraGirls) {
+      const at = voices.findIndex((v) => v.girl === girl);
+      const voice = at >= 0 ? voices[at]! : { girl, dialogue: "", fx: "none" as FxEvent };
+      if (voice.fx === "spray") continue;
+      const card = state.roster?.[girl];
+      const shaped = shapeSpontaneousFart(
+        girl,
+        card?.trust ?? 0,
+        place,
+        readStops(card),
+        readDebt(card),
+        voice.fx ?? "none",
+        "",
+        voice.dialogue ?? "",
+        modeFor(girl),
+        undefined,
+        intimate,
+        windowBonus(state, girl),
+      );
+      if (shaped.fx !== "fart" && voice.fx !== "fart" && modeFor(girl) !== "prompt" && at < 0) continue;
+      const updated = {
+        ...voice,
+        fx: shaped.fx === "fart" ? ("fart" as const) : ("none" as const),
+        dialogue: shaped.dialogue || (shaped.fx === "fart" ? "That one was mine." : ""),
+        expression: shaped.expression ?? (shaped.fx === "fart" ? (voice.expression ?? "embarrassed") : voice.expression),
+      };
+      if (at >= 0) voices[at] = updated;
+      else voices.push(updated);
+    }
+    next = { ...next, extras: voices };
   }
   return next;
 }
@@ -635,7 +688,7 @@ async function runTurn(
     if (result.otherDialogue && result.otherFx !== "fart" && result.otherFx !== "spray") {
       result = {
         ...result,
-        otherDialogue: deDupeLine(snapshot, speakerRole(otherGirl(focusIdEarly)), result.otherDialogue, asked),
+        otherDialogue: deDupeLine(snapshot, speakerRole(otherGirl(focusIdEarly, present)), result.otherDialogue, asked),
       };
     }
     result = { ...result, fx: resolveFx(result), suggestLocation: asLocationId(result.suggestLocation) };
@@ -648,7 +701,7 @@ async function runTurn(
     const hers =
       [...fresh].reverse().find((m) => m.role === voice && (m.fx === "fart" || m.fx === "spray")) ??
       [...fresh].reverse().find((m) => m.role === voice);
-    const otherId = otherGirl(focusId);
+    const otherId = otherGirl(focusId, patch.present ?? snapshot.present ?? []);
     const otherWasHere = (snapshot.present ?? []).includes(otherId) || (patch.present ?? []).includes(otherId);
     const otherVoice = speakerRole(otherId);
     const theirs = otherWasHere
@@ -681,6 +734,22 @@ async function runTurn(
     if (otherKind === "fart") events.push({ girl: otherId, amount: fartSizeFor(otherFartSrc ?? "") });
     if (patch.sprayKind && patch.sprayKind !== "none") events.push({ girl: focusId, amount: 10 });
     if (patch.otherSprayKind && patch.otherSprayKind !== "none") events.push({ girl: otherId, amount: 10 });
+    const extraFx: Partial<Record<GirlId, FxEvent>> = {};
+    const extraFartSrcs: Partial<Record<GirlId, string>> = {};
+    const extraSprays: Partial<Record<GirlId, SprayKind>> = {};
+    for (const girl of sceneOthers(patch.present ?? snapshot.present ?? [], focusId).filter((id) => id !== otherId)) {
+      const line = [...fresh].reverse().find((m) => m.role === speakerRole(girl) && (m.fx === "fart" || m.fx === "spray"));
+      if (!line?.fx) continue;
+      extraFx[girl] = line.fx;
+      if (line.fx === "spray" && line.sprayKind) extraSprays[girl] = line.sprayKind;
+      if (line.fx === "fart") {
+        const src = pickFartSrc(clipKind);
+        const size = fartSizeFor(src);
+        extraFartSrcs[girl] = src;
+        gas = [...gas, { id: uid(), size, turns: size }];
+        events.push({ girl, amount: size });
+      } else events.push({ girl, amount: 10 });
+    }
     let level = clampStink(snapshot.stink ?? 0);
     let from = normalizeScent(snapshot.scentFrom);
     const hadGas = (snapshot.gas ?? []).some((puff) => puff.turns > 0);
@@ -766,8 +835,7 @@ async function runTurn(
         talk = judgment.followUp ? { girl: talk.girl, presses: talk.presses + 1 } : null;
       }
     }
-    const source =
-      poured.scent.izzy > poured.scent.victoria ? "izzy" : poured.scent.victoria > poured.scent.izzy ? "victoria" : null;
+    const source = topScent(poured.scent);
     if (poured.switched && presentThen.includes(poured.switched.girl)) {
       const girl = poured.switched.girl;
       nudgeGirl(patch, snapshot, girl, 0, markBond(poured.switched.applied));
@@ -1008,6 +1076,7 @@ async function runTurn(
     const tanksNow: Record<GirlId, GlandTank> = {
       izzy: readTank(rosterNow.izzy),
       victoria: readTank(rosterNow.victoria),
+      ronnie: readTank(rosterNow.ronnie),
     };
     tanksNow[seated] = readTank({
       glandCap: patch.glandCap ?? tanksNow[seated].glandCap,
@@ -1015,10 +1084,10 @@ async function runTurn(
       turnsSinceIntimateSpray: patch.turnsSinceIntimateSpray ?? tanksNow[seated].turnsSinceIntimateSpray,
       glandDry: patch.glandDry ?? tanksNow[seated].glandDry,
     });
-    const already: Record<GirlId, boolean> = { izzy: false, victoria: false };
+    const already: Record<GirlId, boolean> = { izzy: false, victoria: false, ronnie: false };
     if (patch.sprayKind && patch.sprayKind !== "none") already[origin] = true;
-    if (patch.otherSprayKind && patch.otherSprayKind !== "none") already[otherGirl(origin)] = true;
-    const glandExtra: Record<GirlId, number> = { izzy: 0, victoria: 0 };
+    if (patch.otherSprayKind && patch.otherSprayKind !== "none") already[otherGirl(origin, snapshot.present)] = true;
+    const glandExtra: Record<GirlId, number> = { izzy: 0, victoria: 0, ronnie: 0 };
     if (affairShot) glandExtra[affairShot] += 1;
     const finished = finishTanks(tanksNow, already, glandExtra);
     const seatedAfter = finished.tanks[seated];
@@ -1029,10 +1098,12 @@ async function runTurn(
     let glandRoster = rosterNow;
     glandRoster = withGirl({ ...snapshot, ...patch, roster: glandRoster } as GameState, "izzy", finished.tanks.izzy);
     glandRoster = withGirl({ ...snapshot, ...patch, roster: glandRoster } as GameState, "victoria", finished.tanks.victoria);
+    glandRoster = withGirl({ ...snapshot, ...patch, roster: glandRoster } as GameState, "ronnie", finished.tanks.ronnie);
     patch.roster = glandRoster;
     const farted: GirlId[] = [];
     if (fx === "fart" && fartSrc) farted.push(focusId);
     if (otherKind === "fart" && otherFartSrc && !farted.includes(otherId)) farted.push(otherId);
+    for (const girl of Object.keys(extraFartSrcs) as GirlId[]) if (!farted.includes(girl)) farted.push(girl);
     if (plan.girl && plan.fart && !farted.includes(plan.girl)) farted.push(plan.girl);
     patch.roster = settleGuts(
       glandRoster,
@@ -1050,6 +1121,11 @@ async function runTurn(
       });
     }
     patch.messages = messages;
+    patch.sceneFarts = logSceneFarts(
+      snapshot.sceneFarts ?? [],
+      patch.izzyHere === false ? [] : [...(patch.present ?? snapshot.present ?? [])],
+      farted,
+    );
     set({
       ...patch,
       gas,
@@ -1064,6 +1140,7 @@ async function runTurn(
         otherKind: pulseOther,
         fartSrc: pulseFart,
         otherFartSrc: pulseOtherFart,
+        ...(Object.keys(extraFx).length ? { extraKinds: extraFx, extraFartSrcs, extraSprayKinds: extraSprays } : {}),
       },
     });
     persist({ ...patch, gas }, get);
@@ -1316,7 +1393,7 @@ function applyTurn(
   let giftSpeechLine: string | null = null;
   if (askingDate) {
     const hinted = awkwardMention(dateBlob, asked);
-    if (hinted && isAwkwardPlace(hinted)) {
+    if (hinted && isAwkwardPlace(hinted, planGirl)) {
       dateNote = "refused";
       traveled = null;
       nextLocation = asLocationId(state.location) ?? "library";
@@ -1360,7 +1437,8 @@ function applyTurn(
 
   const testsDone = turn.testId ? [...new Set([...state.testsDone, turn.testId])] : state.testsDone;
   const pace: Pace = { mode: state.gameMode === "slow" ? "slow" : "casual", dates };
-  let trust = applyTrust(state.trust, (turn.trustDelta ?? 0) + giftTrust + (stoodDown ? 6 : 0), pace);
+  const rawTrust = (state.focus ?? "izzy") === "ronnie" ? ronnieReactionTrust(turn.trustDelta ?? 0, turn.fartReaction) : (turn.trustDelta ?? 0);
+  let trust = applyTrust(state.trust, rawTrust + giftTrust + (stoodDown ? 6 : 0), pace);
   let bonding = applyBonding(state.bonding, bondingDelta + giftBond + (stoodDown ? 4 : 0), pace);
   const gate = romanceGate(pace.mode, dates, dateSpots);
   if (pace.mode === "slow") {
@@ -1430,6 +1508,7 @@ function applyTurn(
   let tanks: Record<GirlId, GlandTank> = {
     izzy: readTank(state.roster?.izzy),
     victoria: readTank(state.roster?.victoria),
+    ronnie: readTank(state.roster?.ronnie),
   };
   tanks[focusOrigin] = readTank({ glandCap, glandShots, turnsSinceIntimateSpray, glandDry });
   const emptiedGirls: GirlId[] = [];
@@ -1580,11 +1659,16 @@ function applyTurn(
   let partner = state.partner ?? null;
   let meetKind = state.meetKind ?? "plan";
   if (traveled) {
-    const other = otherGirl(focusNow);
     let party = inviteParty(state, `${input.say} ${input.action}`, traveled);
+    // Every girl who is not the focus can tag along or already be there. Izzy/Victoria keep their old order.
+    for (const other of [otherGirl(focusNow), ...GIRLS.filter((g) => g !== focusNow && g !== otherGirl(focusNow))]) {
     const wasWith = state.izzyHere !== false && (state.present ?? []).includes(other);
     if (!party.includes(other) && dutyOf(other, state.weekday, state.timeOfDay) === "free") {
-      const chance = companionChance(focusNow, traveled);
+      // Ronnie: her own drop-in odds (haunts 20% when free, campus 5%) instead of the companion roll.
+      const chance =
+        other === "ronnie"
+          ? ronnieDropInChance(traveled, state.weekday, state.timeOfDay, [focusNow, ...party])
+          : companionChance(focusNow, traveled, other);
       if (chance > 0 && Math.random() < chance) {
         party = [...party, other];
         const first = !roster[other]?.met;
@@ -1624,9 +1708,12 @@ function applyTurn(
           text:
             other === "victoria"
               ? "I'm at the desk. If this is about a room, a fabric, or a client, I can help. Anything else will have to wait."
-              : "I'm on the floor. If you need a pack, ask. If this is a hangout, I'm working.",
+              : other === "ronnie"
+                ? "I'm teaching right now. Grab a mat and join in, or catch me after class."
+                : "I'm on the floor. If you need a pack, ask. If this is a hangout, I'm working.",
         });
       }
+    }
     }
     const leftBehind = (state.izzyHere === false ? [] : (state.present ?? [])).filter((id) => !party.includes(id));
     for (const girl of leftBehind) {
@@ -1723,7 +1810,7 @@ function applyTurn(
   let otherSprayKind: SprayKind = "none";
   let otherSprayer: GirlId | null = null;
   if (bothHere({ present })) {
-    const other = otherGirl(focusNow);
+    const other = otherGirl(focusNow, present);
     let otherFx = turn.otherFx ?? "none";
     const namedKind = turn.otherSprayKind;
     if (otherFx !== "fart" && (otherFx === "spray" || namedKind)) {
@@ -1791,12 +1878,61 @@ function applyTurn(
       }
     }
   }
+  const extraSprayers: { girl: GirlId; kind: SprayKind }[] = [];
+  if (sceneGirls({ present, izzyHere: true }).length > 2) {
+    const covered: GirlId[] = [focusNow, otherGirl(focusNow, present)];
+    const holdGas = Boolean(warned || calmed || blockedEmpty || call.blocked || call.redirect || suppressScent);
+    const extras = resolveSceneExtras<GirlId>({
+      voices: turn.extras as SceneVoice<GirlId>[] | undefined,
+      present,
+      covered,
+      holdGas,
+      dry: (girl) => (tanks[girl]?.glandDry ?? 0) > 0,
+      mentionsFart,
+      dryLine: emptyGlandLine,
+    });
+    for (const out of extras) {
+      if (out.fx === "spray" && tanks[out.girl]) {
+        extraSprayers.push({ girl: out.girl, kind: out.sprayKind ?? "defensive" });
+        const spent = spendTank(tanks[out.girl]);
+        tanks[out.girl] = spent.tank;
+        if (spent.emptied) emptiedGirls.push(out.girl);
+      }
+      msgs.push({
+        id: uid(),
+        role: speakerRole(out.girl),
+        at: Date.now(),
+        text: out.text,
+        expression: out.expression,
+        fx: out.fx,
+        ...(out.sprayKind ? { sprayKind: out.sprayKind } : {}),
+      });
+      girlReplies += 1;
+      const card = roster[out.girl];
+      if (card) {
+        const nextTrust = Math.max(0, Math.min(100, card.trust + out.trustDelta));
+        const nextBond = Math.max(0, Math.min(100, card.bonding + out.bondingDelta));
+        roster = withGirl({ ...state, roster }, out.girl, {
+          trust: nextTrust,
+          bonding: nextBond,
+          bond: bondFromScores(nextTrust, nextBond, card.romanceAccepted),
+          expression: out.expression,
+          met: true,
+          knowsAboutSpray: card.knowsAboutSpray || out.fx === "spray",
+        });
+      }
+    }
+  }
   const sprayPrompts: SprayPrompt[] = [];
   const windowFor = (kind: SprayKind) =>
     kind !== "none" && !(kind === "consensual" && flags.intimateSprayResolved);
   if (sprayed && windowFor(sprayKind)) sprayPrompts.push({ girl: focusNow, kind: sprayKind as SprayPrompt["kind"] });
   if (pairedSpray && otherSprayer && windowFor(otherSprayKind)) {
     sprayPrompts.push({ girl: otherSprayer, kind: otherSprayKind as SprayPrompt["kind"] });
+  }
+  // A third girl's spray gets the same response window as the other two.
+  for (const shot of extraSprayers) {
+    if (windowFor(shot.kind)) sprayPrompts.push({ girl: shot.girl, kind: shot.kind as SprayPrompt["kind"] });
   }
   if (activeDate && !confronting) {
     const other = otherGirl(activeDate.girl);
@@ -1902,6 +2038,7 @@ function applyTurn(
   }
   let daySprays = sprayed ? bumpSpray(state.daySprays, sprayKind) : state.daySprays;
   if (pairedSpray && otherSprayKind !== "none") daySprays = bumpSpray(daySprays, otherSprayKind);
+  for (const shot of extraSprayers) daySprays = bumpSpray(daySprays, shot.kind);
   const dayTopics = topicsFrom(`${input.say} ${input.action} ${dialogue}`, state.dayTopics ?? []);
   const emittedScent =
     call.scene &&
@@ -2329,6 +2466,7 @@ function applyTurn(
   glandDry = seatedTank.glandDry;
   roster = withGirl({ ...state, roster } as GameState, "izzy", tanks.izzy);
   roster = withGirl({ ...state, roster } as GameState, "victoria", tanks.victoria);
+  roster = withGirl({ ...state, roster } as GameState, "ronnie", tanks.ronnie);
 
   return {
     trust,
@@ -2615,6 +2753,12 @@ function runDebugCommand(
 
   if (cmd.kind === "cycle_outfit") {
     const focus = s.focus ?? "izzy";
+    if (focus === "ronnie") {
+      const messages = systemNote(s, "Ronnie's outfit follows the place: athletic at the gym, studio, field, and trail; casual elsewhere. /travel to change it.");
+      set({ messages, draft: "" });
+      persist({ messages }, get);
+      return;
+    }
     if (focus === "victoria") {
       const messages = systemNote(s, "Outfit: office blouse and pencil skirt. Victoria doesn't change clothes.");
       const patch = { outfit: "work" as const, debugOutfitLock: true, messages };
@@ -2727,8 +2871,11 @@ function runDebugCommand(
 
   if (cmd.kind === "character_change") {
     const focus = s.focus ?? "izzy";
-    const other = otherGirl(focus);
-    const hadBoth = (s.present ?? []).includes("izzy") && (s.present ?? []).includes("victoria");
+    const here = s.present ?? [];
+    // Cycle through whoever is here; alone, cycle the whole cast.
+    const after = [nextGirl(focus), nextGirl(nextGirl(focus))];
+    const other = (here.length > 1 ? after.find((girl) => here.includes(girl)) : undefined) ?? nextGirl(focus);
+    const hadBoth = here.length > 1 && here.includes(other);
     let next = pullFocus(asGameState(s), other);
     const card = next.roster[other];
     next = {
@@ -2738,13 +2885,13 @@ function runDebugCommand(
       sprayKind: "none",
       otherSprayKind: "none",
       sprayPrompts: [],
-      outfit: other === "victoria" ? "work" : next.outfit,
+      outfit: other === "victoria" ? "work" : other === "ronnie" ? "casual" : next.outfit,
       roster: {
         ...next.roster,
         [other]: {
           ...card,
           met: true,
-          outfit: other === "victoria" ? "work" : card.outfit,
+          outfit: other === "victoria" ? "work" : other === "ronnie" ? "casual" : card.outfit,
         },
       },
     };
@@ -2772,10 +2919,10 @@ function runDebugCommand(
 
   if (cmd.kind === "character_add") {
     const focus = s.focus ?? "izzy";
-    const other = otherGirl(focus);
     const present = [...(s.present?.length ? s.present : [focus])];
-    if (present.includes(other)) {
-      const messages = systemNote(s, `${girlName(other)} is already here.`);
+    const other = absentGirl(present);
+    if (!other) {
+      const messages = systemNote(s, "Everyone is already here.");
       set({ messages, draft: "" });
       persist({ messages }, get);
       return;
@@ -2786,7 +2933,7 @@ function runDebugCommand(
     const roster = withGirl(base, other, {
       met: true,
       outfit: other === "victoria" ? "work" : card?.outfit,
-      expression: card?.met ? card.expression : other === "victoria" ? "shy" : "embarrassed",
+      expression: card?.met ? card.expression : other === "victoria" ? "shy" : other === "ronnie" ? "idle" : "embarrassed",
       trust: card?.met ? card.trust : Math.max(card?.trust ?? 0, 4),
       bonding: card?.met ? card.bonding : Math.max(card?.bonding ?? 0, 2),
     });
@@ -3389,8 +3536,49 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       const blob = `${say} ${action}`;
       const dating = isDateAsk(blob) && !state.activeDate && !state.scheduledDate && !state.dateDraft;
       const hinted = dating ? (awkwardMention(blob, invite) ?? invite) : invite;
-      const awkward = Boolean(dating && hinted && isAwkwardPlace(hinted));
+      const awkward = Boolean(dating && hinted && awkwardForAny(hinted, state.present ?? []));
       const plan = classifyInvite(state, blob, hinted, awkward);
+      if (plan?.dateGoes) {
+        // Only the girls who find the place awkward decline. The rest go on the date through the normal turn.
+        const declined = new Set(plan.blocked.map((block) => block.girl));
+        const host = plan.going.includes(state.focus ?? "izzy") ? (state.focus ?? "izzy") : plan.going[0]!;
+        const base = pullFocus(asGameState(state), host);
+        let roster = base.roster;
+        for (const block of plan.blocked) {
+          if (block.bondingDelta) {
+            roster = withGirl({ ...base, roster }, block.girl, {
+              bonding: Math.max(0, (roster[block.girl]?.bonding ?? 0) + block.bondingDelta),
+            });
+          }
+        }
+        const snapshot = snapshotOf({
+          ...state,
+          ...base,
+          roster,
+          present: (state.present ?? []).filter((girl) => !declined.has(girl)),
+        } as CompanionStore);
+        set({ lastTurn: { state: structuredClone(snapshotOf(state)), turn: payload }, busy: true, draft: "", inviteReply: null });
+        await runTurn(snapshot, payload, get, set);
+        const after = [...get().messages];
+        const lines = plan.blocked.map((block) => ({
+          id: uid(),
+          role: speakerRole(block.girl),
+          at: Date.now(),
+          expression: block.expression,
+          text: block.line,
+          bondingDelta: block.bondingDelta,
+        }));
+        after.splice(Math.min(after.length, state.messages.length + 1), 0, ...lines);
+        // No travel yet (e.g. the date was only planned): the girls who declined are still standing here.
+        const now = get();
+        const stayed = now.location === state.location;
+        const patch = stayed
+          ? { messages: after, present: [...new Set([...(now.present ?? []), ...declined])] }
+          : { messages: after };
+        set(patch);
+        persist(patch, get);
+        return;
+      }
       if (plan) {
         scriptInvite(asGameState(state), plan, payload, get, set);
         return;
@@ -3484,7 +3672,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const roster =
       otherKind === "none"
         ? s.roster
-        : withGirl(asGameState(s), otherGirl(focus), { expression: otherIntimate ? "flirty" : "shy" });
+        : withGirl(asGameState(s), otherGirl(focus, s.present), { expression: otherIntimate ? "flirty" : "shy" });
     const patch = {
       spraySpotlight: false,
       sprayed: false,
@@ -3577,7 +3765,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         id: uid(),
         role: "narrator",
         at: Date.now(),
-        text: `${placeOf(id).name}. ${placeOf(id).blurb} You don't see either of them.`,
+        text: `${placeOf(id).name}. ${placeOf(id).blurb} You don't see any of them.`,
       });
       const patch = {
         location: id,
@@ -3638,7 +3826,17 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       }
     }
     if (!arrived.roster[focus]?.met) {
-      if (focus === "victoria") {
+      if (focus === "ronnie") {
+        const lines = ronnieOpening(id);
+        messages.push({ id: uid(), role: "narrator", at: Date.now(), text: lines.narrator });
+        messages.push({
+          id: uid(),
+          role: "ronnie",
+          at: Date.now(),
+          expression: "happy",
+          text: oneGreeting(lines.first, lines.second),
+        });
+      } else if (focus === "victoria") {
         const lines = victoriaOpening(id);
         messages.push({ id: uid(), role: "narrator", at: Date.now(), text: lines.narrator });
         messages.push({
@@ -3935,7 +4133,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const giftId = draft.giftId || "";
     if (giftId && !state.inventory.includes(giftId)) return;
     if (!slotOpen(state.weekday, state.timeOfDay, draft.day, draft.time)) return;
-    if (isAwkwardPlace(draft.place)) return;
+    if (isAwkwardPlace(draft.place, plan.girl)) return;
     const nth = plan.nth;
     if (nth < 3 && (draft.place === "dorm" || draft.place === "apartment" || draft.place === "vickyLiving" || draft.place === "vickyBedroom")) {
       return;
@@ -4245,7 +4443,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     let romanticBond = romantic;
     let meters = false;
     let floorTrust = false;
-    const lines: { role: "narrator" | "player" | "izzy" | "victoria"; expression?: GameState["expression"]; text: string }[] = [];
+    const lines: { role: "narrator" | "player" | GirlId; expression?: GameState["expression"]; text: string }[] = [];
     const say = (
       role: (typeof lines)[number]["role"],
       text: string,
@@ -4558,7 +4756,11 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const where = placeOf(place);
     const voice = speakerRole(other);
     const messages = [...s.messages];
-    if (other === "victoria" && first) {
+    if (other === "ronnie" && first) {
+      const lines = ronnieDropIn(where.name);
+      messages.push({ id: uid(), role: "narrator", at: Date.now(), text: lines.narrator });
+      messages.push({ id: uid(), role: voice, at: Date.now(), expression: "happy", text: lines.line });
+    } else if (other === "victoria" && first) {
       const lines = victoriaDropIn(where.name);
       messages.push({ id: uid(), role: "narrator", at: Date.now(), text: lines.narrator });
       messages.push({ id: uid(), role: voice, at: Date.now(), expression: "embarrassed", text: lines.line });
@@ -4594,17 +4796,41 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
             : "You found me. That's either sweet or creepy and I'm choosing sweet. What's up?",
       });
     }
-    const roster = withGirl(arrived, other, {
+    let roster = withGirl(arrived, other, {
       met: true,
       trust: Math.max(arrived.trust, first ? 6 : arrived.trust),
       bonding: Math.max(arrived.bonding, first ? 4 : arrived.bonding),
       expression: first ? "embarrassed" : "happy",
     });
+    const morningPresent: GirlId[] = [other];
+    if (ronnieMorningDropIn(place, scheduled, other)) {
+      const ronnieFirst = !s.roster?.ronnie?.met;
+      if (ronnieFirst) {
+        const lines = ronnieDropIn(where.name);
+        messages.push({ id: uid(), role: "narrator", at: Date.now(), text: lines.narrator });
+        messages.push({ id: uid(), role: "ronnie", at: Date.now(), expression: "happy", text: lines.line });
+      } else {
+        messages.push({ id: uid(), role: "narrator", at: Date.now(), text: "Ronnie jogs up between classes, water bottle in hand." });
+        messages.push({ id: uid(), role: "ronnie", at: Date.now(), expression: "happy", text: "Hey! Got ten minutes before my next class. What'd I miss?" });
+      }
+      const card = roster.ronnie;
+      roster = {
+        ...roster,
+        ronnie: {
+          ...card,
+          met: true,
+          trust: ronnieFirst ? Math.max(card.trust, 4) : card.trust,
+          bonding: ronnieFirst ? Math.max(card.bonding, 2) : card.bonding,
+          expression: "happy",
+        },
+      };
+      morningPresent.push("ronnie");
+    }
     const patch = {
       ...arrived,
       roster,
       location: place,
-      present: [other] as GirlId[],
+      present: morningPresent,
       izzyHere: true,
       morningDetour: true,
       dayPhase: "playing" as const,
@@ -4775,3 +5001,6 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
   },
 }));
 
+
+/** Pure turn steps, exported for the companion unit tests only. */
+export const __turnForTests = { applyTurn, applyFartDice };

@@ -11,6 +11,7 @@ import {
 } from "./spray";
 import { bothHere, duetFallback, otherGirl, romanceBlocked } from "./cast";
 import { addressedGirls, isGroupAddress } from "./outing";
+import { localSceneExtras, sceneGirls } from "./scene";
 import {
   holdCopy,
   intimacyAllowed,
@@ -252,7 +253,7 @@ function contextualInvite(
 function withOther(state: GameState, input: TurnInput, turn: IzzyTurn): IzzyTurn {
   if (!bothHere(state)) return turn;
   const focus = state.focus ?? "izzy";
-  const other = otherGirl(focus);
+  const other = otherGirl(focus, state.present);
   if (turn.otherDialogue?.trim()) return turn;
   const text = hay(input);
   const card = state.roster?.[other];
@@ -605,7 +606,101 @@ function localVictoriaTurn(state: GameState, input: TurnInput): IzzyTurn {
   });
 }
 
+/** Offline reply for the focus girl, plus one short line from any third-or-later girl the player addressed. */
 export function localIzzyTurn(state: GameState, input: TurnInput): IzzyTurn {
+  const turn = localFocusTurn(state, input);
+  const extras = localSceneExtras(sceneGirls(state), state.focus ?? "izzy", hay(input));
+  return extras ? { ...turn, extras: [...(turn.extras ?? []), ...extras] } : turn;
+}
+
+/** Ronnie offline: short, competitive, sarcastic, unashamed about gas. */
+function localRonnieTurn(state: GameState, input: TurnInput): IzzyTurn {
+  const text = hay(input);
+  const pos = hits(text, POS);
+  const neg = hits(text, NEG);
+  const threat = hits(text, THREAT);
+  const gas = /fart|gas|toot|smell|stink|reek/.test(text);
+
+  if (threat && !/pat|spank|smack/.test(text)) {
+    const contact = /grab|punch|hit her|slap her|choke|kick her|shove/.test(text);
+    if (!contact) {
+      return withOther(state, input, {
+        narration: "Her stance widens like it's a start line. The tail is already up.",
+        dialogue: "Try it. I'm faster than you and I've got a better aim. Back off.",
+        expression: "angry",
+        trustDelta: -4,
+        bondingDelta: -2,
+        fx: "none",
+        sprayKind: "defensive",
+      });
+    }
+    return withOther(state, input, {
+      narration: "She pivots, the tail snaps up, and the shot lands before you finish the move.",
+      dialogue: "Yeah. That's what you get. Stay down.",
+      expression: "spray",
+      trustDelta: -16,
+      bondingDelta: -8,
+      fx: "spray",
+      sprayed: true,
+      sprayKind: "defensive",
+    });
+  }
+
+  if (gas && neg) {
+    const big = neg >= 2;
+    return withOther(state, input, {
+      dialogue: big
+        ? "Wow. Okay. It's protein and fiber, it's a body, and you're making it a whole thing. Grow up."
+        : "Don't like it? Fair. Not changing, though. Protein and fiber, champ.",
+      expression: big ? "angry" : "suspicious",
+      trustDelta: big ? -6 : -1,
+      bondingDelta: big ? -4 : 0,
+      fx: "none",
+      fartReaction: big ? "bigIssue" : "negative",
+    });
+  }
+
+  if (gas) {
+    return withOther(state, input, {
+      dialogue: pos
+        ? "Ha! See, you get it. Bet you can't top that, though."
+        : "That's just everything working. You keeping up or what?",
+      expression: pos ? "laughing" : "scheming",
+      trustDelta: pos ? 4 : 2,
+      bondingDelta: pos ? 3 : 1,
+      fx: pos ? "laugh" : "none",
+      fartReaction: pos ? "playful" : "cool",
+    });
+  }
+
+  if (neg >= 1) {
+    return withOther(state, input, {
+      dialogue: "Okay, attitude. I lift more than you and I'm in a better mood. Try again.",
+      expression: "suspicious",
+      trustDelta: -3,
+      bondingDelta: -2,
+      fx: "none",
+    });
+  }
+
+  const lines = pos
+    ? ["Okay, you're alright. Want to race sometime? Loser buys smoothies.", "See, now you're talking. I like people who keep up."]
+    : [
+        "So what's the plan? I don't do standing around.",
+        "I've got about three things to do and you're one of them now. Go.",
+        "Did you know mantises can turn their heads all the way around? Way cooler than whatever this is. Talk to me.",
+      ];
+  return withOther(state, input, {
+    dialogue: lines[Math.floor(Math.random() * lines.length)],
+    expression: pos ? "happy" : "idle",
+    trustDelta: pos ? 3 : 1,
+    bondingDelta: pos ? 3 : 1,
+    fx: "none",
+  });
+}
+
+function localFocusTurn(state: GameState, input: TurnInput): IzzyTurn {
+  if ((state.focus ?? "izzy") === "ronnie") return localRonnieTurn(state, input);
   if ((state.focus ?? "izzy") === "victoria") return localVictoriaTurn(state, input);
   const text = hay(input);
   const pos = hits(text, POS);

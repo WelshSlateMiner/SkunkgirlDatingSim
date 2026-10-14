@@ -1,4 +1,5 @@
 import { DEBUG_TIPS } from "@/lib/companion/debug";
+import { sceneOrder } from "@/lib/companion/scene";
 import { useCompanion } from "@/lib/companion/store";
 
 export function DebugBar() {
@@ -10,14 +11,15 @@ export function DebugBar() {
   const focus = useCompanion((s) => s.focus ?? "izzy");
   const present = useCompanion((s) => s.present);
   if (!debug) return null;
-  const both = (present ?? []).includes("izzy") && (present ?? []).includes("victoria");
-  const who = focus === "victoria" ? "Victoria" : "Izzy";
+  const here = sceneOrder(present ?? []);
+  const both = here.length === 2;
+  const who = focus === "victoria" ? "Victoria" : focus === "ronnie" ? "Ronnie" : "Izzy";
 
   return (
     <div className="rounded-lg border border-cream/40 bg-bg/70 px-3 py-2 backdrop-blur-sm">
       <p className="text-[10px] uppercase tracking-[0.16em] text-cream/70">
         {who}
-        {both ? " · both" : ""} · {outfit} · {expression}
+        {both ? " · both" : here.length > 2 ? ` · ${here.length} here` : ""} · {outfit} · {expression}
         {sprayKind !== "none" ? ` · ${sprayKind}` : ""}
       </p>
       <div className="-mx-1 mt-2 flex gap-1 overflow-x-auto px-1">

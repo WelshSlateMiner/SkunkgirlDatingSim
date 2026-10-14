@@ -10,71 +10,81 @@ import type {
   RelationshipType,
   Roster,
   TimeOfDay,
+  Weekday,
 } from "./types";
 import { bondFromScores } from "./trust";
 import { sexualBeat } from "./intimacy";
 import { uid } from "@/lib/utils";
-import { placeOf } from "./locations";
+import { openTonight, placeOf } from "./locations";
+import { MAX_SCENE_GIRLS, sceneOrder, sceneOthers } from "./scene";
+import { dutyOf } from "./outing";
+import { RONNIE_HAUNTS } from "./ronnie-bio";
 
-export const GIRLS: GirlId[] = ["izzy", "victoria"];
+export const GIRLS: GirlId[] = ["izzy", "victoria", "ronnie"];
 
 const AFFINITY: Record<LocationId, Record<GirlId, number>> = {
-  library: { izzy: 70, victoria: 70 },
-  studyHall: { izzy: 78, victoria: 42 },
-  classroom: { izzy: 88, victoria: 8 },
-  cafe: { izzy: 58, victoria: 48 },
-  campus: { izzy: 84, victoria: 12 },
-  trail: { izzy: 76, victoria: 22 },
-  dorm: { izzy: 100, victoria: 0 },
-  mexican: { izzy: 82, victoria: 28 },
-  burger: { izzy: 64, victoria: 16 },
-  mall: { izzy: 50, victoria: 52 },
-  gameStore: { izzy: 74, victoria: 18 },
-  foodCourt: { izzy: 56, victoria: 30 },
-  fashion: { izzy: 40, victoria: 64 },
-  makeup: { izzy: 32, victoria: 58 },
-  collectibles: { izzy: 76, victoria: 28 },
-  trendy: { izzy: 68, victoria: 18 },
-  perfume: { izzy: 22, victoria: 92 },
-  theater: { izzy: 52, victoria: 48 },
-  animeStore: { izzy: 96, victoria: 14 },
-  tabletop: { izzy: 72, victoria: 24 },
-  grocery: { izzy: 38, victoria: 74 },
-  naturalFoods: { izzy: 34, victoria: 56 },
-  sportingGoods: { izzy: 70, victoria: 18 },
-  apartment: { izzy: 40, victoria: 40 },
-  vickyLiving: { izzy: 0, victoria: 100 },
-  vickyBedroom: { izzy: 0, victoria: 100 },
-  craftStore: { izzy: 18, victoria: 96 },
-  italian: { izzy: 34, victoria: 90 },
-  furniture: { izzy: 14, victoria: 96 },
-  firm: { izzy: 8, victoria: 98 },
-  gym: { izzy: 82, victoria: 12 },
-  yogaStudio: { izzy: 24, victoria: 36 },
-  field: { izzy: 74, victoria: 14 },
-  ronnieDorm: { izzy: 0, victoria: 0 },
+  library: { izzy: 70, victoria: 70, ronnie: 50 },
+  studyHall: { izzy: 78, victoria: 42, ronnie: 40 },
+  classroom: { izzy: 88, victoria: 8, ronnie: 55 },
+  cafe: { izzy: 58, victoria: 48, ronnie: 62 },
+  campus: { izzy: 84, victoria: 12, ronnie: 64 },
+  trail: { izzy: 76, victoria: 22, ronnie: 72 },
+  dorm: { izzy: 100, victoria: 0, ronnie: 0 },
+  mexican: { izzy: 82, victoria: 28, ronnie: 30 },
+  burger: { izzy: 64, victoria: 16, ronnie: 28 },
+  mall: { izzy: 50, victoria: 52, ronnie: 30 },
+  gameStore: { izzy: 74, victoria: 18, ronnie: 12 },
+  foodCourt: { izzy: 56, victoria: 30, ronnie: 30 },
+  fashion: { izzy: 40, victoria: 64, ronnie: 18 },
+  makeup: { izzy: 32, victoria: 58, ronnie: 10 },
+  collectibles: { izzy: 76, victoria: 28, ronnie: 40 },
+  trendy: { izzy: 68, victoria: 18, ronnie: 60 },
+  perfume: { izzy: 22, victoria: 92, ronnie: 6 },
+  theater: { izzy: 52, victoria: 48, ronnie: 56 },
+  animeStore: { izzy: 96, victoria: 14, ronnie: 38 },
+  tabletop: { izzy: 72, victoria: 24, ronnie: 14 },
+  grocery: { izzy: 38, victoria: 74, ronnie: 24 },
+  naturalFoods: { izzy: 34, victoria: 56, ronnie: 66 },
+  sportingGoods: { izzy: 70, victoria: 18, ronnie: 82 },
+  apartment: { izzy: 40, victoria: 40, ronnie: 30 },
+  vickyLiving: { izzy: 0, victoria: 100, ronnie: 20 },
+  vickyBedroom: { izzy: 0, victoria: 100, ronnie: 0 },
+  craftStore: { izzy: 18, victoria: 96, ronnie: 30 },
+  italian: { izzy: 34, victoria: 90, ronnie: 20 },
+  furniture: { izzy: 14, victoria: 96, ronnie: 22 },
+  firm: { izzy: 8, victoria: 98, ronnie: 0 },
+  gym: { izzy: 82, victoria: 12, ronnie: 96 },
+  yogaStudio: { izzy: 24, victoria: 36, ronnie: 92 },
+  field: { izzy: 74, victoria: 14, ronnie: 94 },
+  ronnieDorm: { izzy: 0, victoria: 0, ronnie: 100 },
 };
 
 const PRIVATE = new Set<LocationId>(["dorm", "apartment", "vickyLiving", "vickyBedroom", "ronnieDorm"]);
 
-export function otherGirl(id: GirlId): GirlId {
+/**
+ * The other girl in this scene: the first one after the focus in scene order.
+ * Without a scene, the old Izzy/Victoria swap (Ronnie pairs with Izzy, her campus classmate).
+ */
+export function otherGirl(id: GirlId, present?: readonly GirlId[]): GirlId {
+  const here = present ? sceneOthers(present, id) : [];
+  if (here.length) return here[0]!;
   return id === "izzy" ? "victoria" : "izzy";
 }
 
 export function girlName(id: GirlId) {
-  return id === "victoria" ? "Victoria" : "Izzy";
+  return id === "victoria" ? "Victoria" : id === "ronnie" ? "Ronnie" : "Izzy";
 }
 
 export function girlShort(id: GirlId) {
-  return id === "victoria" ? "Vicky" : "Izzy";
+  return id === "victoria" ? "Vicky" : id === "ronnie" ? "Ronnie" : "Izzy";
 }
 
-export function speakerRole(id: GirlId): "izzy" | "victoria" {
-  return id === "victoria" ? "victoria" : "izzy";
+export function speakerRole(id: GirlId): GirlId {
+  return id;
 }
 
 export function herHome(id: GirlId): LocationId {
-  return id === "victoria" ? "vickyLiving" : "dorm";
+  return id === "victoria" ? "vickyLiving" : id === "ronnie" ? "ronnieDorm" : "dorm";
 }
 
 export function isPrivatePlace(id: LocationId | null | undefined) {
@@ -84,6 +94,7 @@ export function isPrivatePlace(id: LocationId | null | undefined) {
 export function ownsHome(id: LocationId): GirlId | null {
   if (id === "dorm") return "izzy";
   if (id === "vickyLiving" || id === "vickyBedroom") return "victoria";
+  if (id === "ronnieDorm") return "ronnie";
   return null;
 }
 
@@ -124,6 +135,7 @@ export function blankRoster(): Roster {
   return {
     izzy: blankCard("casual"),
     victoria: blankCard("work"),
+    ronnie: blankCard("casual"),
   };
 }
 
@@ -134,7 +146,7 @@ export function initialCast(focus: GirlId = "izzy") {
     met: true,
     trust: 6,
     bonding: 4,
-    expression: focus === "victoria" ? "shy" : "embarrassed",
+    expression: focus === "victoria" ? "shy" : focus === "ronnie" ? "happy" : "embarrassed",
   };
   return {
     relationshipType: "mono" as RelationshipType,
@@ -150,11 +162,38 @@ export function initialCast(focus: GirlId = "izzy") {
   };
 }
 
-export function rollGirl(place: LocationId): GirlId {
-  const a = affinity("izzy", place);
-  const b = affinity("victoria", place);
-  const total = Math.max(1, a + b);
-  return Math.random() * total < a ? "izzy" : "victoria";
+/** First-meeting odds per start location, in percent (design table, not derived from affinity). */
+export const START_ODDS: Partial<Record<LocationId, Record<GirlId, number>>> = {
+  library: { izzy: 50, victoria: 25, ronnie: 25 },
+  studyHall: { izzy: 50, victoria: 10, ronnie: 40 },
+  trail: { izzy: 45, victoria: 10, ronnie: 45 },
+  animeStore: { izzy: 60, victoria: 10, ronnie: 30 },
+  craftStore: { izzy: 20, victoria: 50, ronnie: 30 },
+  gym: { izzy: 10, victoria: 30, ronnie: 60 },
+};
+
+function startWeights(place: LocationId): number[] {
+  const table = START_ODDS[place];
+  return GIRLS.map((girl) => (table ? table[girl] : affinity(girl, place)));
+}
+
+/** Who you meet first at a place: START_ODDS for start locations, affinity elsewhere. `roll` is 0..1 (tests pass one). */
+export function rollGirl(place: LocationId, roll = Math.random()): GirlId {
+  const weights = startWeights(place);
+  const total = Math.max(1, weights.reduce((sum, w) => sum + w, 0));
+  let pick = roll * total;
+  for (let i = 0; i < GIRLS.length; i++) {
+    pick -= weights[i]!;
+    if (pick < 0) return GIRLS[i]!;
+  }
+  return GIRLS[GIRLS.length - 1]!;
+}
+
+/** Chance of meeting each girl first at a start location. */
+export function meetOdds(place: LocationId): Record<GirlId, number> {
+  const w = startWeights(place);
+  const total = Math.max(1, w.reduce((sum, x) => sum + x, 0));
+  return { izzy: w[0]! / total, victoria: w[1]! / total, ronnie: w[2]! / total };
 }
 
 export function morningSpots(other: GirlId, avoid: LocationId | null): LocationId[] {
@@ -170,9 +209,8 @@ export function morningSpots(other: GirlId, avoid: LocationId | null): LocationI
     .slice(0, 6);
 }
 
-export function companionChance(focus: GirlId, place: LocationId) {
+export function companionChance(focus: GirlId, place: LocationId, other: GirlId = otherGirl(focus)) {
   if (PRIVATE.has(place)) return 0;
-  const other = otherGirl(focus);
   const theirs = affinity(other, place);
   const mine = affinity(focus, place);
   if (theirs < 68) return 0;
@@ -280,8 +318,8 @@ export function cardCouple(card: GirlCard | undefined) {
 export function romanceBlocked(state: Pick<GameState, "focus" | "relationshipType" | "roster" | "gameMode">, trust: number, bonding: number, dates: number) {
   const focus = state.focus ?? "izzy";
   if ((state.relationshipType ?? "mono") === "mono") {
-    const other = state.roster?.[otherGirl(focus)];
-    if (other?.romanceAccepted) return true;
+    // Monogamy: anyone else official blocks this one.
+    if (GIRLS.some((girl) => girl !== focus && state.roster?.[girl]?.romanceAccepted)) return true;
   }
   if (focus === "victoria") {
     const need = state.relationshipType === "harem" ? 82 : 72;
@@ -559,16 +597,21 @@ export function victoriaDropIn(placeName: string): { narrator: string; line: str
   ]);
 }
 
-export function seedMeeting(state: GameState, place: LocationId, relationshipType: RelationshipType): GameState {
-  const girl = rollGirl(place);
+export function seedMeeting(
+  state: GameState,
+  place: LocationId,
+  relationshipType: RelationshipType,
+  roll = Math.random(),
+): GameState {
+  const girl = rollGirl(place, roll);
   const roster = blankRoster();
   roster[girl] = {
     ...roster[girl],
     met: true,
     trust: 6,
     bonding: 4,
-    expression: girl === "victoria" ? "shy" : "embarrassed",
-    outfit: girl === "victoria" ? "work" : state.outfit,
+    expression: girl === "victoria" ? "shy" : girl === "ronnie" ? "idle" : "embarrassed",
+    outfit: girl === "victoria" ? "work" : girl === "ronnie" ? "casual" : state.outfit,
   };
   if (girl === "izzy") {
     roster.izzy = { ...roster.izzy, trust: state.trust, bonding: state.bonding, expression: state.expression, outfit: state.outfit };
@@ -586,24 +629,24 @@ export function seedMeeting(state: GameState, place: LocationId, relationshipTyp
       affairKnown: false,
     };
   }
-  const lines = victoriaOpening(place);
+  const lines = girl === "ronnie" ? ronnieOpening(place) : victoriaOpening(place);
   const messages: GameState["messages"] = [
     { id: uid(), role: "narrator", at: Date.now(), text: lines.narrator },
     {
       id: uid(),
-      role: "victoria",
+      role: girl,
       at: Date.now() + 1,
-      expression: "embarrassed",
+      expression: girl === "ronnie" ? "happy" : "embarrassed",
       text: oneGreeting(lines.first, lines.second),
     },
   ];
   return {
     ...state,
     relationshipType,
-    focus: "victoria",
-    present: ["victoria"],
+    focus: girl,
+    present: [girl],
     roster,
-    planGirl: "victoria",
+    planGirl: girl,
     morningDetour: false,
     queuedMeet: null,
     meetKind: "plan",
@@ -612,14 +655,89 @@ export function seedMeeting(state: GameState, place: LocationId, relationshipTyp
     trust: 6,
     bonding: 4,
     bond: "stranger",
-    outfit: "work",
-    expression: "shy",
+    outfit: girl === "ronnie" ? "casual" : "work",
+    expression: girl === "ronnie" ? "idle" : "shy",
     izzyHere: true,
     messages,
   };
 }
 
+/** First-meet lines for Ronnie. Written for the activation; the doc has none. Rainbow Dash + Kim Possible. */
+export function ronnieOpening(place: LocationId): { narrator: string; first: string; second: string } {
+  const named: Partial<Record<LocationId, { narrator: string; first: string; second: string }[]>> = {
+    gym: [
+      {
+        narrator:
+          "The free-weight corner. A blonde skunkgirl in a white track top and blue trunks racks a barbell that has no business being that heavy, ponytail swinging, black-and-white tail up and loose. The air behind her is unmistakably skunk. She grins at you in the mirror like she heard you think about it.",
+        first: "Yeah, that was me. Leg day does that. I'm Ronnie. Veronica if you're my professor, Ronnie if you're cool.",
+        second: "You lifting, or just spotting the view? Either way, grab a bench. I've got two more sets and I don't do them slow.",
+      },
+      {
+        narrator:
+          "Someone is doing barbell squats like the floor owes her money. Skunk ears, blonde ponytail, smartwatch blinking. Between reps she lets one rip, loud, and doesn't even break form.",
+        first: "Ha! Personal best on that one too. Relax, it's just my body working. Protein and fiber, baby. I'm Ronnie.",
+        second: "New here? I can show you the racks. Fair warning, I'm going to make it a competition.",
+      },
+    ],
+    field: [
+      {
+        narrator:
+          "West Field. A blonde skunkgirl finishes a lap so fast the track should file a complaint, slows to a jog, and lands next to you hands on hips, tail flicking. A faint musk catches up a second later.",
+        first: "Hey! You were timing me, right? Tell me that was under seventy. I'm Ronnie. Track team.",
+        second: "If you're running, I'll pace you. If you're not, you can hold my water and tell me I'm amazing.",
+      },
+    ],
+    trail: [
+      {
+        narrator:
+          "Halfway up a hill on the Nature Trail a blonde skunkgirl in olive cargo pants is crouched over a leaf, tail high, totally still. Then she pops up, beaming, and the breeze carries a very skunky note your way.",
+        first: "Don't step there, there's a mantis! Okay, wait, that smell's me, sorry not sorry. I'm Ronnie.",
+        second: "I do hill repeats up here and bug spotting on the way down. You can tag along if you can keep up.",
+      },
+    ],
+    yogaStudio: [
+      {
+        narrator:
+          "Second Wind. A blonde skunkgirl in track kit is rolling out mats at the front of the room, smartwatch on, ponytail high. Somebody in the back lets one slip during a stretch, and she just laughs.",
+        first: "See? Body's working. That's the whole point. I'm Ronnie, I teach here. You here for class?",
+        second: "Grab a mat. I go easy on first-timers for exactly one pose.",
+      },
+    ],
+  };
+  const fallback = [
+    {
+      narrator: `A blonde skunkgirl in a backwards cap and a "Love Stinks" tank turns around fast, like she's always about to start a race. Baggy cargo pants, chunky boots, a big black-and-white tail. Skunk musk, zero apology.`,
+      first: "Oh, hey. Yeah, the smell's me. I'm Ronnie. You looked like you were about to say something, so say it.",
+      second: "I've got somewhere to be in, like, twenty minutes. Until then, I'm all yours. Make it interesting.",
+    },
+    {
+      narrator: `An athletic blonde skunkgirl is mid-protein-bar when she spots you, salutes with it, and lets out a short, unbothered toot as she shifts her weight.`,
+      first: "Ha. That's not a greeting, that's just Tuesday. I'm Ronnie. Track team, health sciences, future gym owner.",
+      second: "You look like you need a workout plan. Or a snack. I've got both.",
+    },
+  ];
+  return pickOne(named[place] ?? fallback);
+}
+
+export function ronnieDropIn(placeName: string): { narrator: string; line: string } {
+  return pickOne([
+    {
+      narrator: `${placeName}. A blonde skunkgirl with her ponytail through a backwards cap is already here, stretching a calf against whatever's closest. Her tail swings up when she sees you.`,
+      line: "Hey, new face! I'm Ronnie. Don't mind the smell, I just came from the gym. Mostly.",
+    },
+    {
+      narrator: `${placeName}. Someone athletic and blonde laughs at her own fart before you even get close. Skunk ears. Big grin.`,
+      line: "You heard that? Good. Saves me the intro. I'm Ronnie. What's your deal?",
+    },
+  ]);
+}
+
 export function duetFallback(other: GirlId, met: boolean) {
+  if (other === "ronnie") {
+    return met
+      ? "Ronnie bounces on her toes, tail up. \"Hey. Still here. Don't make me compete for attention, because I will win.\""
+      : "Ronnie grins and sticks out a hand. \"Ronnie. Track, health sci, gym rat. Don't stop on my account.\"";
+  }
   if (other === "victoria") {
     return met
       ? "Victoria's ears turn, but she doesn't leave. \"I'm still in this. Don't talk about me like I stepped out.\""
@@ -634,7 +752,7 @@ export function fidelityHit(
   state: GameState,
   text: string,
   scene: boolean,
-): { roster: Roster; partner: GirlId | null; affairKnown: boolean; lines: { role: "narrator" | "izzy" | "victoria"; text: string; expression?: Expression }[] } | null {
+): { roster: Roster; partner: GirlId | null; affairKnown: boolean; lines: { role: "narrator" | GirlId; text: string; expression?: Expression }[] } | null {
   if ((state.relationshipType ?? "mono") !== "mono") return null;
   const partner = state.partner;
   if (!partner || partner === state.focus) return null;
@@ -662,7 +780,7 @@ export function fidelityHit(
   };
   const roster = { ...(state.roster ?? blankRoster()), [partner]: next };
   const name = girlName(partner);
-  const lines: { role: "narrator" | "izzy" | "victoria"; text: string; expression?: Expression }[] = [];
+  const lines: { role: "narrator" | GirlId; text: string; expression?: Expression }[] = [];
   if (seen) {
     lines.push({
       role: "narrator",
@@ -686,13 +804,16 @@ export function fidelityHit(
   return { roster, partner: broken ? null : partner, affairKnown: true, lines };
 }
 
+/** Two or more girls in the scene. */
 export function bothHere(state: Pick<GameState, "present">) {
-  const present = state.present ?? [];
-  return present.includes("izzy") && present.includes("victoria");
+  return sceneOrder(state.present ?? []).length >= 2;
 }
 
 export function describeArrival(focus: GirlId, other: GirlId, place: LocationId, firstTime: boolean) {
   const where = placeOf(place).name;
+  if (firstTime && other === "ronnie") {
+    return `${where} has a blonde skunkgirl in track kit already in it, ponytail swinging. She waves like you're late for something. That's Ronnie.`;
+  }
   if (firstTime && other === "victoria") {
     return `${where} was not only ${girlName(focus)}. Victoria is here too, blouse smoothed, tail held in, already pretending the scent in the air is the room's.`;
   }
@@ -705,4 +826,56 @@ export function describeArrival(focus: GirlId, other: GirlId, place: LocationId,
 export function bondWord(bond: Bond) {
   if (bond === "romantic") return "together";
   return bond;
+}
+
+/** Chance Ronnie drops in on a morning detour scene. */
+export const RONNIE_MORNING_DROP_IN = 0.35;
+
+/**
+ * Ronnie drops in on a morning scene only in the campus area (locations with group "campus"),
+ * never when she is the scheduled girl or already the one you went to find.
+ */
+export function ronnieMorningDropIn(place: LocationId, scheduled: GirlId, arriving: GirlId, roll = Math.random()): boolean {
+  if (scheduled === "ronnie" || arriving === "ronnie") return false;
+  if (PRIVATE.has(place) || placeOf(place).group !== "campus") return false;
+  return roll < RONNIE_MORNING_DROP_IN;
+}
+
+/** Debug: the next girl in roster order (izzy -> victoria -> ronnie -> izzy). */
+export function nextGirl(girl: GirlId): GirlId {
+  const i = GIRLS.indexOf(girl);
+  return GIRLS[(i + 1) % GIRLS.length]!;
+}
+
+/** Debug: the first girl in roster order who is not in the scene, or null when all are here. */
+export function absentGirl(present: readonly GirlId[]): GirlId | null {
+  return GIRLS.find((girl) => !present.includes(girl)) ?? null;
+}
+
+/** Outside the morning detour: Ronnie drops in at her haunts (bio) when she is free, else campus-area spots. */
+export const RONNIE_HAUNT_DROP_IN = 0.2;
+export const RONNIE_CAMPUS_DROP_IN = 0.05;
+export const RONNIE_HAUNT_PLACES: ReadonlySet<LocationId> = new Set(RONNIE_HAUNTS.map((h) => h.place));
+
+export function isCampusArea(place: LocationId) {
+  return !PRIVATE.has(place) && placeOf(place).group === "campus";
+}
+
+/**
+ * Chance Ronnie drops in on an in-play arrival (not the morning detour).
+ * 0 while she is in class or teaching, at a closed place, in a private room, when she is already
+ * in the scene or the focus, or when the scene already has three girls.
+ */
+export function ronnieDropInChance(
+  place: LocationId,
+  weekday: Weekday,
+  time: TimeOfDay,
+  scene: readonly GirlId[],
+): number {
+  if (scene.includes("ronnie") || new Set(scene).size >= MAX_SCENE_GIRLS) return 0;
+  if (PRIVATE.has(place) || !openTonight(place, time)) return 0;
+  if (dutyOf("ronnie", weekday, time) !== "free") return 0;
+  if (RONNIE_HAUNT_PLACES.has(place)) return RONNIE_HAUNT_DROP_IN;
+  if (isCampusArea(place)) return RONNIE_CAMPUS_DROP_IN;
+  return 0;
 }

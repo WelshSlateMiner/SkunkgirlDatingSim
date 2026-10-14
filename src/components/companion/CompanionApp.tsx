@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { sceneNames, sceneOrder } from "@/lib/companion/scene";
 import { Backpack, ChevronsDownUp, ChevronsUpDown, DollarSign, GripHorizontal, RotateCcw, ShowerHead, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CharacterPortrait } from "@/components/companion/CharacterPortrait";
@@ -145,9 +146,9 @@ export function CompanionApp() {
   if (!hydrated || !started) return <StartScreen />;
 
   const place = placeOf(location);
-  const both = (present ?? []).includes("izzy") && (present ?? []).includes("victoria");
-  const outfitLabel = both
-    ? "Izzy and Victoria"
+  const together = sceneOrder(present ?? []);
+  const outfitLabel = together.length >= 2
+    ? sceneNames(together)
     : (focus ?? "izzy") === "victoria"
       ? victoriaLingerieOn(location, Boolean(flags.intimateScene))
         ? "Black blazer set"

@@ -3,8 +3,9 @@ import { TIMES, WEEKDAYS, emptySprays } from "./time";
 import { uid } from "@/lib/utils";
 import { FIRST_MEETS, asLocationId, placeOf } from "./locations";
 import { asOutfitId } from "./portraits";
-import { initialCast, oneGreeting } from "./cast";
+import { blankCard, initialCast, oneGreeting } from "./cast";
 import { economySeed } from "./outing";
+import { readSceneFarts } from "./scene";
 import { readTank } from "./spray";
 
 export const SAVE_KEY = "izzy-companion-save";
@@ -350,27 +351,29 @@ export function blankState(): GameState {
 }
 
 function asGirl(value: unknown): GirlId | null {
-  return value === "izzy" || value === "victoria" ? value : null;
+  return value === "izzy" || value === "victoria" || value === "ronnie" || value === "ronnie" ? value : null;
 }
 
 const AFFAIR_PHASES = ["wait", "hint", "demand", "warn", "reclaim", "spent", "known"] as const;
 
 export function parseMarkAffair(raw: GameState["markAffair"] | null | undefined): GameState["markAffair"] {
   if (!raw || typeof raw !== "object") return null;
-  const girl = raw.girl === "izzy" || raw.girl === "victoria" ? raw.girl : null;
-  const marker = raw.marker === "izzy" || raw.marker === "victoria" ? raw.marker : null;
+  const girl = raw.girl === "izzy" || raw.girl === "victoria" || raw.girl === "ronnie" ? raw.girl : null;
+  const marker = raw.marker === "izzy" || raw.marker === "victoria" || raw.marker === "ronnie" ? raw.marker : null;
   const phase = AFFAIR_PHASES.find((item) => item === raw.phase);
   if (!girl || !marker || !phase || girl === marker) return null;
   const waits = typeof raw.waits === "number" && Number.isFinite(raw.waits) ? Math.max(0, Math.round(raw.waits)) : 0;
   return { girl, marker, phase, waits };
 }
 
-function migrate(raw: GameState): GameState {
+export function migrate(raw: GameState): GameState {
   const base = blankState();
   const location = asLocationId(raw.location) ?? "library";
   const focus = asGirl(raw.focus) ?? "izzy";
   const seeded = initialCast(focus);
-  const roster = raw.roster?.izzy && raw.roster?.victoria ? raw.roster : seeded.roster;
+  const roster = raw.roster?.izzy && raw.roster?.victoria ? { ...raw.roster } : seeded.roster;
+  // Saves from before Ronnie have no card for her. She starts unmet.
+  if (!roster.ronnie) roster.ronnie = blankCard("casual");
   if (!raw.roster?.izzy) {
     roster.izzy = {
       ...roster.izzy,
@@ -391,7 +394,7 @@ function migrate(raw: GameState): GameState {
     };
   }
   const inherited = readTank(raw);
-  for (const girl of ["izzy", "victoria"] as const) {
+  for (const girl of ["izzy", "victoria", "ronnie"] as const) {
     const card = roster[girl];
     if (!card) continue;
     const own = typeof card.glandCap === "number";
@@ -478,6 +481,7 @@ function migrate(raw: GameState): GameState {
     relationshipType: raw.relationshipType === "harem" ? "harem" : "mono",
     focus,
     present: present.length ? present : [focus],
+    sceneFarts: readSceneFarts(raw.sceneFarts),
     roster,
     planGirl: asGirl(raw.planGirl) ?? focus,
     morningDetour: Boolean(raw.morningDetour),
@@ -506,15 +510,16 @@ function migrate(raw: GameState): GameState {
     sceneTurns: typeof raw.sceneTurns === "number" ? raw.sceneTurns : 0,
     shiftsWorked: typeof raw.shiftsWorked === "number" ? Math.max(0, Math.round(raw.shiftsWorked)) : 0,
     workedToday: Boolean(raw.workedToday),
-    pressedDuty: raw.pressedDuty === "izzy" || raw.pressedDuty === "victoria" ? raw.pressedDuty : null,
+    pressedDuty: raw.pressedDuty === "izzy" || raw.pressedDuty === "victoria" || raw.pressedDuty === "ronnie" ? raw.pressedDuty : null,
     stink: typeof raw.stink === "number" ? Math.max(0, Math.min(100, Math.round(raw.stink))) : 0,
     scentFrom: {
       izzy: typeof raw.scentFrom?.izzy === "number" ? Math.max(0, Math.round(raw.scentFrom.izzy)) : 0,
       victoria: typeof raw.scentFrom?.victoria === "number" ? Math.max(0, Math.round(raw.scentFrom.victoria)) : 0,
+      ronnie: typeof raw.scentFrom?.ronnie === "number" ? Math.max(0, Math.round(raw.scentFrom.ronnie)) : 0,
     },
     stinkAsked: raw.stinkAsked ?? {},
     stinkTalk:
-      raw.stinkTalk && (raw.stinkTalk.girl === "izzy" || raw.stinkTalk.girl === "victoria")
+      raw.stinkTalk && (raw.stinkTalk.girl === "izzy" || raw.stinkTalk.girl === "victoria" || raw.stinkTalk.girl === "ronnie")
         ? { girl: raw.stinkTalk.girl, presses: typeof raw.stinkTalk.presses === "number" ? raw.stinkTalk.presses : 0 }
         : null,
     showersToday: typeof raw.showersToday === "number" ? Math.max(0, Math.min(2, Math.round(raw.showersToday))) : 0,
@@ -523,7 +528,7 @@ function migrate(raw: GameState): GameState {
       ? raw.dutyNotice.filter(
           (notice): notice is GameState["dutyNotice"][number] =>
             !!notice &&
-            (notice.girl === "izzy" || notice.girl === "victoria") &&
+            (notice.girl === "izzy" || notice.girl === "victoria" || notice.girl === "ronnie") &&
             (notice.duty === "class" || notice.duty === "work") &&
             Boolean(asLocationId(notice.place)),
         )
@@ -541,7 +546,7 @@ function migrate(raw: GameState): GameState {
       ? raw.sprayPrompts.filter(
           (prompt): prompt is GameState["sprayPrompts"][number] =>
             !!prompt &&
-            (prompt.girl === "izzy" || prompt.girl === "victoria") &&
+            (prompt.girl === "izzy" || prompt.girl === "victoria" || prompt.girl === "ronnie") &&
             (prompt.kind === "angry" ||
               prompt.kind === "consensual" ||
               prompt.kind === "defensive" ||

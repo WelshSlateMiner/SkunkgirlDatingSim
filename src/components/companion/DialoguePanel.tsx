@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { girlName } from "@/lib/companion/cast";
 import { useCompanion } from "@/lib/companion/store";
 import type { ChatMessage } from "@/lib/companion/types";
+import { isGirlRole, roleName, SCENE_STYLE } from "@/lib/companion/scene";
 import { cn } from "@/lib/utils";
 
 const RECENT_COUNT = 12;
@@ -24,10 +25,10 @@ export function ChatLine({ message }: { message: Pick<ChatMessage, "role" | "tex
       </p>
     );
   }
-  const name = m.role === "victoria" ? "Victoria" : "Izzy";
+  const who = isGirlRole(m.role) ? m.role : "izzy";
   return (
     <div>
-      <p className={cn("mb-1 font-display text-sm", m.role === "victoria" ? "text-cream" : "text-accent")}>{name}</p>
+      <p className={cn("mb-1 font-display text-sm", SCENE_STYLE[who])}>{roleName(who)}</p>
       <p className="text-[15px] leading-relaxed text-fg text-pretty">{m.text}</p>
     </div>
   );
@@ -66,9 +67,9 @@ export function DialoguePanel({ compact = false }: { compact?: boolean }) {
           <p className="text-sm text-muted shimmer-text">{thinking}</p>
         ) : latest ? (
           <div>
-            {latest.role === "izzy" || latest.role === "victoria" ? (
-              <p className={cn("mb-0.5 font-display text-xs", latest.role === "victoria" ? "text-cream" : "text-accent")}>
-                {latest.role === "victoria" ? "Victoria" : "Izzy"}
+            {isGirlRole(latest.role) ? (
+              <p className={cn("mb-0.5 font-display text-xs", SCENE_STYLE[latest.role])}>
+                {roleName(latest.role)}
               </p>
             ) : null}
             <p
