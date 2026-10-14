@@ -25,6 +25,42 @@ export const RONNIE_PROFILE = {
     "In public she acts like not having a father is a settled fact. She still wishes she had one, and she keeps going anyway. She will talk about that once Trust and Bonding are both at least 60. Not before.",
 } as const;
 
+/**
+ * Her deepest secret, from the dev doc. Dormant: Ronnie cannot speak yet.
+ * Not for the How to Play window. It is a bonus for players to find.
+ */
+export const RONNIE_SECRET = {
+  why:
+    "Deep down, her mother's overbearing parenting and the missing father left a mark she has questioned and grappled with since puberty.",
+  kink:
+    "She has a mommy kink. She likes being treated like a dependent by her partner and nurtured compassionately, guided by a soft-dominant hand during intimacy.",
+  vicky: "She wonders whether she is actually interested in Victoria sexually. It is a deep, taboo secret.",
+  gate: "She will not discuss it unless Trust and Bonding are both at least 90 and she is in a relationship with the player.",
+} as const;
+
+export const RONNIE_SECRET_GATE = { trust: 90, bonding: 90, relationship: true } as const;
+
+/**
+ * The hidden Vicky and Ronnie threesome pathway. Both game modes. Dormant until Ronnie is a GirlId.
+ * Never listed in How to Play.
+ */
+export const VICKY_RONNIE_PATHWAY = {
+  steps: [
+    "The player enters a relationship with Vicky or Ronnie first. In Skunkgirl Harem the other is locked out of a relationship until this pathway is complete. Either one explains in her own voice that it would be weird to date the same person as her mom or her daughter.",
+    "Trust and Bonding are maxed with both women.",
+    "The player tells Vicky how good she is at being a motherly figure. Vicky says she loves being a mother figure, it feels natural, and it is very sexy to her.",
+    "The player asks Ronnie whether she has deep secrets or taboo kinks. She admits the mommy kink. If the player is with Vicky, she adds that she knows it is weird, she is a little jealous of how her mom treats the player the way she used to treat her, and she wonders if she has a thing for Vicky too.",
+    "The player suggests they talk to her mom about it and work it out. Ronnie accepts in her own voice only if Trust and Bonding are 100 with both women.",
+    "The player invites both to Vicky's bedroom or living room, Ronnie's dorm, or the player's apartment, and tells Vicky that Ronnie has something to talk about. Ronnie explains her feelings to Vicky.",
+    "If Vicky's Trust and Bonding are maxed and one or both are in a relationship with the player, Vicky slips into the motherly role and seduces Ronnie with her sly cougar charm.",
+  ],
+  meetPlaces: ["vickyBedroom", "vickyLiving", "ronnieDorm", "apartment"] as LocationId[],
+  acceptGate: { trust: 100, bonding: 100 },
+  vickyGate: { maxed: true, relationshipWithEither: true },
+  haremLockout: true,
+  inHowToPlay: false,
+} as const;
+
 export const RONNIE_FATHER_GATE = { trust: 60, bonding: 60 } as const;
 
 /** Above 75 on both. Slow Romance also waits until the third date, same as the other girls. */
