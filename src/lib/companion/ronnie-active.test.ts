@@ -210,3 +210,51 @@ describe("debug cast cycling", () => {
     assert.equal(absentGirl(["izzy", "victoria", "ronnie"]), null);
   });
 });
+
+import { ronnieDropInChance, RONNIE_HAUNT_DROP_IN, RONNIE_CAMPUS_DROP_IN } from "@/lib/companion/cast";
+
+describe("Ronnie drop-ins outside the morning detour", () => {
+  const free = ["Monday", "Evening"] as const; // no class, not a teaching day slot
+  it("20% at her haunts when free (campus haunts too)", () => {
+    for (const p of ["gym", "field", "library", "trail", "cafe", "naturalFoods", "sportingGoods", "animeStore"] as const) {
+      assert.equal(ronnieDropInChance(p, ...free, ["izzy"]), RONNIE_HAUNT_DROP_IN, p);
+    }
+  });
+  it("5% at campus spots that are not haunts", () => {
+    for (const p of ["studyHall", "classroom", "campus"] as const) {
+      assert.equal(ronnieDropInChance(p, ...free, ["izzy"]), RONNIE_CAMPUS_DROP_IN, p);
+    }
+  });
+  it("0 elsewhere", () => {
+    for (const p of ["mall", "burger", "firm", "dorm", "ronnieDorm", "yogaStudio"] as const) {
+      assert.equal(ronnieDropInChance(p, ...free, ["izzy"]), 0, p);
+    }
+  });
+  it("never in class or while teaching", () => {
+    assert.equal(ronnieDropInChance("gym", "Monday", "Morning", ["izzy"]), 0);
+    assert.equal(ronnieDropInChance("gym", "Tuesday", "Afternoon", ["izzy"]), 0);
+    assert.equal(ronnieDropInChance("gym", "Monday", "Afternoon", ["izzy"]), RONNIE_HAUNT_DROP_IN);
+  });
+  it("never on herself, already here, at a full scene, or a place closed at night", () => {
+    assert.equal(ronnieDropInChance("gym", ...free, ["ronnie"]), 0);
+    assert.equal(ronnieDropInChance("gym", ...free, ["izzy", "ronnie"]), 0);
+    assert.equal(ronnieDropInChance("gym", ...free, ["izzy", "victoria", "izzy"]), RONNIE_HAUNT_DROP_IN);
+    assert.equal(ronnieDropInChance("gym", "Monday", "Night", ["izzy"]), 0);
+    assert.equal(ronnieDropInChance("field", "Monday", "Night", ["izzy"]), RONNIE_HAUNT_DROP_IN);
+  });
+});
+
+describe("group date to the yoga studio", () => {
+  it("only Ronnie declines; the rest still go", () => {
+    const plan = classifyInvite(
+      { location: "cafe", focus: "izzy", present: ["izzy", "victoria", "ronnie"], izzyHere: true, weekday: "Monday", timeOfDay: "Evening", pressedDuty: null },
+      "you guys want to go on a date at the yoga studio?",
+      "yogaStudio",
+      true,
+    );
+    assert.deepEqual(plan?.blocked.map((b) => b.girl), ["ronnie"]);
+    assert.match(plan!.blocked[0]!.line, /Second Wind|my job/);
+    assert.deepEqual([...(plan?.going ?? [])].sort(), ["izzy", "victoria"]);
+    assert.equal(plan?.dateGoes, true);
+  });
+});

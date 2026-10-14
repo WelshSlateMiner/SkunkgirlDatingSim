@@ -10,12 +10,15 @@ import type {
   RelationshipType,
   Roster,
   TimeOfDay,
+  Weekday,
 } from "./types";
 import { bondFromScores } from "./trust";
 import { sexualBeat } from "./intimacy";
 import { uid } from "@/lib/utils";
-import { placeOf } from "./locations";
-import { sceneOrder, sceneOthers } from "./scene";
+import { openTonight, placeOf } from "./locations";
+import { MAX_SCENE_GIRLS, sceneOrder, sceneOthers } from "./scene";
+import { dutyOf } from "./outing";
+import { RONNIE_HAUNTS } from "./ronnie-bio";
 
 export const GIRLS: GirlId[] = ["izzy", "victoria", "ronnie"];
 
@@ -847,4 +850,32 @@ export function nextGirl(girl: GirlId): GirlId {
 /** Debug: the first girl in roster order who is not in the scene, or null when all are here. */
 export function absentGirl(present: readonly GirlId[]): GirlId | null {
   return GIRLS.find((girl) => !present.includes(girl)) ?? null;
+}
+
+/** Outside the morning detour: Ronnie drops in at her haunts (bio) when she is free, else campus-area spots. */
+export const RONNIE_HAUNT_DROP_IN = 0.2;
+export const RONNIE_CAMPUS_DROP_IN = 0.05;
+export const RONNIE_HAUNT_PLACES: ReadonlySet<LocationId> = new Set(RONNIE_HAUNTS.map((h) => h.place));
+
+export function isCampusArea(place: LocationId) {
+  return !PRIVATE.has(place) && placeOf(place).group === "campus";
+}
+
+/**
+ * Chance Ronnie drops in on an in-play arrival (not the morning detour).
+ * 0 while she is in class or teaching, at a closed place, in a private room, when she is already
+ * in the scene or the focus, or when the scene already has three girls.
+ */
+export function ronnieDropInChance(
+  place: LocationId,
+  weekday: Weekday,
+  time: TimeOfDay,
+  scene: readonly GirlId[],
+): number {
+  if (scene.includes("ronnie") || new Set(scene).size >= MAX_SCENE_GIRLS) return 0;
+  if (PRIVATE.has(place) || !openTonight(place, time)) return 0;
+  if (dutyOf("ronnie", weekday, time) !== "free") return 0;
+  if (RONNIE_HAUNT_PLACES.has(place)) return RONNIE_HAUNT_DROP_IN;
+  if (isCampusArea(place)) return RONNIE_CAMPUS_DROP_IN;
+  return 0;
 }

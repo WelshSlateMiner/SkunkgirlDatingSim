@@ -261,6 +261,8 @@ export interface InvitePlan {
   going: GirlId[];
   blocked: InviteRefusal[];
   press: GirlId | null;
+  /** A group date where only some girls find the place awkward: they decline, the rest still go on the date. */
+  dateGoes?: boolean;
 }
 
 function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
@@ -333,9 +335,11 @@ export function classifyInvite(
   const targets = (group ? present : named.length === 1 ? named : [focus]).filter((id, i, all) => all.indexOf(id) === i);
   const loss = rudeness(text);
   if (dating && awkwardForAny(dest, targets)) {
+    const willing = targets.filter((girl) => !isAwkwardPlace(dest, girl));
     return {
       dest,
-      going: [],
+      going: willing,
+      dateGoes: willing.length > 0,
       blocked: targets.filter((girl) => isAwkwardPlace(dest, girl)).map((girl) => ({
         girl,
         bondingDelta: -loss,

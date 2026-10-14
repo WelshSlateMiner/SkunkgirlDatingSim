@@ -91,6 +91,7 @@ import {
   ronnieOpening,
   ronnieDropIn,
   ronnieMorningDropIn,
+  ronnieDropInChance,
   nextGirl,
   absentGirl,
   suitedPlace,
@@ -1663,7 +1664,11 @@ function applyTurn(
     for (const other of [otherGirl(focusNow), ...GIRLS.filter((g) => g !== focusNow && g !== otherGirl(focusNow))]) {
     const wasWith = state.izzyHere !== false && (state.present ?? []).includes(other);
     if (!party.includes(other) && dutyOf(other, state.weekday, state.timeOfDay) === "free") {
-      const chance = companionChance(focusNow, traveled, other);
+      // Ronnie: her own drop-in odds (haunts 20% when free, campus 5%) instead of the companion roll.
+      const chance =
+        other === "ronnie"
+          ? ronnieDropInChance(traveled, state.weekday, state.timeOfDay, [focusNow, ...party])
+          : companionChance(focusNow, traveled, other);
       if (chance > 0 && Math.random() < chance) {
         party = [...party, other];
         const first = !roster[other]?.met;
@@ -3533,6 +3538,47 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       const hinted = dating ? (awkwardMention(blob, invite) ?? invite) : invite;
       const awkward = Boolean(dating && hinted && awkwardForAny(hinted, state.present ?? []));
       const plan = classifyInvite(state, blob, hinted, awkward);
+      if (plan?.dateGoes) {
+        // Only the girls who find the place awkward decline. The rest go on the date through the normal turn.
+        const declined = new Set(plan.blocked.map((block) => block.girl));
+        const host = plan.going.includes(state.focus ?? "izzy") ? (state.focus ?? "izzy") : plan.going[0]!;
+        const base = pullFocus(asGameState(state), host);
+        let roster = base.roster;
+        for (const block of plan.blocked) {
+          if (block.bondingDelta) {
+            roster = withGirl({ ...base, roster }, block.girl, {
+              bonding: Math.max(0, (roster[block.girl]?.bonding ?? 0) + block.bondingDelta),
+            });
+          }
+        }
+        const snapshot = snapshotOf({
+          ...state,
+          ...base,
+          roster,
+          present: (state.present ?? []).filter((girl) => !declined.has(girl)),
+        } as CompanionStore);
+        set({ lastTurn: { state: structuredClone(snapshotOf(state)), turn: payload }, busy: true, draft: "", inviteReply: null });
+        await runTurn(snapshot, payload, get, set);
+        const after = [...get().messages];
+        const lines = plan.blocked.map((block) => ({
+          id: uid(),
+          role: speakerRole(block.girl),
+          at: Date.now(),
+          expression: block.expression,
+          text: block.line,
+          bondingDelta: block.bondingDelta,
+        }));
+        after.splice(Math.min(after.length, state.messages.length + 1), 0, ...lines);
+        // No travel yet (e.g. the date was only planned): the girls who declined are still standing here.
+        const now = get();
+        const stayed = now.location === state.location;
+        const patch = stayed
+          ? { messages: after, present: [...new Set([...(now.present ?? []), ...declined])] }
+          : { messages: after };
+        set(patch);
+        persist(patch, get);
+        return;
+      }
       if (plan) {
         scriptInvite(asGameState(state), plan, payload, get, set);
         return;
