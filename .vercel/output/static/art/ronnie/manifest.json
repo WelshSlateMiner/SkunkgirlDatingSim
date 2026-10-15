@@ -1,0 +1,62 @@
+{
+  "id": "ronnie",
+  "name": "Veronica",
+  "short": "Ronnie",
+  "active": true,
+  "note": "Playable. Third skunkgirl: speaker, roster card, glands, and a romance option. No lingerie art: private scenes fall back to her casual set.",
+  "outfits": {
+    "casual": "Baggy light-olive cargo pants, Love Stinks tank, backwards cap, reddish-brown boots, jester-hood purse.",
+    "athletic": "White cropped track tank, royal-blue running trunks, sports-bra band, smartwatch, ponytail, white trainers. Gym, studio, field, and trail.",
+    "private": "Blue lacy lingerie. No art yet; falls back to casual."
+  },
+  "expressions": [
+    "embarrassed",
+    "happy",
+    "idle",
+    "flirty",
+    "laughing",
+    "suspicious",
+    "shy",
+    "angry",
+    "infodump",
+    "aroused",
+    "thinking",
+    "scheming"
+  ],
+  "special": {
+    "squat": {
+      "src": "/art/ronnie/athletic/squat.webp",
+      "outfit": "athletic",
+      "locations": [
+        "gym"
+      ],
+      "when": "First time she is encountered in the gym, or when she wants to show off her strength."
+    },
+    "yoga": {
+      "src": "/art/ronnie/athletic/yoga.webp",
+      "outfit": "athletic",
+      "locations": [
+        "yogaStudio"
+      ],
+      "when": "Only while she is instructing class at the studio."
+    }
+  },
+  "spray": {
+    "defensive": {
+      "athletic": "/art/ronnie/athletic/spray-defensive.webp",
+      "casual": "/art/ronnie/casual/spray-defensive.webp"
+    },
+    "angry": {
+      "athletic": "/art/ronnie/athletic/spray-angry.webp",
+      "casual": "/art/ronnie/casual/spray-angry.webp"
+    },
+    "consent": {
+      "athletic": "/art/ronnie/athletic/spray-consent.webp",
+      "casual": "/art/ronnie/casual/spray-consent.webp"
+    },
+    "dominant": {
+      "athletic": "/art/ronnie/athletic/spray-dominant.webp",
+      "casual": "/art/ronnie/casual/spray-dominant.webp"
+    }
+  }
+}

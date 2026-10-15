@@ -61,6 +61,14 @@ describe("Ronnie rules hooked in", () => {
       assert.doesNotMatch(portraitSrc("lingerie" as never, ex, "none", "ronnie", true, "ronnieDorm"), /lingerie/);
     }
   });
+  it("wears the dorm set at home and keeps the other kits", () => {
+    assert.match(portraitSrc("casual", "idle", "none", "ronnie", false, "ronnieDorm"), /\/art\/ronnie\/home\/idle\.webp/);
+    assert.match(portraitSrc("casual", "shy", "none", "ronnie", false, "apartment"), /\/art\/ronnie\/home\/shy\.webp/);
+    assert.match(portraitSrc("casual", "idle", "consensual", "ronnie", false, "ronnieDorm"), /\/art\/ronnie\/home\/spray-consent\.webp/);
+    assert.match(portraitSrc("casual", "idle", "none", "ronnie", false, "gym"), /\/art\/ronnie\/athletic\//);
+    assert.match(portraitSrc("casual", "idle", "none", "ronnie", false, "cafe"), /\/art\/ronnie\/casual\//);
+    assert.match(portraitSrc("casual", "flirty", "none", "ronnie", false, "ronnieDorm", false, true), /\/art\/ronnie\/dress\//);
+  });
 });
 
 describe("a real three-girl turn", () => {

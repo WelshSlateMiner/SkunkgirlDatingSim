@@ -84,6 +84,15 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
             </p>
           </section>
           <section>
+            <h3 className="font-display text-base text-fg">Collectibles</h3>
+            <p className="mt-1">
+              Once Trust and Bonding with a girl are both at least 50, the first time you see her on a given
+              day there is a small chance she gives you something of hers. Each gift happens once. The second
+              gift waits until both meters are at least 90, and only after she has already given the first.
+              They land in Inventory under Collectibles, and on the cabinet in your apartment.
+            </p>
+          </section>
+          <section>
             <h3 className="font-display text-base text-fg">Trust and Bonding</h3>
             <p className="mt-1">
               Trust is how you treat the skunkgirl parts of her. Bonding is whether you actually get along.

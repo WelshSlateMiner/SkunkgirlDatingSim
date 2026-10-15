@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { sceneNames, sceneOrder } from "@/lib/companion/scene";
-import { Backpack, ChevronsDownUp, ChevronsUpDown, DollarSign, GripHorizontal, RotateCcw, ShowerHead, Volume2, VolumeX } from "lucide-react";
+import { Backpack, ChevronsDownUp, ChevronsUpDown, DollarSign, Download, GripHorizontal, RotateCcw, ShowerHead, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CharacterPortrait } from "@/components/companion/CharacterPortrait";
 import { ChatComposer } from "@/components/companion/ChatComposer";
@@ -16,6 +16,7 @@ import { HowToPlay } from "@/components/companion/HowToPlay";
 import { PassTime } from "@/components/companion/PassTime";
 import { SleepButton } from "@/components/companion/SleepButton";
 import { InventorySheet } from "@/components/companion/InventorySheet";
+import { KeepsakeReveal, KeepsakeShelf } from "@/components/companion/KeepsakeShelf";
 import { ShowerSheet } from "@/components/companion/ShowerSheet";
 import { StinkMeter } from "@/components/companion/StinkMeter";
 import { SaveChatButton } from "@/components/companion/SaveChatButton";
@@ -32,8 +33,9 @@ import { dateIsDue } from "@/lib/companion/outing";
 import { romanceBlocked, girlName } from "@/lib/companion/cast";
 import { isMuted, setMuted, unlockAudio } from "@/lib/companion/audio";
 import { placeOf } from "@/lib/companion/locations";
-import { OUTFIT_LABEL, asOutfitId, victoriaLingerieOn } from "@/lib/companion/portraits";
-import { writeSave } from "@/lib/companion/save";
+import { OUTFIT_LABEL, asOutfitId, victoriaGownOn, victoriaLingerieOn } from "@/lib/companion/portraits";
+import { ronnieOutfitName } from "@/lib/companion/ronnie-art";
+import { writeSave, downloadSave } from "@/lib/companion/save";
 import { useCompanion } from "@/lib/companion/store";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +66,7 @@ export function CompanionApp() {
   const relationshipType = useCompanion((s) => s.relationshipType);
   const roster = useCompanion((s) => s.roster);
   const dates = useCompanion((s) => s.dates);
+  const activeDate = useCompanion((s) => s.activeDate);
   const dateSpots = useCompanion((s) => s.dateSpots);
   const dateDraft = useCompanion((s) => s.dateDraft);
   const dateReview = useCompanion((s) => s.dateReview);
@@ -75,6 +78,7 @@ export function CompanionApp() {
   const [shower, setShower] = useState(false);
   const [compact, setCompact] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [stage, setStage] = useState<HTMLDivElement | null>(null);
   const dragRef = useRef<{ dx: number; dy: number; w: number } | null>(null);
   const [spot, setSpot] = useState<{ x: number; y: number; w: number } | null>(null);
 
@@ -147,13 +151,21 @@ export function CompanionApp() {
 
   const place = placeOf(location);
   const together = sceneOrder(present ?? []);
+  const who = focus ?? "izzy";
+  const dateGirl = activeDate?.girl;
   const outfitLabel = together.length >= 2
     ? sceneNames(together)
-    : (focus ?? "izzy") === "victoria"
-      ? victoriaLingerieOn(location, Boolean(flags.intimateScene))
-        ? "Black blazer set"
-        : "Office blouse"
-      : OUTFIT_LABEL[asOutfitId(outfit) ?? "casual"];
+    : who === "victoria"
+      ? dateGirl === "victoria" || (victoriaGownOn(location) && !victoriaLingerieOn(location, Boolean(flags.intimateScene)))
+        ? "Royal blue gown"
+        : victoriaLingerieOn(location, Boolean(flags.intimateScene))
+          ? "Black blazer set"
+          : "Office blouse"
+      : who === "ronnie"
+        ? ronnieOutfitName(location, dateGirl === "ronnie")
+        : dateGirl === "izzy"
+          ? OUTFIT_LABEL.dress
+          : OUTFIT_LABEL[asOutfitId(outfit) ?? "casual"];
   const gate = romanceGate(mode, dates ?? 0, dateSpots ?? []);
   const blocked = romanceBlocked(
     { focus: focus ?? "izzy", relationshipType: relationshipType ?? "mono", roster, gameMode: mode },
@@ -170,13 +182,12 @@ export function CompanionApp() {
       : trust >= 90 && bonding >= 60);
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden bg-bg text-fg">
-      <img
-        src={place.image}
-        alt=""
-        className="absolute inset-0 size-full object-cover"
-      />
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg">
+      <div ref={setStage} className="absolute inset-0">
+        <img src={place.image} alt="" className="size-full object-cover" />
+      </div>
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/20 to-bg/35" />
+      <KeepsakeShelf stage={stage} />
       <FxLayer />
       <GasVeil />
       <StinkMeter />
@@ -202,7 +213,10 @@ export function CompanionApp() {
         <div className="min-w-[12rem] flex-1 rounded-lg border border-border bg-bg/55 px-3 py-2 backdrop-blur-sm">
           <TrustMeter />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-1 [&_button]:size-9 [&_button]:shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => downloadSave(useCompanion.getState())} aria-label="Save to file" title="Save to file">
+            <Download />
+          </Button>
           <LocationSheet />
           {isStore(location) ? (
             <Button variant="ghost" size="icon" onClick={() => setShop(true)} aria-label="Buy A Gift" title="Buy A Gift">
@@ -242,7 +256,7 @@ export function CompanionApp() {
 
       <div
         className={cn(
-          "relative z-20 flex min-h-[calc(100dvh-4.75rem)] items-end p-3 sm:p-5 lg:max-w-[54%]",
+          "relative z-20 flex min-h-0 flex-1 items-end overflow-hidden p-3 sm:p-5 lg:max-w-[54%]",
           compact ? "pb-16 sm:pb-20" : "pb-20 sm:pb-24",
         )}
       >
@@ -250,7 +264,7 @@ export function CompanionApp() {
           ref={cardRef}
           style={spot ? { left: spot.x, top: spot.y, width: spot.w } : undefined}
           className={cn(
-            "w-full rounded-xl border border-border bg-bg/78 shadow-[0_16px_50px_rgba(0,0,0,0.35)] backdrop-blur-md",
+            "max-h-full w-full overflow-y-auto rounded-xl border border-border bg-bg/78 shadow-[0_16px_50px_rgba(0,0,0,0.35)] backdrop-blur-md",
             "transition-[padding] duration-[var(--motion-fast)] ease-[var(--ease-smooth-out)]",
             compact ? "px-3 py-2" : "p-4 sm:p-5",
             spot && "fixed z-30",
@@ -326,6 +340,7 @@ export function CompanionApp() {
       {shop && isStore(location) ? <GiftShop place={location} onClose={() => setShop(false)} /> : null}
       {bag ? <InventorySheet onClose={() => setBag(false)} /> : null}
       {shower ? <ShowerSheet onClose={() => setShower(false)} /> : null}
+      <KeepsakeReveal />
       <LensCoat />
       <div
         data-fade

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HowToPlay } from "@/components/companion/HowToPlay";
 import { ChatLogLibrary } from "@/components/companion/ChatLogLibrary";
 import { unlockAudio } from "@/lib/companion/audio";
 import { FIRST_MEETS, LOCATIONS } from "@/lib/companion/locations";
+import { downloadSave } from "@/lib/companion/save";
 import { useCompanion } from "@/lib/companion/store";
 import type { GameMode, LocationId, PlayerFartRole, PlayerGender, RelationshipType } from "@/lib/companion/types";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,9 @@ export function StartScreen() {
   const hydrated = useCompanion((s) => s.hydrated);
   const hasSave = useCompanion((s) => Boolean(s.playerName && s.messages.length));
   const resume = useCompanion((s) => s.resume);
+  const openSave = useCompanion((s) => s.openSave);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [fileError, setFileError] = useState("");
   const [name, setName] = useState("");
   const [gender, setGender] = useState<PlayerGender | null>(null);
   const [fartRole, setFartRole] = useState<PlayerFartRole | null>(null);
@@ -233,6 +237,45 @@ export function StartScreen() {
               </Button>
             ) : null}
           </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => fileRef.current?.click()}
+            >
+              Open save file
+            </Button>
+            {hasSave ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  unlockAudio();
+                  void downloadSave(useCompanion.getState());
+                }}
+              >
+                Save to file
+              </Button>
+            ) : null}
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              void file.text().then((text) => {
+                unlockAudio();
+                setFileError(openSave(text) ? "" : "That file isn't a Skunkgirls save.");
+              });
+            }}
+          />
+          {fileError ? <p className="text-sm text-cream/80">{fileError}</p> : null}
           <div className="flex items-center gap-4 pt-1">
             <HowToPlay tone="title" />
             <ChatLogLibrary />

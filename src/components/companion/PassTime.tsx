@@ -100,9 +100,8 @@ export function PassTime() {
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)} aria-label="Time Skips And Work" title="Time Skips And Work">
+      <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Time Skips And Work" title="Time Skips And Work">
         <Timer />
-        <span className="text-xs leading-tight">Time Skips And Work</span>
       </Button>
       {typeof document !== "undefined" && sheet ? createPortal(sheet, document.body) : null}
     </>

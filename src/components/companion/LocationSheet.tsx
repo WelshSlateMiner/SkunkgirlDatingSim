@@ -145,9 +145,8 @@ export function LocationSheet() {
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)} aria-label="Places">
+      <Button variant="outline" size="icon" onClick={() => setOpen(true)} aria-label="Places" title="Places">
         <MapPin />
-        <span className="hidden sm:inline">Places</span>
       </Button>
       {typeof document !== "undefined" && sheet ? createPortal(sheet, document.body) : null}
     </>

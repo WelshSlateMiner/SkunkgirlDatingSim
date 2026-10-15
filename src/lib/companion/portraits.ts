@@ -122,6 +122,27 @@ export function victoriaLingerieOn(locationId: string, intimate: boolean) {
     locationId === "apartment"
   );
 }
+
+/** Osteria Vale is the table worth dressing for. */
+export function victoriaGownOn(locationId: string | undefined) {
+  return locationId === "italian";
+}
+
+const VICTORIA_GOWN: Record<Expression, string> = {
+  embarrassed: "/art/victoria/gown/embarrassed.webp",
+  happy: "/art/victoria/gown/happy.webp",
+  idle: "/art/victoria/gown/idle.webp",
+  flirty: "/art/victoria/gown/flirty.webp",
+  laughing: "/art/victoria/gown/laughing.webp",
+  suspicious: "/art/victoria/gown/suspicious.webp",
+  shy: "/art/victoria/gown/shy.webp",
+  angry: "/art/victoria/gown/angry.webp",
+  infodump: "/art/victoria/gown/infodump.webp",
+  aroused: "/art/victoria/gown/aroused.webp",
+  thinking: "/art/victoria/gown/thinking.webp",
+  scheming: "/art/victoria/gown/scheming.webp",
+  spray: "/art/victoria/gown/angry.webp",
+};
 const VICTORIA_SPRAY: Record<Exclude<SprayKind, "none">, string> = {
   angry: "/art/victoria/spray-angry.webp",
   consensual: "/art/victoria/spray-consent.webp",
@@ -137,14 +158,19 @@ export function portraitSrc(
   lingerie = false,
   place?: LocationId,
   instructing = false,
+  dating = false,
 ) {
-  // Ronnie ignores the Izzy outfit ids and has no lingerie art: her look follows the location.
-  if (girl === "ronnie") return ronnieSrc(expression, sprayKind, place, instructing);
+  // Ronnie ignores the Izzy outfit ids and has no lingerie art: her look follows the location, unless she is on a date.
+  if (girl === "ronnie") return ronnieSrc(expression, sprayKind, place, instructing, dating);
   if (girl === "victoria") {
-    if (lingerie) {
+    if (lingerie && !dating) {
       if (sprayKind !== "none") return VICTORIA_LINGERIE_SPRAY[sprayKind];
       if (expression === "spray") return VICTORIA_LINGERIE.spray;
       return VICTORIA_LINGERIE[expression] ?? VICTORIA_LINGERIE.idle;
+    }
+    if (dating || victoriaGownOn(place)) {
+      if (sprayKind !== "none" || expression === "spray") return VICTORIA_GOWN.angry;
+      return VICTORIA_GOWN[expression] ?? VICTORIA_GOWN.idle;
     }
     if (sprayKind !== "none") return VICTORIA_SPRAY[sprayKind];
     if (expression === "spray") return VICTORIA.spray;

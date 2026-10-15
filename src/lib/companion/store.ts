@@ -27,6 +27,7 @@ import {
 } from "./intimacy";
 import { isDateAsk, romanceGate } from "./dates";
 import { giftById, isStore } from "./gifts";
+import { offerKeepsakes } from "./keepsakes";
 import {
   APOLOGY,
   CRUEL,
@@ -110,6 +111,7 @@ import {
   loadSave,
   openingState,
   parseMarkAffair,
+  readSaveText,
   writeSave,
 } from "./save";
 import { defensiveSprayCopy, dominantSprayMode, finishTanks, madeContact, readTank, resolveSprayEvent, spendTank, talkedDown, threatKind, type GlandTank } from "./spray";
@@ -189,6 +191,7 @@ interface CompanionStore extends GameState {
   hydrate: () => void;
   start: (name: string, meet?: LocationId, gender?: PlayerGender, fartRole?: PlayerFartRole, mode?: GameMode, relationship?: RelationshipType) => void;
   resume: () => void;
+  openSave: (text: string) => boolean;
   reset: () => void;
   send: (turn: TurnInput) => Promise<void>;
   travel: (id: LocationId) => void;
@@ -214,6 +217,8 @@ interface CompanionStore extends GameState {
   studyTime: () => void;
   showPlaces: boolean;
   dismissPlaces: () => void;
+  keepsakeQueue: string[];
+  shiftKeepsake: () => void;
   takeShower: (ids: string[]) => void;
   confirmMeet: () => void;
   beginMorning: (place: LocationId) => void;
@@ -327,6 +332,12 @@ function asGameState(s: CompanionStore): GameState {
     dutyNotice: Array.isArray(s.dutyNotice) ? s.dutyNotice : [],
     flauntDay: s.flauntDay ?? {},
     markAffair: parseMarkAffair(s.markAffair),
+    keepsakes: Array.isArray(s.keepsakes) ? s.keepsakes.filter((id): id is string => typeof id === "string") : [],
+    seenDay: {
+      ...(typeof s.seenDay?.izzy === "number" ? { izzy: s.seenDay.izzy } : {}),
+      ...(typeof s.seenDay?.victoria === "number" ? { victoria: s.seenDay.victoria } : {}),
+      ...(typeof s.seenDay?.ronnie === "number" ? { ronnie: s.seenDay.ronnie } : {}),
+    },
   };
 }
 
@@ -412,11 +423,17 @@ function deDupeLine(state: GameState, role: GirlId, line: string, asked: string)
           "You heard me the first time. Add something new.",
           "I'm still on what you said. Not on a copy of myself.",
         ]
-      : [
-          "I'm not gonna say that twice. Your turn. New words.",
-          "Yeah, I heard myself. What did you actually mean.",
-          "Looping me isn't a conversation. Try the next sentence.",
-        ];
+      : role === "ronnie"
+        ? [
+            "I already said that. New sentence.",
+            "You heard me. What else you got?",
+            "I'm not running the same lap twice. Talk.",
+          ]
+        : [
+            "I'm not gonna say that twice. Your turn. New words.",
+            "Yeah, I heard myself. What did you actually mean.",
+            "Looping me isn't a conversation. Try the next sentence.",
+          ];
   const fresh = swaps.find((swap) => swap !== prev.text);
   return fresh ?? swaps[0]!;
 }
@@ -1150,7 +1167,38 @@ async function runTurn(
 }
 
 function persist(partial: Partial<GameState>, get: () => CompanionStore) {
-  writeSave(pushFocus({ ...asGameState(get()), ...partial }));
+  const merged = pushFocus({ ...asGameState(get()), ...partial });
+  const offer = offerKeepsakes(merged, Math.random);
+  if (!offer.changed) {
+    writeSave(merged);
+    return;
+  }
+  const messages: GameState["messages"] = [
+    ...merged.messages,
+    ...offer.gained.flatMap((item) => [
+      {
+        id: uid(),
+        role: "narrator" as const,
+        at: Date.now(),
+        text: `${item.girl === "victoria" ? "Victoria" : item.girl === "ronnie" ? "Ronnie" : "Izzy"} holds something out.`,
+      },
+      {
+        id: uid(),
+        role: item.girl,
+        at: Date.now(),
+        expression: item.expression,
+        text: item.line,
+      },
+    ]),
+  ];
+  const next: GameState = { ...merged, keepsakes: offer.keepsakes, seenDay: offer.seenDay, messages };
+  useCompanion.setState({
+    keepsakes: next.keepsakes,
+    seenDay: next.seenDay,
+    messages,
+    keepsakeQueue: [...(get().keepsakeQueue ?? []), ...offer.gained.map((item) => item.id)],
+  });
+  writeSave(next);
 }
 
 function takeOne(items: string[], id: string | null | undefined) {
@@ -1305,9 +1353,13 @@ function applyTurn(
     (state.relationshipType ?? "mono") !== "harem" &&
     Boolean(state.partner) &&
     state.partner !== (state.focus ?? "izzy");
+  const focusForDuty = state.focus ?? "izzy";
+  const stuckOnDuty = dutyOf(focusForDuty, state.weekday, state.timeOfDay) !== "free";
+  const ronnieWontEnter =
+    focusForDuty === "ronnie" && (asked === "dorm" || asked === "vickyLiving" || asked === "vickyBedroom");
   if (asked && asked !== nextLocation && state.timeOfDay === "Night" && !openTonight(asked)) {
     nightShut = asked;
-  } else if (asked && asked !== nextLocation && !(askingDate && (!dateReady || taken))) {
+  } else if (asked && asked !== nextLocation && !stuckOnDuty && !ronnieWontEnter && !(askingDate && (!dateReady || taken))) {
     const tone = inviteVerdict(state, asked);
     if (inviteAccepted(tone)) {
       traveled = asked;
@@ -3391,6 +3443,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
   fadeMs: 700,
   showPlaces: false,
   lastTurn: null,
+  keepsakeQueue: [],
   debugFartIndex: -1,
   debugPoseIndex: -1,
   debugOutfitIndex: Math.max(0, OUTFIT_CYCLE.indexOf("casual")),
@@ -3408,6 +3461,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       inviteReply: null,
       showPlaces: false,
       lastTurn: null,
+      keepsakeQueue: [],
     });
   },
 
@@ -3440,12 +3494,31 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       debugOutfitIndex: Math.max(0, OUTFIT_CYCLE.indexOf(next.outfit)),
       fxPulse: { kind: "blush", key: Date.now() },
       lastTurn: null,
+      keepsakeQueue: [],
     });
   },
 
   resume: () => {
     const saved = loadSave();
-    if (saved?.started) set({ ...saved, hydrated: true, spraySpotlight: false, draft: "", inviteReply: null, lastTurn: null });
+    if (saved?.started) set({ ...saved, hydrated: true, spraySpotlight: false, draft: "", inviteReply: null, lastTurn: null, keepsakeQueue: [] });
+  },
+
+  openSave: (text) => {
+    const saved = readSaveText(text);
+    if (!saved?.started) return false;
+    writeSave(saved);
+    set({
+      ...saved,
+      hydrated: true,
+      busy: false,
+      spraySpotlight: false,
+      draft: "",
+      inviteReply: null,
+      lastTurn: null,
+      showPlaces: false,
+      keepsakeQueue: [],
+    });
+    return true;
   },
 
   reset: () => {
@@ -3465,6 +3538,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       debugPoseIndex: -1,
       debugOutfitIndex: 0,
       lastTurn: null,
+      keepsakeQueue: [],
     });
   },
 
@@ -4745,6 +4819,8 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
   },
 
   dismissPlaces: () => set({ showPlaces: false }),
+
+  shiftKeepsake: () => set((state) => ({ keepsakeQueue: (state.keepsakeQueue ?? []).slice(1) })),
 
   beginMorning: (place: LocationId) => {
     const s = get();

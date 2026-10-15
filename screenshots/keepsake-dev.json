@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Skunkgirls",
+      "hasCanvas": false,
+      "bodyTextLen": 742,
+      "bodyTextHash": "8d73ab9f079a53b080a0dea21cbdb6799779561d7c3d57e948deb168bb05234c",
+      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Usually Izzy. Sometimes Vicky ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/keepsake-dev.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Skunkgirls",
+      "hasCanvas": false,
+      "bodyTextLen": 742,
+      "bodyTextHash": "8d73ab9f079a53b080a0dea21cbdb6799779561d7c3d57e948deb168bb05234c",
+      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Usually Izzy. Sometimes Vicky ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/keepsake-dev-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/keepsake-dev.json"
+}

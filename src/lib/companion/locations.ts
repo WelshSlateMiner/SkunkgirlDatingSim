@@ -217,7 +217,7 @@ export const LOCATIONS: Record<LocationId, LocationDef> = {
   apartment: {
     id: "apartment",
     name: "Your Apartment",
-    what: "The player's one-bedroom apartment. Simple furnishings, light blue walls, dark grey carpet, a full-size mattress on a faux-wood bed frame, and a few music and movie posters. Left sparse on purpose so it can stand in as your own place.",
+    what: "The player's one-bedroom apartment. Simple furnishings, light blue walls, dark grey carpet, a full-size mattress on a faux-wood bed frame, a few music and movie posters, and a wooden display cabinet with twelve cubbies. Left sparse on purpose so it can stand in as your own place. Gifts the girls give sit in that cabinet.",
     blurb: "Light blue walls, grey carpet, and a bed that is yours.",
     group: "private",
     minTrust: 40,

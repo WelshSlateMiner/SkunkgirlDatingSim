@@ -47,17 +47,17 @@ export function topScent(scent: ScentFrom): GirlId | null {
   return best && !tie ? best : null;
 }
 
-/** Who the player currently smells like. Off at 20 or below, and off on a tie. */
+/** Who the player currently smells like. Needs the meter at 20 and one girl at 20 or more. Off on a tie. */
 export function markedBy(stink: number, scent: ScentFrom): GirlId | null {
-  if (stink <= 20) return null;
+  if (clampStink(stink) < 20) return null;
   const top = topScent(scent);
-  return top && (scent[top] ?? 0) > 20 ? top : null;
+  if (!top || (scent[top] ?? 0) < 20) return null;
+  return top;
 }
 
 export function markedLabel(stink: number, scent: ScentFrom) {
-  if (stink <= 0) return "Nobody";
-  const top = topScent(scent);
-  return top && (scent[top] ?? 0) > 0 ? SCENT_NAME[top] : "Nobody";
+  const who = markedBy(stink, normalizeScent(scent));
+  return who ? SCENT_NAME[who] : "Nobody";
 }
 
 export function reduceStink(stink: number, scent: ScentFrom, cut: number) {

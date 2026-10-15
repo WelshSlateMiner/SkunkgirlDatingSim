@@ -6,10 +6,11 @@ import { asOutfitId } from "./portraits";
 import { blankCard, initialCast, oneGreeting } from "./cast";
 import { economySeed } from "./outing";
 import { readSceneFarts } from "./scene";
+import { keepsakeById } from "./keepsakes";
 import { readTank } from "./spray";
 
 export const SAVE_KEY = "izzy-companion-save";
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 export const defaultFlags = (): GameFlags => ({
   invitedMexican: false,
@@ -293,6 +294,8 @@ export function openingState(
     messages,
     ...economySeed(),
     ...initialCast("izzy"),
+    keepsakes: [],
+    seenDay: {},
   };
 }
 
@@ -347,6 +350,8 @@ export function blankState(): GameState {
     debugOutfitLock: false,
     ...economySeed(),
     ...initialCast("izzy"),
+    keepsakes: [],
+    seenDay: {},
   };
 }
 
@@ -535,6 +540,14 @@ export function migrate(raw: GameState): GameState {
       : [],
     flauntDay: raw.flauntDay ?? {},
     markAffair: parseMarkAffair(raw.markAffair),
+    keepsakes: Array.isArray(raw.keepsakes)
+      ? raw.keepsakes.filter((id): id is string => typeof id === "string" && Boolean(keepsakeById(id)))
+      : [],
+    seenDay: {
+      ...(typeof raw.seenDay?.izzy === "number" ? { izzy: raw.seenDay.izzy } : {}),
+      ...(typeof raw.seenDay?.victoria === "number" ? { victoria: raw.seenDay.victoria } : {}),
+      ...(typeof raw.seenDay?.ronnie === "number" ? { ronnie: raw.seenDay.ronnie } : {}),
+    },
     otherSprayKind:
       raw.otherSprayKind === "angry" ||
       raw.otherSprayKind === "consensual" ||
@@ -580,5 +593,47 @@ export function clearSave() {
     localStorage.removeItem(SAVE_KEY);
   } catch {
     /* ignore */
+  }
+}
+
+export function saveFileName(state: Pick<GameState, "playerName">) {
+  const who = (state.playerName || "run").replace(/[^\w-]+/g, "").slice(0, 24) || "run";
+  return `skunkgirls-${who}.json`;
+}
+
+/** Download or share the run as a JSON file the player can keep. */
+export async function downloadSave(state: GameState) {
+  const body = JSON.stringify({ ...state, started: true });
+  const name = saveFileName(state);
+  const file = new File([body], name, { type: "application/json" });
+  if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "Skunkgirls save" });
+      return;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Read a save file. Null if it is not one of ours. */
+export function readSaveText(text: string): GameState | null {
+  try {
+    const data = JSON.parse(text) as GameState;
+    if (!data || typeof data !== "object") return null;
+    if (typeof data.playerName !== "string" || !Array.isArray(data.messages)) return null;
+    const state = migrate(data);
+    if (!state.playerName.trim() && state.messages.length === 0) return null;
+    return { ...state, started: true };
+  } catch {
+    return null;
   }
 }

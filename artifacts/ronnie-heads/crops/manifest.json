@@ -1,0 +1,420 @@
+[
+  {
+    "name": "ath_angry",
+    "outfit": "athletic",
+    "file": "angry",
+    "crop": [
+      300,
+      125,
+      455,
+      225
+    ],
+    "side": "left",
+    "ear": [
+      384,
+      172,
+      36,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_angry.png"
+  },
+  {
+    "name": "ath_happy",
+    "outfit": "athletic",
+    "file": "happy",
+    "crop": [
+      300,
+      130,
+      455,
+      225
+    ],
+    "side": "left",
+    "ear": [
+      380,
+      175,
+      34,
+      36
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_happy.png"
+  },
+  {
+    "name": "ath_idle",
+    "outfit": "athletic",
+    "file": "idle",
+    "crop": [
+      305,
+      140,
+      465,
+      235
+    ],
+    "side": "left",
+    "ear": [
+      392,
+      185,
+      36,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_idle.png"
+  },
+  {
+    "name": "ath_aroused",
+    "outfit": "athletic",
+    "file": "aroused",
+    "crop": [
+      295,
+      130,
+      455,
+      230
+    ],
+    "side": "left",
+    "ear": [
+      378,
+      178,
+      36,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_aroused.png"
+  },
+  {
+    "name": "ath_flirty",
+    "outfit": "athletic",
+    "file": "flirty",
+    "crop": [
+      315,
+      165,
+      490,
+      265
+    ],
+    "side": "left",
+    "ear": [
+      395,
+      210,
+      38,
+      36
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_flirty.png"
+  },
+  {
+    "name": "ath_infodump",
+    "outfit": "athletic",
+    "file": "infodump",
+    "crop": [
+      310,
+      125,
+      470,
+      225
+    ],
+    "side": "left",
+    "ear": [
+      388,
+      172,
+      34,
+      34
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_infodump.png"
+  },
+  {
+    "name": "ath_thinking",
+    "outfit": "athletic",
+    "file": "thinking",
+    "crop": [
+      300,
+      135,
+      460,
+      235
+    ],
+    "side": "left",
+    "ear": [
+      380,
+      180,
+      36,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_thinking.png"
+  },
+  {
+    "name": "ath_suspicious",
+    "outfit": "athletic",
+    "file": "suspicious",
+    "crop": [
+      295,
+      125,
+      455,
+      225
+    ],
+    "side": "left",
+    "ear": [
+      372,
+      172,
+      38,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_suspicious.png"
+  },
+  {
+    "name": "ath_scheming",
+    "outfit": "athletic",
+    "file": "scheming",
+    "crop": [
+      295,
+      135,
+      460,
+      230
+    ],
+    "side": "left",
+    "ear": [
+      378,
+      178,
+      38,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_scheming.png"
+  },
+  {
+    "name": "ath_laughing",
+    "outfit": "athletic",
+    "file": "laughing",
+    "crop": [
+      295,
+      125,
+      460,
+      230
+    ],
+    "side": "left",
+    "ear": [
+      378,
+      172,
+      38,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_laughing.png"
+  },
+  {
+    "name": "ath_shy",
+    "outfit": "athletic",
+    "file": "shy",
+    "crop": [
+      295,
+      130,
+      460,
+      230
+    ],
+    "side": "left",
+    "ear": [
+      378,
+      172,
+      38,
+      40
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_shy.png"
+  },
+  {
+    "name": "ath_embarrassed",
+    "outfit": "athletic",
+    "file": "embarrassed",
+    "crop": [
+      295,
+      140,
+      445,
+      220
+    ],
+    "side": "left",
+    "ear": [
+      370,
+      178,
+      36,
+      32
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_embarrassed.png"
+  },
+  {
+    "name": "ath_squat",
+    "outfit": "athletic",
+    "file": "squat",
+    "crop": [
+      500,
+      135,
+      690,
+      255
+    ],
+    "side": "left",
+    "ear": [
+      590,
+      192,
+      40,
+      40
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_squat.png"
+  },
+  {
+    "name": "ath_sa",
+    "outfit": "athletic",
+    "file": "spray-angry",
+    "crop": [
+      340,
+      165,
+      510,
+      285
+    ],
+    "side": "right",
+    "ear": [
+      408,
+      222,
+      42,
+      44
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_sa.png"
+  },
+  {
+    "name": "ath_sc",
+    "outfit": "athletic",
+    "file": "spray-consent",
+    "crop": [
+      345,
+      150,
+      520,
+      270
+    ],
+    "side": "right",
+    "ear": [
+      418,
+      208,
+      42,
+      44
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_sc.png"
+  },
+  {
+    "name": "ath_sdef",
+    "outfit": "athletic",
+    "file": "spray-defensive",
+    "crop": [
+      355,
+      155,
+      540,
+      280
+    ],
+    "side": "right",
+    "ear": [
+      438,
+      212,
+      44,
+      46
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_sdef.png"
+  },
+  {
+    "name": "ath_sdom",
+    "outfit": "athletic",
+    "file": "spray-dominant",
+    "crop": [
+      490,
+      145,
+      670,
+      270
+    ],
+    "side": "right",
+    "ear": [
+      565,
+      202,
+      44,
+      46
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_sdom.png"
+  },
+  {
+    "name": "cas_sa",
+    "outfit": "casual",
+    "file": "spray-angry",
+    "crop": [
+      450,
+      155,
+      630,
+      275
+    ],
+    "side": "right",
+    "ear": [
+      518,
+      212,
+      40,
+      44
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/cas_sa.png"
+  },
+  {
+    "name": "cas_sc",
+    "outfit": "casual",
+    "file": "spray-consent",
+    "crop": [
+      445,
+      148,
+      630,
+      265
+    ],
+    "side": "right",
+    "ear": [
+      518,
+      202,
+      42,
+      46
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/cas_sc.png"
+  },
+  {
+    "name": "cas_sdef",
+    "outfit": "casual",
+    "file": "spray-defensive",
+    "crop": [
+      425,
+      145,
+      620,
+      260
+    ],
+    "side": "right",
+    "ear": [
+      502,
+      198,
+      44,
+      44
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/cas_sdef.png"
+  },
+  {
+    "name": "cas_sdom",
+    "outfit": "casual",
+    "file": "spray-dominant",
+    "crop": [
+      460,
+      155,
+      650,
+      275
+    ],
+    "side": "right",
+    "ear": [
+      532,
+      208,
+      42,
+      44
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/cas_sdom.png"
+  },
+  {
+    "name": "ath_yoga",
+    "outfit": "athletic",
+    "file": "yoga",
+    "crop": [
+      170,
+      655,
+      330,
+      760
+    ],
+    "side": "left",
+    "ear": [
+      255,
+      708,
+      34,
+      38
+    ],
+    "path": "/workspace/artifacts/ronnie-heads/crops/ath_yoga.png"
+  }
+]

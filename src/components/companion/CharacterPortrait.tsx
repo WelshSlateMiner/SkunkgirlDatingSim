@@ -19,19 +19,21 @@ function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra
   const pulse = useCompanion((s) => s.fxPulse);
   const location = useCompanion((s) => s.location);
   const intimate = useCompanion((s) => Boolean(s.flags.intimateScene));
+  const activeDate = useCompanion((s) => s.activeDate);
   const [stinkUntil, setStinkUntil] = useState(0);
 
   const mine = girl === focus;
-  const outfit = mine ? liveOutfit : (card?.outfit ?? (girl === "victoria" ? "work" : "casual"));
+  const dating = activeDate?.girl === girl;
+  const outfit = dating && girl === "izzy" ? "dress" : mine ? liveOutfit : (card?.outfit ?? (girl === "victoria" ? "work" : "casual"));
   // An "extra" is a third-or-later girl. She reads her own pulse instead of the shared "other" one.
   const extraKind = extra ? pulse.extraKinds?.[girl] : undefined;
   const joinedSpray = extra ? extraKind === "spray" : !mine && otherSpray !== "none";
   const joinedFart = extra ? extraKind === "fart" : !mine && pulse.otherKind === "fart";
   const expression = joinedSpray ? "spray" : mine ? liveExpression : (card?.expression ?? "idle");
   const sprayKind = mine ? liveSpray : joinedSpray ? (extra ? (pulse.extraSprayKinds?.[girl] ?? "defensive") : otherSpray) : "none";
-  const lingerie = girl === "victoria" && victoriaLingerieOn(location, intimate);
+  const lingerie = girl === "victoria" && !dating && victoriaLingerieOn(location, intimate);
   const instructing = useCompanion((s) => girl === "ronnie" && ronnieInstructing(s));
-  const src = portraitSrc(outfit, expression, sprayKind, girl, lingerie, location, instructing);
+  const src = portraitSrc(outfit, expression, sprayKind, girl, lingerie, location, instructing, dating);
   const gas = mine ? pulse.kind === "fart" || pulse.kind === "spray" : joinedFart || joinedSpray;
   const stink = gas && stinkUntil !== pulse.key;
   const fullSpray = mine
@@ -75,8 +77,7 @@ function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra
         stink && "izzy-fart",
         showSpot && "izzy-spotlight",
         busy && mine && "opacity-95",
-        // Three on screen: the girl being talked to stands forward, the others ease back a touch.
-        count >= 3 && (mine ? "z-10" : "scale-[0.94] opacity-90"),
+        count >= 2 && mine && "z-10",
       )}
     >
       <img

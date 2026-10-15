@@ -390,6 +390,10 @@ export interface GameState {
   flauntDay: Partial<Record<GirlId, number>>;
   /** A girlfriend's ongoing reaction to being marked by the other skunkgirl. */
   markAffair: MarkAffair | null;
+  /** Keepsakes the girls have given, in the order they arrived. Shelf fills in this order. */
+  keepsakes: string[];
+  /** daySerial of the last first-meeting roll for that girl. */
+  seenDay: Partial<Record<GirlId, number>>;
 }
 
 export interface IzzyTurn {

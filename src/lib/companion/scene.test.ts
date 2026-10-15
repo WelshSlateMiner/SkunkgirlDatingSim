@@ -33,8 +33,10 @@ describe("scene roster", () => {
   });
   it("names and lays out by head count", () => {
     assert.equal(sceneNames(["victoria", "izzy"]), "Izzy and Victoria");
-    assert.equal(sceneLayout(2).width, "w-1/2");
-    assert.equal(sceneLayout(3).width, "w-1/3");
+    assert.match(sceneLayout(2).width, /-mx-/);
+    assert.match(sceneLayout(3).width, /-mx-\[16%\]/);
+    assert.equal(sceneLayout(1).height.includes("92dvh"), true);
+    assert.equal(sceneLayout(2).height, sceneLayout(3).height);
   });
 });
 

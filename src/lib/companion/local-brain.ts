@@ -10,7 +10,7 @@ import {
   shouldInitiateIntimate,
 } from "./spray";
 import { bothHere, duetFallback, otherGirl, romanceBlocked } from "./cast";
-import { addressedGirls, isGroupAddress } from "./outing";
+import { addressedGirls, dutyOf, isGroupAddress } from "./outing";
 import { localSceneExtras, sceneGirls } from "./scene";
 import {
   holdCopy,
@@ -112,6 +112,143 @@ function hits(text: string, words: string[]) {
 
 function pick<T>(arr: T[]) {
   return arr[Math.floor(Math.random() * arr.length)] as T;
+}
+
+const RONNIE_STOP = new Set([
+  "that",
+  "this",
+  "with",
+  "from",
+  "have",
+  "just",
+  "like",
+  "your",
+  "youre",
+  "about",
+  "what",
+  "when",
+  "where",
+  "would",
+  "could",
+  "should",
+  "there",
+  "their",
+  "them",
+  "they",
+  "then",
+  "than",
+  "been",
+  "being",
+  "into",
+  "onto",
+  "over",
+  "under",
+  "really",
+  "gonna",
+  "want",
+  "wanna",
+  "please",
+  "thanks",
+  "thank",
+  "okay",
+  "yeah",
+  "yep",
+  "nope",
+  "dont",
+  "does",
+  "doing",
+  "make",
+  "makes",
+  "made",
+  "know",
+  "think",
+  "thought",
+  "because",
+  "cause",
+  "something",
+  "anything",
+  "nothing",
+  "everyone",
+  "someone",
+  "actually",
+  "pretty",
+  "still",
+  "even",
+  "also",
+  "only",
+  "very",
+  "much",
+  "more",
+  "some",
+  "tell",
+  "talk",
+  "saying",
+  "said",
+  "whats",
+  "whos",
+  "going",
+  "right",
+  "well",
+  "good",
+  "nice",
+  "cool",
+  "sure",
+  "maybe",
+  "kinda",
+  "sort",
+  "stuff",
+  "thing",
+  "things",
+  "people",
+  "person",
+  "love",
+  "hate",
+]);
+
+function ronnieSubjects(say: string) {
+  return say
+    .toLowerCase()
+    .replace(/[^a-z0-9' ]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.replace(/^'+|'+$/g, ""))
+    .filter((word) => word.length > 3 && !RONNIE_STOP.has(word));
+}
+
+function ronnieAsking(say: string) {
+  const line = say.trim().toLowerCase();
+  return (
+    line.includes("?") ||
+    /^(who|what|why|how|when|where|which|whose|do you|are you|can you|did you|have you|will you|would you|what's|whats)\b/.test(
+      line,
+    )
+  );
+}
+
+function ronnieTopic(say: string) {
+  const cleaned = say.replace(/\?+/g, " ").replace(/\s+/g, " ").trim();
+  const match = cleaned.match(
+    /\b(?:what|who|why|how|when|where|which)\s+(?:is|are|was|were|do|does|did|about|would|should|'s)?\s*(.{3,70})$/i,
+  );
+  const raw = (match?.[1] ?? ronnieSubjects(say).slice(0, 4).join(" ")).replace(/\s+/g, " ").trim();
+  return raw.replace(/^(you|your|the|a|an|my|me|to|of|for|and|or)\s+/i, "").trim();
+}
+
+function ronnieChime(text: string, met: boolean) {
+  if (/\b(mom|mother|vicky|victoria)\b/.test(text)) {
+    return "That's my mom. I love her. I'm still not her, and I'm not repeating her line.";
+  }
+  if (/\b(izzy|isabella)\b/.test(text)) {
+    return "Izzy can talk. I go here too. Don't hand me her sentence.";
+  }
+  const bits = ronnieSubjects(text).slice(0, 3);
+  if (bits.length) {
+    return met
+      ? `I heard you on ${bits.join(" ")}. I've got my own take, and it's shorter than hers.`
+      : `Ronnie. I caught ${bits[0]}. Don't talk like I'm not standing here.`;
+  }
+  return met
+    ? "Still here. Say it to me if you want my answer, not a copy of hers."
+    : "Ronnie. Track, health sciences. Don't stop. Just don't forget I'm in the room.";
 }
 
 function previewMeter(state: GameState, current: number, delta: number) {
@@ -331,7 +468,7 @@ function withOther(state: GameState, input: TurnInput, turn: IzzyTurn): IzzyTurn
 
   return {
     ...turn,
-    otherDialogue: duetFallback(other, Boolean(card?.met)),
+    otherDialogue: other === "ronnie" ? ronnieChime(text, Boolean(card?.met)) : duetFallback(other, Boolean(card?.met)),
     otherExpression: card?.expression ?? "shy",
     otherTrustDelta: 0,
     otherBondingDelta: 1,
@@ -674,8 +811,11 @@ function localRonnieTurn(state: GameState, input: TurnInput): IzzyTurn {
   }
 
   if (neg >= 1) {
+    const jab = ronnieSubjects(input.say).slice(0, 3).join(" ");
     return withOther(state, input, {
-      dialogue: "Okay, attitude. I lift more than you and I'm in a better mood. Try again.",
+      dialogue: jab
+        ? `${jab} is a cheap shot. I lift more than you and I'm in a better mood. Try a real sentence.`
+        : "Okay, attitude. I lift more than you and I'm in a better mood. Try again.",
       expression: "suspicious",
       trustDelta: -3,
       bondingDelta: -2,
@@ -683,18 +823,233 @@ function localRonnieTurn(state: GameState, input: TurnInput): IzzyTurn {
     });
   }
 
-  const lines = pos
-    ? ["Okay, you're alright. Want to race sometime? Loser buys smoothies.", "See, now you're talking. I like people who keep up."]
-    : [
-        "So what's the plan? I don't do standing around.",
-        "I've got about three things to do and you're one of them now. Go.",
-        "Did you know mantises can turn their heads all the way around? Way cooler than whatever this is. Talk to me.",
-      ];
+  const say = input.say.trim();
+  const asked = ronnieAsking(say);
+  const topic = ronnieTopic(say);
+  const duty = dutyOf("ronnie", state.weekday, state.timeOfDay);
+  const who = callThem(state.playerName, state.trust, Boolean(state.flags.nicknamesOff));
+  const dating = /\b(date|take you out|go out with me)\b/.test(text);
+  const rawQuote = topic || ronnieSubjects(say).slice(0, 4).join(" ");
+  const quote = rawQuote ? rawQuote.charAt(0).toUpperCase() + rawQuote.slice(1) : "";
+
+  if (input.invite) {
+    const dest = placeOf(input.invite);
+    if (duty === "class") {
+      return withOther(state, input, {
+        dialogue: `Class isn't over. I'm not walking to ${dest.name} in the middle of a lecture. Ask me after.`,
+        expression: "thinking",
+        trustDelta: 0,
+        bondingDelta: 0,
+        fx: "none",
+      });
+    }
+    if (duty === "work") {
+      return withOther(state, input, {
+        dialogue: `I'm teaching. ${dest.name} waits until the last person is off the mat. Stay for class or catch me after.`,
+        expression: "thinking",
+        trustDelta: 0,
+        bondingDelta: 1,
+        fx: "none",
+      });
+    }
+    if (dest.id === "dorm") {
+      return withOther(state, input, {
+        dialogue: "That's Izzy's room. I don't wander in there. Pick somewhere else.",
+        expression: "suspicious",
+        trustDelta: -1,
+        bondingDelta: 0,
+        fx: "none",
+      });
+    }
+    if (dest.id === "vickyLiving" || dest.id === "vickyBedroom") {
+      return withOther(state, input, {
+        dialogue: "That's my mom's house. I'm not taking you there. Not to hang out, and not on a date.",
+        expression: "suspicious",
+        trustDelta: 0,
+        bondingDelta: -1,
+        fx: "none",
+      });
+    }
+    if (dest.id === "firm" || dest.id === "classroom" || dest.id === "studyHall") {
+      return withOther(state, input, {
+        dialogue: `${dest.name} isn't a hangout. I go to class. I don't date a desk.`,
+        expression: "idle",
+        trustDelta: 0,
+        bondingDelta: 0,
+        fx: "none",
+      });
+    }
+    const tone = inviteVerdict(state, input.invite);
+    const casualSpot = dest.id === "ronnieDorm" || dest.id === "apartment";
+    if (tone === "here") {
+      return withOther(state, input, {
+        dialogue: `We're already at ${dest.name}. Look around. Say what you wanted to do here.`,
+        expression: "idle",
+        trustDelta: 0,
+        bondingDelta: 0,
+        fx: "none",
+      });
+    }
+    if (tone === "eager" || tone === "casual") {
+      const casualNote = dating && casualSpot ? " That's a casual read of us, just so you know. I'm still in." : "";
+      return withOther(state, input, {
+        dialogue: `${dest.name}. Yeah. I'm moving.${casualNote}`,
+        expression: "happy",
+        trustDelta: 1,
+        bondingDelta: 2,
+        fx: "none",
+      });
+    }
+    return withOther(state, input, {
+      dialogue:
+        tone === "stern-no"
+          ? `No. ${dest.name} is not happening. We don't know each other like that.`
+          : `Not ${dest.name}. Not yet. Ask me somewhere I actually go, after we've hung out.`,
+      expression: tone === "stern-no" ? "suspicious" : "idle",
+      trustDelta: tone === "stern-no" ? -1 : 0,
+      bondingDelta: 0,
+      fx: "none",
+    });
+  }
+
+  if (state.pendingInvite) {
+    const dest = placeOf(state.pendingInvite);
+    const blob = `${input.say} ${input.action}`;
+    if (input.inviteReply === "accept" || (isYes(blob) && !isNo(blob))) {
+      return withOther(state, input, {
+        dialogue: `You said yes. ${dest.name}. Don't make me walk there talking to myself.`,
+        expression: "happy",
+        trustDelta: 1,
+        bondingDelta: 2,
+        fx: "none",
+      });
+    }
+    if (input.inviteReply === "decline" || (isNo(blob) && !isYes(blob))) {
+      return withOther(state, input, {
+        dialogue: `Not ${dest.name}. Fine. Stay on what you actually wanted to say.`,
+        expression: "idle",
+        trustDelta: 0,
+        bondingDelta: 0,
+        fx: "none",
+      });
+    }
+  }
+
+  let dialogue = "";
+  let expression: Expression = pos ? "happy" : "thinking";
+  let trustDelta = pos ? 2 : 1;
+  let bondingDelta = pos ? 2 : 1;
+
+  if (/\b(dad|father)\b/.test(text)) {
+    const open = state.trust >= 60 && state.bonding >= 60;
+    expression = open ? "shy" : "suspicious";
+    dialogue = open
+      ? "I don't have him. I act like that's settled. It isn't, completely. I still wish I did, and I keep going anyway."
+      : "I grew up with my mom. That's the version I tell people. The rest waits.";
+  } else if (/\b(mom|mother|vicky|victoria)\b/.test(text)) {
+    expression = "thinking";
+    dialogue = asked
+      ? "Vicky's my mom. I love her. I'm not a mommy's girl, and I'm not a smaller copy of the woman at the desk. She raised me. I run my own day."
+      : "That's my mom. I love her. Don't talk about her like she's in my pocket. I'm not her.";
+  } else if (/\b(izzy|isabella)\b/.test(text)) {
+    expression = "idle";
+    dialogue =
+      "Izzy goes here. She's loud about being a skunkgirl and I respect that. She's not my rival unless you try to make her one. What about her were you actually asking?";
+  } else if (dating) {
+    const early = state.trust < 20 || state.bonding < 20;
+    expression = early ? "suspicious" : "flirty";
+    dialogue = early
+      ? "A date is a real ask. We're not there. Hang out like a person first. A gift isn't the ticket anyway."
+      : "Yeah. Say the day, the time, and a place that isn't a classroom, a desk, or my mom's house. A gift is welcome. It isn't required.";
+    bondingDelta = early ? 0 : 3;
+  } else if (/\b(yoga|second wind|instructor|downward|vinyasa|pose)\b/.test(text)) {
+    expression = "thinking";
+    dialogue =
+      duty === "work"
+        ? `I'm on the clock. ${quote ? `${quote} can wait until the last mat is up.` : "Form first."} Grab a mat or say hello and let me teach.`
+        : "I teach Tuesday, Wednesday, Thursday, and Saturday afternoons at Second Wind. Off the clock I'm not your instructor. I'm just Ronnie.";
+  } else if (/\b(smoothie|hungry|eat|food|snack|protein)\b/.test(text)) {
+    expression = "happy";
+    dialogue = quote
+      ? `${quote}. Protein and fiber. Smoothies at the cafe, bars at Root & Grain. That's the diet. The gas is the receipt.`
+      : "Protein and fiber. Smoothies at the cafe, bars at Root & Grain. If you're hungry, say so. I'll pick the place.";
+  } else if (/\b(track|sprint|laps?|relay|hurdles?|race|racing|split|400|800|1500|meter|event)\b/.test(text)) {
+    expression = "happy";
+    dialogue = quote
+      ? `${quote}. I run college track. I race the clock first and everyone else second. If you want a time, come to West Field and hold the watch.`
+      : "College track. I race the clock first. West Field, if you want to see it instead of hear about it.";
+    bondingDelta += 2;
+  } else if (/\b(gym|lift|squat|deadlift|bench|workout|reps?|sets)\b/.test(text)) {
+    expression = "infodump";
+    dialogue = quote
+      ? `${quote}. Free weights, not the machines that think for you. Tell me what you can already do and I'll tell you the next set. Leg day is not optional.`
+      : "Free weights. Leg day is not optional. Tell me what you can already lift and I'll give you the next set, not a poster.";
+    bondingDelta += 2;
+  } else if (/\b(bugs?|mantises|mantis|insects?|beetles?|butterflies|butterfly)\b/.test(text)) {
+    expression = "infodump";
+    dialogue =
+      "Devil's Flower Mantis. She's in an enclosure in my dorm. I look for them on the trail and I rent the books. You asked, so I'll talk. Which part — the one I keep, or the ones outside?";
+    bondingDelta += 2;
+  } else if (/\b(movie|movies|film|action|marquee|cinema)\b/.test(text)) {
+    expression = "happy";
+    dialogue = quote
+      ? `${quote}. Marquee House, action, something that moves. I don't need a speech before the credits. If that's the movie you meant, say the title.`
+      : "Action movies. Marquee House. Something that moves. Give me a title if you've got one.";
+  } else if (/\b(major|school|class|college|health|degree|trainer|career)\b/.test(text)) {
+    expression = "thinking";
+    dialogue = duty === "class"
+      ? `I'm in class. ${quote ? `You asked about ${quote}.` : ""} Health sciences. Trainer after that, then my own place. I can give you the short version and then I have to look at the board.`
+      : "Health sciences. Then a trainer cert, then my own place. Sports and health. Not a reception desk like my mom's.";
+    bondingDelta += 1;
+  } else if (/\b(hair|blonde|dye|blond)\b/.test(text)) {
+    expression = "idle";
+    dialogue = "It's dyed. I'm naturally black-haired, like Vicky. Blonde is so I'm not a copy of her. That's the whole reason.";
+  } else if (/\b(your name|who are you|what's your name|whats your name)\b/.test(text) || /^(who are you)\b/.test(say.toLowerCase())) {
+    expression = "happy";
+    dialogue = "Veronica if you're my professor. Ronnie if you're cool. You can be cool.";
+  } else if (/^(hey|hi|hello|yo|sup)\b/i.test(say) || /how are you|how's it going|whats up|what's up/.test(text)) {
+    const place = placeOf(state.location).name;
+    expression = "happy";
+    dialogue =
+      duty === "class"
+        ? `Hey ${who}. I'm in class at ${place}, so this stays short. What did you actually want?`
+        : duty === "work"
+          ? `Hey ${who}. I'm teaching at Second Wind. Hello's fine. A whole conversation waits until class ends.`
+          : `Hey ${who}. I'm at ${place}, and I'm good. Your turn. What are you actually here for?`;
+  } else if (sexualBeat(text)) {
+    const early = state.gameMode === "slow" && !state.flags.romanceAccepted;
+    const close = state.trust >= 40 && state.bonding >= 40;
+    expression = early || !close ? "suspicious" : "flirty";
+    dialogue = early
+      ? "Not yet. I don't do that until we're actually together. Dates first. I'm not skipping the part where I pick you."
+      : close
+        ? "You asked. I'm not shy about it. Say the actual thing you want, and don't make it a speech."
+        : "Slow down. I like the nerve. I don't like you enough for that yet.";
+    trustDelta = early || !close ? 0 : 1;
+    bondingDelta = early || !close ? 0 : 2;
+  } else if (!say && input.action.trim()) {
+    const did = input.action.replace(/\s+/g, " ").trim().slice(0, 90);
+    dialogue = `I saw that. ${did}. I'm not going to pretend it was small talk. What was that for?`;
+    expression = "suspicious";
+  } else if (quote) {
+    dialogue = asked
+      ? `${quote}. Straight answer: I train, I study how a body works, and I don't dress it up. On ${quote}, I'm in if you're actually asking. Which part did you mean?`
+      : `You said ${quote}. I heard that, not a different conversation. Stay on ${quote.split(" ")[0]}. I'll meet you there.`;
+    expression = asked ? "thinking" : pos ? "happy" : "idle";
+    bondingDelta += 1;
+  } else {
+    const place = placeOf(state.location).name;
+    dialogue = `You're at ${place} with me and you haven't said the thing yet. I'm Ronnie. Give me a subject.`;
+    expression = "idle";
+    trustDelta = 0;
+    bondingDelta = 0;
+  }
+
   return withOther(state, input, {
-    dialogue: lines[Math.floor(Math.random() * lines.length)],
-    expression: pos ? "happy" : "idle",
-    trustDelta: pos ? 3 : 1,
-    bondingDelta: pos ? 3 : 1,
+    dialogue,
+    expression,
+    trustDelta,
+    bondingDelta,
     fx: "none",
   });
 }

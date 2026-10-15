@@ -174,6 +174,29 @@ var DollarSign = createLucideIcon("dollar-sign", [["line", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Download = createLucideIcon("download", [
+	["path", {
+		d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
+		key: "ih7n3h"
+	}],
+	["polyline", {
+		points: "7 10 12 15 17 10",
+		key: "2ggqvy"
+	}],
+	["line", {
+		x1: "12",
+		x2: "12",
+		y1: "15",
+		y2: "3",
+		key: "1vk2je"
+	}]
+]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var GripHorizontal = createLucideIcon("grip-horizontal", [
 	["circle", {
 		cx: "12",
@@ -466,4 +489,4 @@ var X = createLucideIcon("x", [["path", {
 	key: "d8bk6v"
 }]]);
 //#endregion
-export { ChevronsDownUp as _, TriangleAlert as a, Send as c, RefreshCw as d, MapPin as f, ChevronsUpDown as g, CircleHelp as h, Undo2 as i, Save as l, DollarSign as m, VolumeX as n, Timer as o, GripHorizontal as p, Volume2 as r, ShowerHead as s, X as t, RotateCcw as u, Backpack as v };
+export { ChevronsUpDown as _, TriangleAlert as a, Send as c, RefreshCw as d, MapPin as f, CircleHelp as g, DollarSign as h, Undo2 as i, Save as l, Download as m, VolumeX as n, Timer as o, GripHorizontal as p, Volume2 as r, ShowerHead as s, X as t, RotateCcw as u, ChevronsDownUp as v, Backpack as y };

@@ -18,7 +18,7 @@ const EXPRESSIONS: Expression[] = [
   "scheming",
 ];
 
-function set(folder: "casual" | "athletic"): Record<Expression, string> {
+function set(folder: "casual" | "athletic" | "home"): Record<Expression, string> {
   const out = {} as Record<Expression, string>;
   for (const expression of EXPRESSIONS) {
     out[expression] = `/art/ronnie/${folder}/${expression}.webp`;
@@ -29,17 +29,29 @@ function set(folder: "casual" | "athletic"): Record<Expression, string> {
 
 export const RONNIE_CASUAL = set("casual");
 export const RONNIE_ATHLETIC = set("athletic");
+export const RONNIE_HOME = set("home");
 
 export const RONNIE_POSES = {
   squat: "/art/ronnie/athletic/squat.webp",
   yoga: "/art/ronnie/athletic/yoga.webp",
 } as const;
 
-/** Gym, studio, field, and trail get the track kit. Everywhere else is the cargo-pants look. No lingerie art yet. */
+/** Gym, studio, field, and trail get the track kit. Her dorm and the apartment get the black sleep set. Everywhere else is the cargo-pants look. */
 const ATHLETIC_AT = new Set<LocationId>(["gym", "yogaStudio", "field", "trail"]);
+const HOME_AT = new Set<LocationId>(["ronnieDorm", "apartment"]);
 
-export function ronnieOutfit(place: LocationId | undefined): "casual" | "athletic" {
+export function ronnieOutfit(place: LocationId | undefined): "casual" | "athletic" | "home" {
+  if (place && HOME_AT.has(place)) return "home";
   return place && ATHLETIC_AT.has(place) ? "athletic" : "casual";
+}
+
+/** Header name for the kit she is actually wearing. */
+export function ronnieOutfitName(place: LocationId | undefined, dating = false): string {
+  if (dating) return "Night Out";
+  const kit = ronnieOutfit(place);
+  if (kit === "athletic") return "Workout Gear";
+  if (kit === "home") return "Dorm Set";
+  return "Tomboy Chic";
 }
 
 const SPRAY_FILE: Record<Exclude<SprayKind, "none">, string> = {
@@ -65,11 +77,16 @@ export function ronnieSrc(
   sprayKind: SprayKind,
   place: LocationId | undefined,
   instructing = false,
+  dating = false,
 ): string {
+  if (dating) {
+    const face = expression === "spray" || sprayKind !== "none" ? "angry" : expression;
+    return `/art/ronnie/dress/${face}.webp`;
+  }
   const folder = ronnieOutfit(place);
   if (sprayKind !== "none") return `/art/ronnie/${folder}/${SPRAY_FILE[sprayKind]}.webp`;
-  const pose = ronniePose(place, expression, instructing);
+  const pose = folder === "home" ? null : ronniePose(place, expression, instructing);
   if (pose) return RONNIE_POSES[pose];
-  const set = folder === "athletic" ? RONNIE_ATHLETIC : RONNIE_CASUAL;
-  return set[expression] ?? set.idle;
+  const setFor = folder === "athletic" ? RONNIE_ATHLETIC : folder === "home" ? RONNIE_HOME : RONNIE_CASUAL;
+  return setFor[expression] ?? setFor.idle;
 }

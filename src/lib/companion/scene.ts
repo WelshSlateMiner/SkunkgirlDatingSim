@@ -50,11 +50,12 @@ export function sceneNames(ids: readonly SceneGirl[]): string {
   return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 
-/** Portrait sizes per head count. Same classes the two-girl layout already used. */
+/** Same full height as a solo portrait. Extra girls step in instead of shrinking. */
 export function sceneLayout(count: number) {
   const n = Math.max(1, Math.min(MAX_SCENE_GIRLS, count));
-  if (n >= 3) return { width: "w-1/3", height: "h-[min(68dvh,760px)] max-w-full" };
-  if (n === 2) return { width: "w-1/2", height: "h-[min(78dvh,860px)] max-w-full" };
+  const height = "h-[min(92dvh,980px)] w-auto max-w-none";
+  if (n >= 3) return { width: "w-auto shrink-0 -mx-[16%]", height };
+  if (n === 2) return { width: "w-auto shrink-0 -mx-[8%]", height };
   return { width: "w-full", height: "h-[min(92dvh,980px)] max-w-[min(100%,640px)]" };
 }
 
