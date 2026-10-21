@@ -7,9 +7,9 @@
       "status": 200,
       "title": "Skunkgirls",
       "hasCanvas": false,
-      "bodyTextLen": 742,
-      "bodyTextHash": "8d73ab9f079a53b080a0dea21cbdb6799779561d7c3d57e948deb168bb05234c",
-      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Usually Izzy. Sometimes Vicky ",
+      "bodyTextLen": 734,
+      "bodyTextHash": "6b8059dde5145a681885cdeae6d9ca26dcfc4c3a2908664f4996eabcf8825f64",
+      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Usually Izzy. Vicky, Ronnie, a",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
@@ -21,9 +21,9 @@
       "status": 200,
       "title": "Skunkgirls",
       "hasCanvas": false,
-      "bodyTextLen": 742,
-      "bodyTextHash": "8d73ab9f079a53b080a0dea21cbdb6799779561d7c3d57e948deb168bb05234c",
-      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Usually Izzy. Sometimes Vicky ",
+      "bodyTextLen": 734,
+      "bodyTextHash": "6b8059dde5145a681885cdeae6d9ca26dcfc4c3a2908664f4996eabcf8825f64",
+      "bodyTextPrefix": "A SKUNKGIRL DATING SIM Skunkgirls Usually Izzy. Vicky, Ronnie, a",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
@@ -33,6 +33,9 @@
   "brandWarnings": [],
   "authWarnings": [],
   "verdictFile": "/workspace/screenshots/app-builder-built.json",
-  "divergesFromBaseline": false,
-  "baselineReasons": []
+  "divergesFromBaseline": true,
+  "baselineReasons": [
+    "desktop: body text replaced (similar length, page start changed)",
+    "mobile: body text replaced (similar length, page start changed)"
+  ]
 }

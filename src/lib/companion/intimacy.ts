@@ -292,11 +292,27 @@ export function indulgesPublicFart(
     if (TIGHT.has(place) && trust < 28) return false;
     return true;
   }
+  if (girl === "mira") return false;
   if (VICKY_NO.has(place)) return false;
   return trust >= 72 && (place === "trail" || place === "mexican");
 }
 
 export function publicFartNo(girl: GirlId, avoid = ""): { narration: string; dialogue: string; expression: Expression } {
+  if (girl === "mira") {
+    const lines: { narration: string; dialogue: string; expression: Expression }[] = [
+      {
+        narration: "She doesn't shift her weight. The look is cooler than the room.",
+        dialogue: "No. I'm not doing that here. Don't dare me like I'm content.",
+        expression: "suspicious",
+      },
+      {
+        narration: "One hand stays off her stomach on purpose.",
+        dialogue: "Nothing's queued, and I wouldn't give a room the show if it were.",
+        expression: "thinking",
+      },
+    ];
+    return pickFresh(lines, avoid);
+  }
   if (girl === "victoria") {
     const lines: { narration: string; dialogue: string; expression: Expression }[] = [
       {

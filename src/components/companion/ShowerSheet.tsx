@@ -9,13 +9,11 @@ const NONE: string[] = [];
 
 export function ShowerSheet({ onClose }: { onClose: () => void }) {
   const inventory = useCompanion((s) => s.inventory) ?? NONE;
-  const showersToday = useCompanion((s) => s.showersToday ?? 0);
   const stink = useCompanion((s) => s.stink ?? 0);
   const takeShower = useCompanion((s) => s.takeShower);
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
   const owned = [...new Set(inventory)].filter((id) => freshenRating(id) > 0);
-  const left = Math.max(0, 2 - showersToday);
   const cut = showerCut(picked.filter((id) => owned.includes(id)));
 
   function toggle(id: string) {
@@ -29,18 +27,17 @@ export function ShowerSheet({ onClose }: { onClose: () => void }) {
           <div>
             <p className="font-display text-xl text-fg">Shower</p>
             <p className="mt-1 text-sm text-muted">
-              Twice a day. Water alone takes 10 off the stink. Soap, spray, and whatever else you check off is used up, and can take it as high as 75. {left} left today. Stink is {Math.round(stink)}.
+              Water alone takes 10 off the stink. Soap and the rest are used up, and can take off as much as 75. Each shower spends half a period. You can shower again. The day still moves. Stink is {Math.round(stink)}.
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
             <X />
           </Button>
         </div>
-        <Button className="mt-4 w-full" disabled={left <= 0} onClick={() => setOpen(true)}>
+        <Button className="mt-4 w-full" onClick={() => setOpen(true)}>
           Take Shower
         </Button>
-        {left <= 0 ? <p className="mt-2 text-sm text-muted">You've already showered twice today.</p> : null}
-        {open && left > 0 ? (
+        {open ? (
           <div className="mt-4 rounded-md border border-border p-3">
             <p className="text-xs uppercase tracking-[0.14em] text-subtle">Sanitary items</p>
             {owned.length ? (

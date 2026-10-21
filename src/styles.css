@@ -659,6 +659,19 @@
 .keepsake-leave {
   animation: keepsake-shrink 0.6s var(--ease-smooth-out) forwards;
 }
+@keyframes wolf-enter {
+  from { transform: translateX(28%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes wolf-leave {
+  to { transform: translateX(120%); opacity: 0; }
+}
+.wolf-enter {
+  animation: wolf-enter 0.45s var(--ease-smooth-out);
+}
+.wolf-leave {
+  animation: wolf-leave 0.7s var(--ease-smooth-out) forwards;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .izzy-idle,
@@ -688,7 +701,9 @@
   .stink-fill,
   .stink-fill::after,
   .keepsake-spark,
-  .keepsake-leave {
+  .keepsake-leave,
+  .wolf-enter,
+  .wolf-leave {
     animation: none;
     transition: none;
   }

@@ -1,8 +1,9 @@
-import { girlIsOfficial, girlName } from "./cast";
+import { girlIsOfficial, girlName, herHome } from "./cast";
 import { giftById, giftSpeech, giftSummary, presentLine, receptionDelta, receptionOf, type GiftReception } from "./gifts";
 import { LOCATIONS } from "./locations";
 import { nextWeekday, parseMeetPlace, parseTimeOfDay, TIMES, WEEKDAYS } from "./time";
-import { SCENE_NAME_RE, SCENE_ORDER } from "./scene";
+import { SCENE_NAME_RE, SCENE_ORDER, MAX_SCENE_GIRLS } from "./scene";
+import { MIRA_DATES, MIRA_SCHEDULE } from "./mira-bio";
 import { RONNIE_DATE_RULES, RONNIE_SCHEDULE } from "./ronnie-bio";
 import type {
   ActiveDate,
@@ -23,9 +24,8 @@ import type {
   Weekday,
 } from "./types";
 
-const PRIVATE_DATES = new Set<LocationId>(["dorm", "apartment", "vickyLiving", "vickyBedroom"]);
+const PRIVATE_DATES = new Set<LocationId>(["dorm", "apartment", "vickyLiving", "vickyBedroom", "miraDorm", "ronnieDorm"]);
 const AWKWARD_DATES = new Set<LocationId>(["classroom", "studyHall", "sportingGoods", "firm"]);
-const CAMPUS_AM: LocationId[] = ["library", "cafe", "campus", "studyHall", "classroom"];
 
 const HANGOUT: Record<GirlId, Record<TimeOfDay, LocationId[]>> = {
   izzy: {
@@ -35,7 +35,7 @@ const HANGOUT: Record<GirlId, Record<TimeOfDay, LocationId[]>> = {
     Night: ["campus", "trail", "burger"],
   },
   victoria: {
-    Morning: ["grocery", "cafe", "furniture", "craftStore"],
+    Morning: ["craftStore", "grocery", "cafe", "furniture"],
     Afternoon: ["craftStore", "furniture", "perfume", "italian", "mall"],
     Evening: ["italian", "mall", "furniture", "perfume"],
     Night: ["italian", "perfume"],
@@ -45,6 +45,12 @@ const HANGOUT: Record<GirlId, Record<TimeOfDay, LocationId[]>> = {
     Afternoon: ["gym", "naturalFoods", "sportingGoods", "trail", "field", "trendy"],
     Evening: ["gym", "theater", "field", "cafe", "trendy"],
     Night: ["field", "trail", "theater"],
+  },
+  mira: {
+    Morning: ["library", "cafe", "studyHall", "gym", "makeup"],
+    Afternoon: ["theater", "animeStore", "perfume", "makeup", "gym", "yogaStudio"],
+    Evening: ["theater", "italian", "mexican", "perfume", "animeStore"],
+    Night: ["theater", "campus"],
   },
 };
 
@@ -70,7 +76,7 @@ export function economySeed() {
     otherSprayKind: "none" as SprayKind,
     sprayPrompts: [] as SprayPrompt[],
     stink: 0,
-    scentFrom: { izzy: 0, victoria: 0, ronnie: 0 },
+    scentFrom: { izzy: 0, victoria: 0, ronnie: 0, mira: 0 },
     stinkAsked: {} as Partial<Record<GirlId, number>>,
     stinkTalk: null as GameState["stinkTalk"],
     showersToday: 0,
@@ -121,6 +127,7 @@ export function dateIsDue(state: Pick<GameState, "scheduledDate" | "activeDate" 
 /** Ronnie's own poor-date list adds her workplace. Izzy and Vicky share the global list. */
 const GIRL_AWKWARD: Partial<Record<GirlId, ReadonlySet<LocationId>>> = {
   ronnie: new Set<LocationId>(RONNIE_DATE_RULES.poorDatePlaces),
+  mira: new Set<LocationId>(MIRA_DATES.poor),
 };
 
 export function isAwkwardPlace(id: LocationId, girl?: GirlId) {
@@ -134,8 +141,49 @@ export function awkwardForAny(id: LocationId, girls: readonly GirlId[]) {
 
 export type Duty = "class" | "work" | "free";
 
+const CLASS_PLACES = {
+  izzy: ["library", "cafe", "campus", "studyHall", "classroom"],
+  ronnie: ["library", "cafe", "campus", "studyHall", "classroom"],
+  mira: ["library", "studyHall", "cafe", "classroom", "campus"],
+} as const satisfies Record<"izzy" | "ronnie" | "mira", readonly LocationId[]>;
+
+const CLASS_SHIFT = { izzy: 0, ronnie: 3, mira: 1 } as const;
+
+function classSpot(girl: "izzy" | "ronnie" | "mira", weekday: Weekday): LocationId {
+  const places = CLASS_PLACES[girl];
+  return places[(WEEKDAYS.indexOf(weekday) + CLASS_SHIFT[girl]) % places.length] ?? "library";
+}
+
+/** Where her schedule puts her, ignoring whoever is currently walking with the player. */
+export function placeOnSchedule(girl: GirlId, weekday: Weekday, time: TimeOfDay, daySerial = 0): LocationId {
+  const duty = dutyOf(girl, weekday, time);
+  if (girl === "mira" && duty === "class" && miraSkipsClass(daySerial)) {
+    const spots = ["yogaStudio", "gym", "makeup", "perfume"] as const;
+    return spots[Math.max(0, daySerial) % spots.length] ?? "gym";
+  }
+  if (duty === "class" && girl !== "victoria") return classSpot(girl, weekday);
+  if (duty === "work") return dutyPlace(girl);
+  if (girl === "mira") {
+    if (weekday === "Saturday" && time === "Afternoon") return "yogaStudio";
+    if (weekday === "Sunday" && time === "Morning") return "gym";
+    if (weekday === "Tuesday" && time === "Afternoon") return "gym";
+  }
+  const list = HANGOUT[girl][time];
+  const index = (WEEKDAYS.indexOf(weekday) + TIMES.indexOf(time)) % list.length;
+  return list[index] ?? "library";
+}
+
+export function miraSkipsClass(daySerial: number) {
+  return ((Math.max(0, daySerial) * 17 + 3) % 20) === 0;
+}
+
 export function dutyOf(girl: GirlId, weekday: Weekday, time: TimeOfDay): Duty {
   const weekend = weekday === "Saturday" || weekday === "Sunday";
+  if (girl === "mira") {
+    if (!weekend && time === "Morning") return "class";
+    if (time === "Afternoon" && (MIRA_SCHEDULE.work.days as readonly Weekday[]).includes(weekday)) return "work";
+    return "free";
+  }
   if (girl === "ronnie") {
     if (!weekend && time === "Morning") return "class";
     if (time === "Afternoon" && RONNIE_SCHEDULE.work.days.includes(weekday)) return "work";
@@ -153,18 +201,21 @@ export function dutyOf(girl: GirlId, weekday: Weekday, time: TimeOfDay): Duty {
 }
 
 export function dutyPlace(girl: GirlId): LocationId {
-  if (girl === "ronnie") return RONNIE_SCHEDULE.work.place;
+  if (girl === "ronnie" || girl === "mira") return "yogaStudio";
   return girl === "victoria" ? "firm" : "sportingGoods";
 }
 
-export function dutyStop(girl: GirlId, weekday: Weekday, time: TimeOfDay): LocationId | null {
-  const duty = dutyOf(girl, weekday, time);
-  if (duty === "free") return null;
-  if (duty === "work") return dutyPlace(girl);
-  return CAMPUS_AM[WEEKDAYS.indexOf(weekday) % CAMPUS_AM.length] ?? "library";
+export function dutyStop(girl: GirlId, weekday: Weekday, time: TimeOfDay, daySerial = 0): LocationId | null {
+  if (dutyOf(girl, weekday, time) === "free") return null;
+  return placeOnSchedule(girl, weekday, time, daySerial);
 }
 
 export function dutyWarn(girl: GirlId, duty: Exclude<Duty, "free">) {
+  if (girl === "mira") {
+    return duty === "class"
+      ? "Class. I have to go. The name can wait. This conversation can't have the rest of the morning."
+      : "Second Wind. I'm on the count. Last thing, then I'm teaching.";
+  }
   if (girl === "ronnie") {
     return duty === "class"
       ? "Clock's ticking. I've got class and I'm not getting marked late. Last thing, go."
@@ -178,6 +229,9 @@ export function dutyWarn(girl: GirlId, duty: Exclude<Duty, "free">) {
 }
 
 export function dutyFarewell(girl: GirlId, duty: Exclude<Duty, "free">) {
+  if (girl === "mira") {
+    return duty === "class" ? "That's the morning. I'll be on campus. Don't follow me into a lecture." : "I'm teaching. Take the class or don't. I'm not hanging around the door.";
+  }
   if (girl === "ronnie") {
     return duty === "class" ? "Okay, class. Later. Try to keep up next time." : "Shift time. Come take a class if you want. I'll make you sweat.";
   }
@@ -266,6 +320,12 @@ export interface InvitePlan {
 }
 
 function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
+  if (girl === "mira") {
+    if (loss >= 8) return duty === "class" ? "Skip class? No. My parents already fought me on that once. Don't be the second person." : "Walk out on my own class? No. They paid for the hour.";
+    return duty === "class"
+      ? "I have class this morning. I'm not skipping it for a hangout."
+      : "I'm on the count at Second Wind. Take the class or wait. I'm not leaving.";
+  }
   // Like Vicky, not Izzy: skipping is nuts to her. Work and class come first; no pressing.
   if (girl === "ronnie") {
     if (loss >= 8) return duty === "class" ? "Skip class? Are you nuts? No. And don't talk to me like that." : "Walk out on a class I'm teaching? Are you nuts? No. Work comes first.";
@@ -289,6 +349,12 @@ function busyLine(girl: GirlId, duty: Duty, insist: boolean, loss: number) {
 }
 
 function awkwardLine(girl: GirlId, place: LocationId, loss: number) {
+  if (girl === "mira") {
+    if (place === "yogaStudio") return "Second Wind is where I teach. That is not a date. Pick a room where I am the one being looked at.";
+    if (place === "burger" || place === "foodCourt") return "I don't date over fast food. No.";
+    if (place === "classroom" || place === "studyHall") return "A date in a classroom is a distraction I already have too many of. No.";
+    return "That place is not a date. Not for me. Pick something else.";
+  }
   if (girl === "ronnie") {
     if (place === "yogaStudio") {
       return loss >= 8 ? "A date at my job? While I'm teaching? No. Hard no." : "Second Wind is where I work. That's not a date, that's you watching me teach. Pick somewhere else.";
@@ -342,7 +408,7 @@ export function classifyInvite(
       dateGoes: willing.length > 0,
       blocked: targets.filter((girl) => isAwkwardPlace(dest, girl)).map((girl) => ({
         girl,
-        bondingDelta: -loss,
+        bondingDelta: -(girl === "mira" ? loss + MIRA_DATES.poorBondShift : loss),
         line: awkwardLine(girl, dest, loss),
         expression: loss >= 8 ? "angry" : "suspicious",
       })),
@@ -388,12 +454,13 @@ export function inviteParty(state: GameState, text: string, dest: LocationId): G
   const party = (group ? present.slice() : named.length === 1 ? [...named] : [focus]).filter(
     (id, i, all) => all.indexOf(id) === i,
   );
-  for (const girl of ["izzy", "victoria", "ronnie"] as GirlId[]) {
+  for (const girl of ["izzy", "victoria", "ronnie", "mira"] as GirlId[]) {
     if (party.includes(girl) || present.includes(girl)) continue;
     if (girlAt(state, girl) !== dest) continue;
     party.push(girl);
   }
-  return party.length ? party : [focus];
+  const capped = (party.length ? party : [focus]).slice(0, MAX_SCENE_GIRLS);
+  return capped.length ? capped : [focus];
 }
 
 export function girlAt(state: GameState, girl: GirlId): LocationId {
@@ -403,17 +470,10 @@ export function girlAt(state: GameState, girl: GirlId): LocationId {
   const plan = state.scheduledDate;
   if (plan?.girl === girl && dateIsDue(state)) return plan.place;
   if (state.timeOfDay === "Night" && girlIsOfficial(state, girl)) {
-    return girl === "victoria" ? "vickyLiving" : girl === "ronnie" ? "ronnieDorm" : "dorm";
+    return herHome(girl);
   }
   if (state.departure?.girl === girl) return state.departure.place;
-  const duty = dutyOf(girl, state.weekday, state.timeOfDay);
-  if (duty === "class") {
-    return CAMPUS_AM[WEEKDAYS.indexOf(state.weekday) % CAMPUS_AM.length] ?? "library";
-  }
-  if (duty === "work") return dutyPlace(girl);
-  const list = HANGOUT[girl][state.timeOfDay];
-  const index = (WEEKDAYS.indexOf(state.weekday) + TIMES.indexOf(state.timeOfDay)) % list.length;
-  return list[index] ?? "library";
+  return placeOnSchedule(girl, state.weekday, state.timeOfDay, state.daySerial ?? 0);
 }
 
 export function cyclesFor(nth: number) {
@@ -492,6 +552,7 @@ const ELSEWHERE: Record<GirlId, LocationId[]> = {
   izzy: ["library", "cafe", "campus", "studyHall", "mexican", "burger", "animeStore", "tabletop", "trail", "gameStore"],
   victoria: ["cafe", "grocery", "italian", "furniture", "craftStore", "mall", "perfume", "library"],
   ronnie: ["gym", "field", "trail", "naturalFoods", "cafe", "library", "sportingGoods", "trendy", "theater", "collectibles"],
+  mira: ["library", "theater", "animeStore", "cafe", "perfume", "makeup", "fashion", "gym", "naturalFoods", "collectibles"],
 };
 
 export function ageGas(gas: GasPuff[] | undefined): GasPuff[] {
@@ -502,10 +563,7 @@ export function nextStop(girl: GirlId, time: TimeOfDay, avoid: LocationId, weekd
   if (weekday) {
     const duty = dutyOf(girl, weekday, time);
     if (duty === "work") return dutyPlace(girl);
-    if (duty === "class") {
-      const pool = CAMPUS_AM.filter((id) => id !== avoid);
-      return pool[Math.floor(Math.random() * pool.length)] ?? "library";
-    }
+    if (duty === "class" && girl !== "victoria") return classSpot(girl, weekday);
   }
   const near = HANGOUT[girl][time].filter((id) => id !== avoid);
   const pool = near.length ? near : ELSEWHERE[girl].filter((id) => id !== avoid);
@@ -558,7 +616,11 @@ export function leaveCopy(girl: GirlId, reason: LeaveReason) {
     return "I have errands that will not do themselves. This was good.";
   }
   if (reason === "class") return "I have class. If I skip, the professor notices the empty chair, and I already know how that ends. I have to go.";
-  if (reason === "shift") return "My shift at Trailhead. If I don't clock in, the manager notices. I have to go.";
+  if (reason === "shift") {
+    if (girl === "mira") return "The dance block at Second Wind just started. I have to be on the floor.";
+    if (girl === "ronnie") return "Second Wind's starting. I teach that block. I have to go.";
+    return "My shift at Trailhead. If I don't clock in, the manager notices. I have to go.";
+  }
   if (reason === "night") return "I'm heading back. It's late, and I still have reading I was pretending I didn't.";
   if (reason === "bored") return "I'm gonna go. This isn't going anywhere and I can tell. Bye.";
   return "I'm gonna walk. My brain's full. I'll be around.";

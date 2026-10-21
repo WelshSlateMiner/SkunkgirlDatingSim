@@ -11,12 +11,12 @@ import type { GameMode, LocationId, PlayerFartRole, PlayerGender, RelationshipTy
 import { cn } from "@/lib/utils";
 
 const MEET_HOOK: Record<string, string> = {
-  library: "Usually Izzy. Sometimes Vicky with design books, or Ronnie with a stack on insects.",
-  studyHall: "Usually a student. Sometimes a woman studying for a promotion.",
-  trail: "Izzy knows these woods and Ronnie hunts bugs here, about even. Victoria only comes to stop holding it in.",
-  animeStore: "Neko Shelf is Izzy's. Victoria is rarely here, and only for her daughter.",
-  craftStore: "Fabric and frames. This is Victoria's store. Izzy almost never walks in.",
-  gym: "The weight room. Usually Ronnie, mid-set. Sometimes Vicky on a treadmill.",
+  library: "Usually Izzy. Vicky, Ronnie, and Mira turn up about as often as each other.",
+  studyHall: "Usually Izzy or Mira, with a textbook. Ronnie sometimes. Vicky rarely.",
+  trail: "Izzy and Ronnie, about even. Mira only if she took a wrong turn.",
+  animeStore: "Neko Shelf is Izzy's. Mira comes for the idol albums. The other two are rare.",
+  craftStore: "Fabric and frames. This is Victoria's store. The others wander in.",
+  gym: "Usually Ronnie, mid-set. Mira films here sometimes. Izzy almost never.",
 };
 
 export function StartScreen() {
@@ -54,7 +54,7 @@ export function StartScreen() {
           Skunkgirls
         </h1>
         <p className="mt-5 max-w-md text-sm leading-relaxed text-cream/80 text-pretty sm:text-base">
-          {MEET_HOOK[meet] ?? "Someone is already here."} You don't get to choose which of them you find first.
+          {MEET_HOOK[meet] ?? "Someone is already here."} You don't get to choose which of them you find first. A new game is Monday morning. If she has class and this place is off campus, ask her. She'll say she's between classes.
         </p>
         <form
           className="mt-8 space-y-4"

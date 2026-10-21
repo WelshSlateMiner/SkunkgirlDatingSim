@@ -24,6 +24,7 @@ import { InviteDecision } from "@/components/companion/InviteDecision";
 import { LensCoat } from "@/components/companion/LensCoat";
 import { LocationSheet } from "@/components/companion/LocationSheet";
 import { SprayOverlay } from "@/components/companion/SprayOverlay";
+import { AccidentallySkunked, WolfSprite } from "@/components/companion/WolfEvent";
 import { StartScreen } from "@/components/companion/StartScreen";
 import { TrustMeter } from "@/components/companion/TrustMeter";
 import { romanceGate } from "@/lib/companion/dates";
@@ -35,7 +36,9 @@ import { isMuted, setMuted, unlockAudio } from "@/lib/companion/audio";
 import { placeOf } from "@/lib/companion/locations";
 import { OUTFIT_LABEL, asOutfitId, victoriaGownOn, victoriaLingerieOn } from "@/lib/companion/portraits";
 import { ronnieOutfitName } from "@/lib/companion/ronnie-art";
+import { miraOutfitName } from "@/lib/companion/mira-art";
 import { writeSave, downloadSave } from "@/lib/companion/save";
+import { disclosedHarem, haremOpinionsOk, readOpinions } from "@/lib/companion/opinions";
 import { useCompanion } from "@/lib/companion/store";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +62,7 @@ export function CompanionApp() {
   const fading = useCompanion((s) => s.fading);
   const fadeMs = useCompanion((s) => s.fadeMs ?? 700);
   const spotlight = useCompanion((s) => s.spraySpotlight);
+  const wolf = useCompanion((s) => s.incident?.wolf);
   const endSpotlight = useCompanion((s) => s.endSpotlight);
   const mode = useCompanion((s) => s.gameMode);
   const focus = useCompanion((s) => s.focus);
@@ -66,6 +70,8 @@ export function CompanionApp() {
   const relationshipType = useCompanion((s) => s.relationshipType);
   const roster = useCompanion((s) => s.roster);
   const dates = useCompanion((s) => s.dates);
+  const messages = useCompanion((s) => s.messages);
+  const opinions = useCompanion((s) => s.opinions);
   const activeDate = useCompanion((s) => s.activeDate);
   const dateSpots = useCompanion((s) => s.dateSpots);
   const dateDraft = useCompanion((s) => s.dateDraft);
@@ -163,7 +169,9 @@ export function CompanionApp() {
           : "Office blouse"
       : who === "ronnie"
         ? ronnieOutfitName(location, dateGirl === "ronnie")
-        : dateGirl === "izzy"
+        : who === "mira"
+          ? miraOutfitName(location, dateGirl === "mira")
+          : dateGirl === "izzy"
           ? OUTFIT_LABEL.dress
           : OUTFIT_LABEL[asOutfitId(outfit) ?? "casual"];
   const gate = romanceGate(mode, dates ?? 0, dateSpots ?? []);
@@ -180,6 +188,18 @@ export function CompanionApp() {
     (mode === "slow"
       ? (dates ?? 0) >= 3 && trust >= gate.trust && bonding >= gate.bonding
       : trust >= 90 && bonding >= 60);
+  const haremOthers = (["izzy", "victoria", "ronnie", "mira"] as const).filter(
+    (id) => id !== who && roster?.[id]?.romanceAccepted,
+  );
+  const haremOpen = (relationshipType ?? "mono") === "harem" && haremOthers.length > 0;
+  const haremTold =
+    haremOpen &&
+    disclosedHarem(
+      messages.filter((m) => m.role === "player").slice(-8).map((m) => m.text).join(" "),
+      haremOthers,
+    );
+  const haremReady = !haremOpen || !haremTold || haremOpinionsOk(readOpinions(opinions), [who, ...haremOthers]);
+  const wolfOn = Boolean(wolf && wolf !== "off");
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg">
@@ -194,11 +214,13 @@ export function CompanionApp() {
 
       <div
         className={cn(
-          "pointer-events-none absolute inset-x-0 bottom-0 top-16 flex items-end justify-center lg:justify-end lg:pr-8",
+          "pointer-events-none absolute inset-x-0 bottom-0 top-16 flex items-end",
+          wolfOn ? "justify-start pl-1" : "justify-center lg:justify-end lg:pr-8",
           spotlight ? "z-50" : "z-10",
         )}
       >
         {izzyHere ? <CharacterPortrait /> : null}
+        <WolfSprite />
       </div>
 
       <header className="relative z-20 flex flex-wrap items-center gap-2 px-3 py-3 sm:px-5">
@@ -296,7 +318,13 @@ export function CompanionApp() {
             <>
               {showRomance ? (
                 <div className="mb-3 rounded-md border border-accent/40 bg-accent/10 px-3 py-2">
-                  <p className="text-sm text-fg">{girlName(focus ?? "izzy")} asked. This is the door.</p>
+                  <p className="text-sm text-fg">
+                    {haremOpen && !haremTold
+                      ? `${girlName(who)} asked. She has not been told this is a group. A yes is just the two of you.`
+                      : haremOpen && !haremReady
+                        ? `${girlName(who)} knows who else is in it. She is not close enough with them to join.`
+                        : `${girlName(who)} asked. This is the door.`}
+                  </p>
                   <Button size="sm" className="mt-2" onClick={acceptRomance}>
                     Be with {girlName(focus ?? "izzy")}
                   </Button>
@@ -333,6 +361,7 @@ export function CompanionApp() {
         </div>
       </div>
       <SprayOverlay />
+      <AccidentallySkunked />
       <DayFlow />
       <DatePlanner />
       <DateDue />

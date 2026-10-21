@@ -62,6 +62,7 @@ function coerceTurn(raw: unknown): IzzyTurn {
       o.sprayKind === "dominant"
         ? o.sprayKind
         : null,
+    sprayLevel: o.sprayLevel == null ? undefined : Number(o.sprayLevel),
     pendingIntimateSpray: Boolean(o.pendingIntimateSpray),
     otherDialogue: o.otherDialogue ? String(o.otherDialogue).slice(0, 900) : undefined,
     otherExpression: EXPRESSIONS.has(String(o.otherExpression ?? ""))
@@ -79,6 +80,7 @@ function coerceTurn(raw: unknown): IzzyTurn {
       o.otherSprayKind === "dominant"
         ? o.otherSprayKind
         : null,
+    otherSprayLevel: o.otherSprayLevel == null ? undefined : Number(o.otherSprayLevel),
     extras: parseExtras(o.extras),
     fartReaction: (["playful", "cool", "attracted", "negative", "bigIssue"].includes(String(o.fartReaction ?? ""))
       ? String(o.fartReaction)

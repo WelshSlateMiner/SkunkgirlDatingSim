@@ -1,5 +1,6 @@
 import type { Expression, GameFlags, GirlId, LocationId, OutfitId, SprayKind } from "./types";
 import { ronnieSrc } from "./ronnie-art";
+import { miraSrc } from "./mira-art";
 
 const CASUAL: Record<Expression, string> = {
   embarrassed: "/art/izzy/embarrassed.webp",
@@ -162,6 +163,7 @@ export function portraitSrc(
 ) {
   // Ronnie ignores the Izzy outfit ids and has no lingerie art: her look follows the location, unless she is on a date.
   if (girl === "ronnie") return ronnieSrc(expression, sprayKind, place, instructing, dating);
+  if (girl === "mira") return miraSrc(expression, sprayKind, place, dating);
   if (girl === "victoria") {
     if (lingerie && !dating) {
       if (sprayKind !== "none") return VICTORIA_LINGERIE_SPRAY[sprayKind];

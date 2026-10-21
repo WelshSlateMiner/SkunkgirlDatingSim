@@ -14,8 +14,10 @@ const empty = {
 };
 
 describe("keepsakes", () => {
-  it("paints twelve cubbies", () => {
-    assert.equal(shelfCubbies().length, 12);
+  it("paints twelve equal cubbies", () => {
+    const spots = shelfCubbies();
+    assert.equal(spots.length, 12);
+    assert.equal(new Set(spots.map((spot) => `${spot.w}x${spot.h}`)).size, 1);
   });
 
   it("holds the first gift until both meters are 50", () => {

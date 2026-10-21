@@ -2,9 +2,7 @@ import type { Expression, FxEvent, GameState, GirlId } from "./types";
 
 /**
  * Scene infrastructure for up to three skunkgirls at once.
- * "ronnie" is a valid SceneGirl so the plumbing is ready for her, but nothing can put her
- * in `present` yet (that is GirlId only), so she never appears in game.
- * Izzy and Victoria keep using the existing two-girl focus/other fields; these helpers work for any count.
+ * Izzy, Victoria, Ronnie, and Mira can all be in `present`. A scene never holds more than three.
  */
 
 export type SceneGirl = GirlId | "ronnie";
@@ -12,13 +10,33 @@ export type SceneGirl = GirlId | "ronnie";
 export const MAX_SCENE_GIRLS = 3;
 
 /** Left-to-right order on screen. */
-export const SCENE_ORDER: readonly SceneGirl[] = ["izzy", "victoria", "ronnie"];
+export const SCENE_ORDER: readonly SceneGirl[] = ["izzy", "victoria", "ronnie", "mira"];
 
 export const SCENE_NAMES: Record<SceneGirl, string> = {
   izzy: "Izzy",
   victoria: "Victoria",
   ronnie: "Ronnie",
+  mira: "Mira",
 };
+
+/**
+ * Standing height in inches. Vicky is 5'8". Izzy's bio says average and gives no number,
+ * so she is the US adult-woman average, 5'4". Mira is 5'3". Ronnie is 5'2".
+ */
+export const GIRL_INCHES: Record<GirlId, number> = {
+  victoria: 68,
+  izzy: 64,
+  mira: 63,
+  ronnie: 62,
+};
+
+/** 1 when she is alone. In a group, a fraction of the tallest girl present. Feet stay aligned. */
+export function spriteScale(girl: GirlId, present: readonly GirlId[]) {
+  const here = present.filter((id, i, all) => all.indexOf(id) === i);
+  if (here.length < 2) return 1;
+  const tallest = Math.max(...here.map((id) => GIRL_INCHES[id] ?? GIRL_INCHES.izzy));
+  return (GIRL_INCHES[girl] ?? GIRL_INCHES.izzy) / tallest;
+}
 
 /** Unique, sorted by SCENE_ORDER (unknown ids last, in given order), capped at MAX_SCENE_GIRLS. */
 export function sceneOrder<T extends string>(ids: readonly T[]): T[] {
@@ -50,13 +68,14 @@ export function sceneNames(ids: readonly SceneGirl[]): string {
   return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 
-/** Same full height as a solo portrait. Extra girls step in instead of shrinking. */
+/** Solo and group share one height class. A group then scales each girl with --sprite. Mobile is shorter so the header does not cover her head. */
 export function sceneLayout(count: number) {
   const n = Math.max(1, Math.min(MAX_SCENE_GIRLS, count));
-  const height = "h-[min(92dvh,980px)] w-auto max-w-none";
+  const height =
+    "h-[calc((100dvh-22rem)*var(--sprite,1))] sm:h-[calc(min(92dvh,980px)*var(--sprite,1))] w-auto max-w-none";
   if (n >= 3) return { width: "w-auto shrink-0 -mx-[16%]", height };
   if (n === 2) return { width: "w-auto shrink-0 -mx-[8%]", height };
-  return { width: "w-full", height: "h-[min(92dvh,980px)] max-w-[min(100%,640px)]" };
+  return { width: "w-full", height: "h-[calc((100dvh-22rem)*var(--sprite,1))] sm:h-[calc(min(92dvh,980px)*var(--sprite,1))] max-w-[min(100%,640px)]" };
 }
 
 /**
@@ -202,6 +221,7 @@ export const SCENE_STYLE: Record<SceneGirl, string> = {
   izzy: "text-accent",
   victoria: "text-cream",
   ronnie: "text-sky-300",
+  mira: "text-rose-300",
 };
 
 export function isGirlRole(role: string): role is SceneGirl {
@@ -225,6 +245,7 @@ export const SCENE_NAME_RE: Record<SceneGirl, RegExp> = {
   izzy: /\b(izzy|isabella)\b/i,
   victoria: /\b(vicky|victoria)\b/i,
   ronnie: /\b(ronnie|veronica)\b/i,
+  mira: /\b(mira)\b/i,
 };
 
 /** Short offline lines for a girl who is in the scene but not the focus or the first other. */
@@ -232,6 +253,7 @@ const EXTRA_FILLER: Record<SceneGirl, string[]> = {
   izzy: ["Hey. Still here. Still listening.", "Okay, I have opinions, but go on."],
   victoria: ["I'm listening. Go on.", "Mm. Noted."],
   ronnie: ["Yeah, I heard that. Keep up.", "Ha. Okay. I'm in."],
+  mira: ["I'm still here.", "Hm. Go on."],
 };
 
 /**

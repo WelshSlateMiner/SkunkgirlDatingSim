@@ -210,15 +210,23 @@ export function resolveSprayEvent(
   return { kind: "none", phase: "none" };
 }
 
-export function rollGlandCap() {
-  // 8–14, peaked at 11.
-  const weights = [1, 2, 4, 6, 4, 2, 1];
-  let roll = Math.random() * weights.reduce((sum, n) => sum + n, 0);
-  for (let i = 0; i < weights.length; i++) {
-    roll -= weights[i];
-    if (roll <= 0) return 8 + i;
-  }
-  return 11;
+export const GLAND_MAX: Record<GirlId, number> = {
+  izzy: 35,
+  victoria: 40,
+  ronnie: 30,
+  mira: 25,
+};
+
+/** A spray spends 1, 2, or 3. Stink added is ten points per point spent. */
+export function clampSprayLevel(level: unknown): 1 | 2 | 3 {
+  const n = typeof level === "number" ? Math.round(level) : 1;
+  if (n >= 3) return 3;
+  if (n === 2) return 2;
+  return 1;
+}
+
+export function stinkForSpray(level: number) {
+  return clampSprayLevel(level) * 10;
 }
 
 export interface GlandTank {
@@ -241,33 +249,118 @@ export function readTank(raw: Partial<GlandTank> | null | undefined): GlandTank 
   };
 }
 
-/** One fired spray, any kind. A new session rolls 8–14. The shot that hits the cap empties her. */
-export function spendTank(tank: GlandTank): { tank: GlandTank; emptied: boolean } {
+/** One fired spray. Level 1–3, clamped to whatever capacity she has left. */
+export function spendTank(
+  tank: GlandTank,
+  girl: GirlId,
+  level: unknown = 1,
+): { tank: GlandTank; emptied: boolean; spent: 0 | 1 | 2 | 3 } {
+  if (tank.glandDry > 0) return { tank, emptied: true, spent: 0 };
   let cap = tank.glandCap;
   let shots = tank.glandShots;
-  if (tank.turnsSinceIntimateSpray >= 3 || cap <= 0) {
-    cap = rollGlandCap();
+  const max = GLAND_MAX[girl];
+  if (cap <= 0) {
+    cap = max;
     shots = 0;
+  } else if (cap !== max) {
+    cap = max;
+    shots = Math.min(shots, max);
   }
-  shots += 1;
+  const left = cap - shots;
+  if (left <= 0) {
+    return {
+      tank: { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 0, glandDry: 12 },
+      emptied: true,
+      spent: 0,
+    };
+  }
+  const spent = Math.min(clampSprayLevel(level), left) as 1 | 2 | 3;
+  shots += spent;
   if (shots >= cap) {
     return {
       tank: { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 0, glandDry: 12 },
       emptied: true,
+      spent,
     };
   }
   return {
     tank: { glandCap: cap, glandShots: shots, turnsSinceIntimateSpray: 0, glandDry: 0 },
     emptied: false,
+    spent,
   };
 }
 
-/** She did not spray. Dry counts down. Three quiet turns end the session. */
+/** She sprayed last turn and has not yet given a non-spray reply. */
+export function onSprayCooldown(tank: GlandTank) {
+  return tank.glandDry === 0 && tank.glandCap > 0 && tank.glandShots > 0 && tank.turnsSinceIntimateSpray === 0;
+}
+
+const PREP: Record<GirlId, [string, string]> = {
+  izzy: [
+    "Not yet. I want the last one to sit on you. I'm watching what it does.",
+    "Hold on. I'm excited, but I'm letting that one sink in first. I want to see your face before I do it again.",
+  ],
+  victoria: [
+    "Not this second. I'm setting the glands for a bigger one. I want to see how much of mommy's stink you can actually take.",
+    "Wait. The next one will be heavier. I'm preparing it. We'll see how much of mommy's stink you can handle.",
+  ],
+  ronnie: [
+    "Already? You fucking stink. You sure? There's so much more where that came from.",
+    "You want another one right now? You already fucking stink. Say you're sure. There's a lot more.",
+  ],
+  mira: [
+    "Already? I'm not ready this second. If you're sure, I'll get another one ready. I like that you want what I can do.",
+    "Give me a turn. I'm a little shy about firing again this fast. If you mean it, I'll prepare another. I like being wanted for this.",
+  ],
+};
+
+const GAP: Record<GirlId, [string, string]> = {
+  izzy: [
+    "Between classes. I had a gap, and my feet came this way. I'll be back before they take attendance. Probably.",
+    "Class is still on. I'm just not in the room this minute. Between classes. Don't make it a thing.",
+  ],
+  victoria: [
+    "I don't have a class. This is my morning.",
+    "No lecture. I left school a long time ago.",
+  ],
+  ronnie: [
+    "Between classes. I've got the next block. This is just the gap. I wasn't going to sit in a hallway.",
+    "Yeah, I have class. I'm between them. I'll make it. I don't do late.",
+  ],
+  mira: [
+    "Between classes. The next one hasn't started. I'm not skipping. I'm using the gap.",
+    "Class is this morning. This is the space between. I'll be there when it starts.",
+  ],
+};
+
+function pickPair(lines: [string, string], salt: number) {
+  return lines[Math.abs(salt) % 2] ?? lines[0];
+}
+
+export function preparingCopy(girl: GirlId, salt: number) {
+  return {
+    narration: "Her tail stays down. The last spray is still in the air, and she is not ready to fire again.",
+    dialogue: pickPair(PREP[girl], salt),
+    expression: girl === "mira" ? ("shy" as const) : girl === "victoria" ? ("scheming" as const) : ("flirty" as const),
+  };
+}
+
+export function betweenClassCopy(girl: GirlId, salt: number) {
+  return {
+    narration: "She answers the question and does not make a speech out of it.",
+    dialogue: pickPair(GAP[girl], salt),
+    expression: "thinking" as const,
+  };
+}
+
+/** She did not spray. Dry counts down. Capacity stays until it is actually spent. */
 export function restTank(tank: GlandTank): GlandTank {
-  if (tank.glandDry > 0) return { ...tank, glandDry: tank.glandDry - 1 };
-  const turns = tank.turnsSinceIntimateSpray + 1;
-  if (turns >= 3) return { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: turns, glandDry: 0 };
-  return { ...tank, turnsSinceIntimateSpray: turns };
+  if (tank.glandDry > 0) {
+    const glandDry = tank.glandDry - 1;
+    if (glandDry === 0) return { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 1, glandDry: 0 };
+    return { ...tank, glandDry };
+  }
+  return { ...tank, turnsSinceIntimateSpray: tank.turnsSinceIntimateSpray + 1 };
 }
 
 /** Model sprays are already spent. Extra shots are scripted sprays this same turn. Everyone else rests. */
@@ -277,13 +370,13 @@ export function finishTanks(
   extra: Record<GirlId, number>,
 ): { tanks: Record<GirlId, GlandTank>; emptied: GirlId[] } {
   const emptied: GirlId[] = [];
-  const next: Record<GirlId, GlandTank> = { izzy: tanks.izzy, victoria: tanks.victoria, ronnie: tanks.ronnie };
-  for (const girl of ["izzy", "victoria", "ronnie"] as const) {
+  const next: Record<GirlId, GlandTank> = { ...tanks };
+  for (const girl of Object.keys(next) as GirlId[]) {
     let tank = next[girl];
     const more = extra[girl] ?? 0;
     for (let i = 0; i < more; i++) {
       if (tank.glandDry > 0) break;
-      const spent = spendTank(tank);
+      const spent = spendTank(tank, girl, 1);
       tank = spent.tank;
       if (spent.emptied) emptied.push(girl);
     }

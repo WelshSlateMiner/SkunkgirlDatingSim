@@ -1,4 +1,4 @@
-import type { GameFlags, GameMode, GameState, GirlId, LocationId, PlayerFartRole, PlayerGender, QueuedMeet } from "./types";
+import type { GameFlags, GameMode, GameState, GirlId, LiveEvent, LocationId, PlayerFartRole, PlayerGender, QueuedMeet } from "./types";
 import { TIMES, WEEKDAYS, emptySprays } from "./time";
 import { uid } from "@/lib/utils";
 import { FIRST_MEETS, asLocationId, placeOf } from "./locations";
@@ -7,10 +7,11 @@ import { blankCard, initialCast, oneGreeting } from "./cast";
 import { economySeed } from "./outing";
 import { readSceneFarts } from "./scene";
 import { keepsakeById } from "./keepsakes";
+import { isFlatFive, readOpinionGain, readOpinions } from "./opinions";
 import { readTank } from "./spray";
 
 export const SAVE_KEY = "izzy-companion-save";
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 11;
 
 export const defaultFlags = (): GameFlags => ({
   invitedMexican: false,
@@ -31,6 +32,7 @@ export const defaultFlags = (): GameFlags => ({
   defenseAftermath: "none",
   nicknamesOff: false,
   scentInterest: false,
+  vickyScentCurious: false,
   intimateScene: false,
 });
 
@@ -197,6 +199,13 @@ const OPENINGS: Record<string, Beat[]> = {
         "Hi. Izzy. I thought a craft store would be empty on a Monday. I was wrong, and my stomach was louder than the empty. Sorry.",
       second: "The florals are that way if you want distance. I will be over here, surviving.",
     },
+    {
+      narrator:
+        "Hot glue and dried orange peel, and under that a skunky musk that is not a candle. A chubby skunk-neko girl is holding a spool of ribbon like it might be evidence. She sees you. The ribbon wobbles.",
+      first:
+        "Hi. Izzy. I was going to make a wreath for the dorm and then I contributed. The smell is me. The ribbon is innocent. I was thinking about the Somme and my stomach took it personally.",
+      second: "If you actually know what any of this fabric is, I'll listen. If you don't, we can both pretend the aisle is bigger than it is.",
+    },
   ],
   gym: [
     {
@@ -212,6 +221,13 @@ const OPENINGS: Record<string, Beat[]> = {
       first:
         "Don't— hi. I'm Izzy. That was me. I was going to do one set so I could say I went to the gym, and my body filed a different workout.",
       second: "The exit's behind you if a first impression should not include chalk and skunk. Fair.",
+    },
+    {
+      narrator:
+        "The mirrors are honest and the chalk isn't the problem. A chubby skunk-neko girl in a campus hoodie has the end of an empty bench and a history paperback, not a bar. The musk says she just lost to her own stomach.",
+      first:
+        "Okay. Izzy. I brought a book in here because the library felt too public, which I hear myself saying. The fart was also public. Eastern Front supply. Wrong room. Sorry.",
+      second: "You can lift. I'll turn a page and try to be furniture. My tail is not cooperating.",
     },
   ],
 };
@@ -275,7 +291,7 @@ export function openingState(
     glandDry: 0,
     scentHold: 0,
     weekday: "Monday",
-    timeOfDay: "Afternoon",
+    timeOfDay: "Morning",
     turnsUntilTime: 10,
     dayPhase: "playing",
     izzyHere: true,
@@ -296,6 +312,9 @@ export function openingState(
     ...initialCast("izzy"),
     keepsakes: [],
     seenDay: {},
+    incident: null,
+    opinions: readOpinions(null),
+    opinionGain: {},
   };
 }
 
@@ -332,7 +351,7 @@ export function blankState(): GameState {
     glandDry: 0,
     scentHold: 0,
     weekday: "Monday",
-    timeOfDay: "Afternoon",
+    timeOfDay: "Morning",
     turnsUntilTime: 10,
     dayPhase: "playing",
     izzyHere: true,
@@ -352,19 +371,48 @@ export function blankState(): GameState {
     ...initialCast("izzy"),
     keepsakes: [],
     seenDay: {},
+    incident: null,
+    opinions: readOpinions(null),
+    opinionGain: {},
   };
 }
 
 function asGirl(value: unknown): GirlId | null {
-  return value === "izzy" || value === "victoria" || value === "ronnie" || value === "ronnie" ? value : null;
+  return value === "izzy" || value === "victoria" || value === "ronnie" || value === "mira" ? value : null;
+}
+
+const EVENT_PHASES = ["threat", "skunked", "dare", "clear"] as const;
+const WOLF_FRAMES = ["snarl", "sprayed", "retreat", "off"] as const;
+
+export function parseIncident(raw: unknown): LiveEvent | null {
+  if (!raw || typeof raw !== "object") return null;
+  const event = raw as Partial<LiveEvent>;
+  if (event.id !== "wolf") return null;
+  const phase = EVENT_PHASES.find((item) => item === event.phase);
+  const wolf = WOLF_FRAMES.find((item) => item === event.wolf);
+  if (!phase || !wolf) return null;
+  const girls = Array.isArray(event.girls) ? event.girls.filter((id): id is GirlId => asGirl(id) !== null) : [];
+  const sprayers = Array.isArray(event.sprayers) ? event.sprayers.filter((id): id is GirlId => asGirl(id) !== null) : [];
+  const darers = Array.isArray(event.darers) ? event.darers.filter((id): id is GirlId => asGirl(id) !== null) : [];
+  if (!girls.length) return null;
+  const cause = event.cause === "accident" ? ("accident" as const) : undefined;
+  return {
+    id: "wolf",
+    phase,
+    wolf,
+    girls,
+    sprayers,
+    ...(cause ? { cause } : {}),
+    ...(darers.length ? { darers } : {}),
+  };
 }
 
 const AFFAIR_PHASES = ["wait", "hint", "demand", "warn", "reclaim", "spent", "known"] as const;
 
 export function parseMarkAffair(raw: GameState["markAffair"] | null | undefined): GameState["markAffair"] {
   if (!raw || typeof raw !== "object") return null;
-  const girl = raw.girl === "izzy" || raw.girl === "victoria" || raw.girl === "ronnie" ? raw.girl : null;
-  const marker = raw.marker === "izzy" || raw.marker === "victoria" || raw.marker === "ronnie" ? raw.marker : null;
+  const girl = raw.girl === "izzy" || raw.girl === "victoria" || raw.girl === "ronnie" || raw.girl === "mira" ? raw.girl : null;
+  const marker = raw.marker === "izzy" || raw.marker === "victoria" || raw.marker === "ronnie" || raw.marker === "mira" ? raw.marker : null;
   const phase = AFFAIR_PHASES.find((item) => item === raw.phase);
   if (!girl || !marker || !phase || girl === marker) return null;
   const waits = typeof raw.waits === "number" && Number.isFinite(raw.waits) ? Math.max(0, Math.round(raw.waits)) : 0;
@@ -379,6 +427,7 @@ export function migrate(raw: GameState): GameState {
   const roster = raw.roster?.izzy && raw.roster?.victoria ? { ...raw.roster } : seeded.roster;
   // Saves from before Ronnie have no card for her. She starts unmet.
   if (!roster.ronnie) roster.ronnie = blankCard("casual");
+  if (!roster.mira) roster.mira = blankCard("casual");
   if (!raw.roster?.izzy) {
     roster.izzy = {
       ...roster.izzy,
@@ -399,7 +448,7 @@ export function migrate(raw: GameState): GameState {
     };
   }
   const inherited = readTank(raw);
-  for (const girl of ["izzy", "victoria", "ronnie"] as const) {
+  for (const girl of ["izzy", "victoria", "ronnie", "mira"] as const) {
     const card = roster[girl];
     if (!card) continue;
     const own = typeof card.glandCap === "number";
@@ -515,27 +564,32 @@ export function migrate(raw: GameState): GameState {
     sceneTurns: typeof raw.sceneTurns === "number" ? raw.sceneTurns : 0,
     shiftsWorked: typeof raw.shiftsWorked === "number" ? Math.max(0, Math.round(raw.shiftsWorked)) : 0,
     workedToday: Boolean(raw.workedToday),
-    pressedDuty: raw.pressedDuty === "izzy" || raw.pressedDuty === "victoria" || raw.pressedDuty === "ronnie" ? raw.pressedDuty : null,
+    pressedDuty: asGirl(raw.pressedDuty),
     stink: typeof raw.stink === "number" ? Math.max(0, Math.min(100, Math.round(raw.stink))) : 0,
     scentFrom: {
       izzy: typeof raw.scentFrom?.izzy === "number" ? Math.max(0, Math.round(raw.scentFrom.izzy)) : 0,
       victoria: typeof raw.scentFrom?.victoria === "number" ? Math.max(0, Math.round(raw.scentFrom.victoria)) : 0,
       ronnie: typeof raw.scentFrom?.ronnie === "number" ? Math.max(0, Math.round(raw.scentFrom.ronnie)) : 0,
+      mira: typeof raw.scentFrom?.mira === "number" ? Math.max(0, Math.round(raw.scentFrom.mira)) : 0,
     },
     stinkAsked: raw.stinkAsked ?? {},
     stinkTalk:
-      raw.stinkTalk && (raw.stinkTalk.girl === "izzy" || raw.stinkTalk.girl === "victoria" || raw.stinkTalk.girl === "ronnie")
+      raw.stinkTalk && asGirl(raw.stinkTalk.girl)
         ? { girl: raw.stinkTalk.girl, presses: typeof raw.stinkTalk.presses === "number" ? raw.stinkTalk.presses : 0 }
         : null,
-    showersToday: typeof raw.showersToday === "number" ? Math.max(0, Math.min(2, Math.round(raw.showersToday))) : 0,
+    showersToday: typeof raw.showersToday === "number" ? Math.max(0, Math.round(raw.showersToday)) : 0,
+    opinions: isFlatFive(raw.opinions) ? readOpinions(null) : readOpinions(raw.opinions),
+    opinionGain: readOpinionGain(raw.opinionGain),
     daySerial: typeof raw.daySerial === "number" ? Math.max(0, Math.round(raw.daySerial)) : 0,
     dutyNotice: Array.isArray(raw.dutyNotice)
       ? raw.dutyNotice.filter(
           (notice): notice is GameState["dutyNotice"][number] =>
-            !!notice &&
-            (notice.girl === "izzy" || notice.girl === "victoria" || notice.girl === "ronnie") &&
-            (notice.duty === "class" || notice.duty === "work") &&
-            Boolean(asLocationId(notice.place)),
+            Boolean(
+              notice &&
+                asGirl(notice.girl) &&
+                (notice.duty === "class" || notice.duty === "work") &&
+                asLocationId(notice.place),
+            ),
         )
       : [],
     flauntDay: raw.flauntDay ?? {},
@@ -547,7 +601,9 @@ export function migrate(raw: GameState): GameState {
       ...(typeof raw.seenDay?.izzy === "number" ? { izzy: raw.seenDay.izzy } : {}),
       ...(typeof raw.seenDay?.victoria === "number" ? { victoria: raw.seenDay.victoria } : {}),
       ...(typeof raw.seenDay?.ronnie === "number" ? { ronnie: raw.seenDay.ronnie } : {}),
+      ...(typeof raw.seenDay?.mira === "number" ? { mira: raw.seenDay.mira } : {}),
     },
+    incident: parseIncident(raw.incident),
     otherSprayKind:
       raw.otherSprayKind === "angry" ||
       raw.otherSprayKind === "consensual" ||
@@ -558,12 +614,14 @@ export function migrate(raw: GameState): GameState {
     sprayPrompts: Array.isArray(raw.sprayPrompts)
       ? raw.sprayPrompts.filter(
           (prompt): prompt is GameState["sprayPrompts"][number] =>
-            !!prompt &&
-            (prompt.girl === "izzy" || prompt.girl === "victoria" || prompt.girl === "ronnie") &&
-            (prompt.kind === "angry" ||
-              prompt.kind === "consensual" ||
-              prompt.kind === "defensive" ||
-              prompt.kind === "dominant"),
+            Boolean(
+              prompt &&
+                asGirl(prompt.girl) &&
+                (prompt.kind === "angry" ||
+                  prompt.kind === "consensual" ||
+                  prompt.kind === "defensive" ||
+                  prompt.kind === "dominant"),
+            ),
         )
       : [],
   };

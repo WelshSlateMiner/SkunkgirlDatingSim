@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { StinkLines } from "@/components/companion/StinkLines";
 import { portraitSrc, victoriaLingerieOn } from "@/lib/companion/portraits";
 import { useCompanion } from "@/lib/companion/store";
-import { MAX_SCENE_GIRLS, sceneLayout, sceneOrder, sceneOthers } from "@/lib/companion/scene";
+import { MAX_SCENE_GIRLS, sceneLayout, sceneOrder, sceneOthers, spriteScale } from "@/lib/companion/scene";
 import type { GirlId } from "@/lib/companion/types";
 import { ronnieInstructing } from "@/lib/companion/yoga";
 import { cn } from "@/lib/utils";
 
-function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra: boolean }) {
+function GirlSprite({ girl, count, extra, shifted, scale }: { girl: GirlId; count: number; extra: boolean; shifted: boolean; scale: number }) {
   const focus = useCompanion((s) => s.focus ?? "izzy");
   const liveOutfit = useCompanion((s) => s.outfit);
   const liveExpression = useCompanion((s) => s.expression);
@@ -68,6 +68,7 @@ function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra
       className={cn(
         "pointer-events-none relative flex h-full items-end justify-center",
         sceneLayout(count).width,
+        shifted && "!mx-1 w-auto max-w-[24vw]",
         "izzy-idle",
         expression === "embarrassed" && "izzy-embarrassed",
         expression === "laughing" && "izzy-laugh",
@@ -83,19 +84,22 @@ function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra
       <img
         key={src}
         src={src}
-        alt={girl === "victoria" ? "Victoria" : girl === "ronnie" ? "Veronica" : "Isabella"}
+        alt={girl === "victoria" ? "Victoria" : girl === "ronnie" ? "Veronica" : girl === "mira" ? "Mira" : "Isabella"}
+        style={{ ["--sprite" as string]: String(scale) }}
         className={cn(
           "w-auto object-contain object-bottom drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
           showSpot
             ? "h-[min(98dvh,1080px)] max-w-[min(100%,720px)]"
-            : sceneLayout(count).height,
+            : shifted
+              ? "h-[min(68dvh,720px)] max-w-[24vw]"
+              : sceneLayout(count).height,
           spraying || stink
             ? "transition-none"
             : "transition-[height,opacity,filter] duration-[var(--motion-slow)] ease-[var(--ease-smooth-out)]",
         )}
       />
       {stink ? <StinkLines variant="body" /> : null}
-      {showSpot || (duetSpray && spraying) ? <div className="spray-jets" aria-hidden /> : null}
+      {showSpot || (duetSpray && spraying) || (extra && spraying) ? <div className="spray-jets" aria-hidden /> : null}
     </div>
   );
 }
@@ -103,15 +107,24 @@ function GirlSprite({ girl, count, extra }: { girl: GirlId; count: number; extra
 export function CharacterPortrait() {
   const present = useCompanion((s) => s.present);
   const focus = useCompanion((s) => s.focus ?? "izzy");
+  const wolf = useCompanion((s) => s.incident?.wolf);
+  const shifted = Boolean(wolf && wolf !== "off");
   const order: GirlId[] = sceneOrder(present?.length ? present : [focus]);
   const count = Math.min(MAX_SCENE_GIRLS, order.length || 1);
   // The first non-focus girl uses the existing "other" fields. Anyone after her is an extra.
   const others = sceneOthers(order, focus);
 
   return (
-    <div className="pointer-events-none relative flex h-full w-full items-end justify-center">
+    <div className={cn("pointer-events-none relative flex h-full w-full items-end", shifted ? "justify-start" : "justify-center")}>
       {order.map((id) => (
-        <GirlSprite key={id} girl={id} count={count} extra={id !== focus && id !== others[0]} />
+        <GirlSprite
+          key={id}
+          girl={id}
+          count={count}
+          extra={id !== focus && id !== others[0]}
+          shifted={shifted}
+          scale={spriteScale(id, order)}
+        />
       ))}
     </div>
   );

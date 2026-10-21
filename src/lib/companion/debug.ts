@@ -64,13 +64,15 @@ export type DebugCommand =
   | { kind: "spray_intimate" }
   | { kind: "defensive_spray" }
   | { kind: "dominant_spray" }
+  | { kind: "spray_accidental" }
   | { kind: "set_trust"; value: number }
   | { kind: "set_bonding"; value: number }
   | { kind: "character_change" }
-  | { kind: "character_add" };
+  | { kind: "character_add" }
+  | { kind: "trigger_event"; name: string };
 
 const CMD =
-  /^\/(travel|cycle_outfit|cycle_fart|cycle_pose|spray_angry|spray_intimate|defensive_spray|dominant_spray|set_trust|set_bonding|character_change|character_add)\b/i;
+  /^\/(travel|cycle_outfit|cycle_fart|cycle_pose|spray_angry|spray_intimate|defensive_spray|dominant_spray|spray_accidental|set_trust|set_bonding|character_change|character_add|trigger_event)\b/i;
 
 export function parseDebugName(raw: string): { debug: boolean; name: string } {
   const t = raw.trim();
@@ -95,7 +97,8 @@ export function parseDebugCommand(say: string, invite?: LocationId | null): Debu
     if (!Number.isFinite(n)) return null;
     return { kind: "set_bonding", value: n };
   }
-  return { kind: verb as Exclude<DebugCommand["kind"], "travel" | "set_trust" | "set_bonding"> };
+  if (verb === "trigger_event") return { kind: "trigger_event", name: text.slice(m[0].length).trim() };
+  return { kind: verb as Exclude<DebugCommand["kind"], "travel" | "set_trust" | "set_bonding" | "trigger_event"> };
 }
 
 export function nextIndex(current: number, length: number) {
@@ -114,8 +117,10 @@ export const DEBUG_TIPS = [
   "/spray_intimate",
   "/defensive_spray",
   "/dominant_spray",
+  "/spray_accidental",
   "/set_trust 50",
   "/set_bonding 50",
   "/character_change",
   "/character_add",
+  "/trigger_event Wolf Attack!",
 ];

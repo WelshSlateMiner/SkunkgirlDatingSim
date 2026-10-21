@@ -10,13 +10,13 @@ export const FRESHEN: Record<string, number> = {
   "industrial-soap": 30,
 };
 
-export const SHOWER_PLACES = new Set<LocationId>(["apartment", "dorm", "vickyBedroom"]);
+export const SHOWER_PLACES = new Set<LocationId>(["apartment", "dorm", "vickyBedroom", "ronnieDorm", "miraDorm"]);
 
-const SCENT_GIRLS: GirlId[] = ["izzy", "victoria", "ronnie"];
-const SCENT_NAME: Record<GirlId, string> = { izzy: "Izzy", victoria: "Victoria", ronnie: "Ronnie" };
+const SCENT_GIRLS: GirlId[] = ["izzy", "victoria", "ronnie", "mira"];
+const SCENT_NAME: Record<GirlId, string> = { izzy: "Izzy", victoria: "Victoria", ronnie: "Ronnie", mira: "Mira" };
 
 export function emptyScent(): ScentFrom {
-  return { izzy: 0, victoria: 0, ronnie: 0 };
+  return { izzy: 0, victoria: 0, ronnie: 0, mira: 0 };
 }
 
 export function normalizeScent(raw: Partial<ScentFrom> | null | undefined): ScentFrom {

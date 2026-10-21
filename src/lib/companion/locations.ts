@@ -217,8 +217,8 @@ export const LOCATIONS: Record<LocationId, LocationDef> = {
   apartment: {
     id: "apartment",
     name: "Your Apartment",
-    what: "The player's one-bedroom apartment. Simple furnishings, light blue walls, dark grey carpet, a full-size mattress on a faux-wood bed frame, a few music and movie posters, and a wooden display cabinet with twelve cubbies. Left sparse on purpose so it can stand in as your own place. Gifts the girls give sit in that cabinet.",
-    blurb: "Light blue walls, grey carpet, and a bed that is yours.",
+    what: "The player's one-bedroom apartment. Simple furnishings, plain light blue walls, dark grey carpet, a full-size bed with a faux-wood frame and a deep blue comforter, a nightstand and a lamp, a couple of posters, and a glass display cabinet with twelve equal empty compartments. Left sparse on purpose so it can stand in as your own place. Gifts the girls give sit in that cabinet.",
+    blurb: "Light blue walls, a deep blue bed, and a glass cabinet.",
     group: "private",
     minTrust: 40,
     image: "/art/places/apartment.jpg",
@@ -354,6 +354,17 @@ export const LOCATIONS: Record<LocationId, LocationDef> = {
     group: "private",
     minTrust: 45,
     image: "/art/places/ronnieDorm.jpg",
+    defaultOutfit: "lounge",
+    inviteOnly: true,
+  },
+  miraDorm: {
+    id: "miraDorm",
+    name: "Mira's Dorm",
+    what: "Mira's dorm room. Girl-group posters, a bed of plushies, a ring-light vanity, and a dance mat with a phone on a tripod. The poster of her has no name on it yet.",
+    blurb: "Plushies, a ring light, and a blank name.",
+    group: "private",
+    minTrust: 45,
+    image: "/art/places/miraDorm.jpg",
     defaultOutfit: "lounge",
     inviteOnly: true,
   },
@@ -497,6 +508,9 @@ const EXTRA_ALIASES: Record<string, LocationId> = {
   "ronnie's dorm": "ronnieDorm",
   "veronica dorm": "ronnieDorm",
   "veronica's dorm": "ronnieDorm",
+  "mira dorm": "miraDorm",
+  "miras dorm": "miraDorm",
+  "mira's dorm": "miraDorm",
 };
 
 function norm(s: string) {
@@ -544,6 +558,12 @@ export function placeOf(id: string | null | undefined) {
   return LOCATIONS[asLocationId(id) ?? "library"] ?? LOCATIONS.library;
 }
 
+/** Town and workplaces. Campus buildings and private rooms are not off campus. */
+export function offCampus(id: string | null | undefined) {
+  const group = placeOf(id).group;
+  return group === "town" || group === "work";
+}
+
 /** Still open after dark. Everything else locks up. */
 const NIGHT_OPEN = new Set<LocationId>([
   "trail",
@@ -551,13 +571,14 @@ const NIGHT_OPEN = new Set<LocationId>([
   "field",
   "dorm",
   "ronnieDorm",
+  "miraDorm",
   "apartment",
   "vickyLiving",
   "vickyBedroom",
   "theater",
 ]);
 
-const SLEEP_AT = new Set<LocationId>(["apartment", "dorm", "vickyBedroom", "ronnieDorm"]);
+const SLEEP_AT = new Set<LocationId>(["apartment", "dorm", "vickyBedroom", "ronnieDorm", "miraDorm"]);
 
 export function openTonight(id: LocationId, time: TimeOfDay = "Night") {
   if (time !== "Night") return true;

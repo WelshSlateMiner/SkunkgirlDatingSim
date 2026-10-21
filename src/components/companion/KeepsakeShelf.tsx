@@ -106,7 +106,7 @@ export function KeepsakeReveal() {
   }, [id, shift]);
 
   if (!item) return null;
-  const from = item.girl === "victoria" ? "Victoria" : item.girl === "ronnie" ? "Ronnie" : "Izzy";
+  const from = item.girl === "victoria" ? "Victoria" : item.girl === "ronnie" ? "Ronnie" : item.girl === "mira" ? "Mira" : "Izzy";
   return (
     <div className="fixed inset-0 z-[88] flex items-center justify-center bg-black/55 px-6" role="status" aria-live="polite">
       <div className={leaving ? "keepsake-leave relative flex max-w-sm flex-col items-center" : "relative flex max-w-sm flex-col items-center"}>

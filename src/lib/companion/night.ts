@@ -56,6 +56,20 @@ const LINES: Record<GirlId, Record<NightBend, { text: string; expression: Expres
       text: "That's closing time. I've got an early run anyway. Night. Don't be weird about it.",
     },
   },
+  mira: {
+    invite: {
+      expression: "flirty",
+      text: "They're closing. My dorm, or your apartment. I'm not standing in a doorway. Come.",
+    },
+    continue: {
+      expression: "thinking",
+      text: "They're closing. Marquee House, if it's still open. I'm not inviting you home.",
+    },
+    goodnight: {
+      expression: "idle",
+      text: "That's enough for tonight. Don't follow me.",
+    },
+  },
 };
 
 export interface NightSpeaker {
@@ -104,7 +118,8 @@ export function nightClose(args: {
   let inviteGirl: GirlId | null = null;
   for (const girl of order) {
     const meter = byId.get(girl) ?? { girl, trust: 0, bonding: 0, official: false };
-    const bend = nightBend(meter.trust, meter.bonding, meter.official, args.intimate);
+    let bend = nightBend(meter.trust, meter.bonding, meter.official, args.intimate);
+    if (girl === "mira" && bend === "invite" && !meter.official) bend = "continue";
     const line = LINES[girl][bend];
     spoken.push({ girl, text: line.text, expression: line.expression });
     if (bend === "goodnight") left.push(girl);

@@ -55,7 +55,8 @@ export function ChatComposer({ compact = false }: { compact?: boolean }) {
   const playerName = useCompanion((s) => s.playerName);
   const example = `Hi, I’m ${playerName || "there"}! *holds out a hand* Nice to meet you.`;
 
-  const locked = debug ? busy : busy || sprayed || (prompts?.length ?? 0) > 0;
+  const incident = useCompanion((s) => s.incident);
+  const locked = debug ? busy : busy || sprayed || (prompts?.length ?? 0) > 0 || incident?.phase === "skunked" || incident?.phase === "clear";
 
   const parsedLive = parseDraft(draft);
   const empty =

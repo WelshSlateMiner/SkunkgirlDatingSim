@@ -64,8 +64,10 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
               $20. Once a day, and not at night. If you aren't home, it tells you to travel there first.
               Reading at the Campus Library and Studying at the Study Hall each move the clock forward one
               part of the day, and you can do either again. Zzz is Sleep. It only lights up at your apartment,
-              Izzy's dorm, Vicky's bedroom, or Ronnie's dorm, and only from Evening on. The shower button works
-              in the room you're in, including her dorm. Sleep opens a recap of the day.
+              Izzy's dorm, Vicky's bedroom, or Ronnie's dorm, and only from Evening on. The shower works in
+              your apartment, Izzy's dorm, and Vicky's bedroom. Water takes a little stink off. Supplies take more,
+              and they get used up. There is no daily cap, but each shower spends half a period, so you cannot
+              wash the smell off forever. Sleep opens a recap of the day.
               Continue fades out and back in over a few seconds. You wake the next Morning, a little less
               stinky, and Monday adds your paycheck. At Night almost everywhere closes. Still open: the Quad,
               the Nature Trail, West Field, Marquee House, the dorm, Ronnie's dorm, your apartment, and Vicky's living room and bedroom.
@@ -93,6 +95,17 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
             </p>
           </section>
           <section>
+            <h3 className="font-display text-base text-fg">Events</h3>
+            <p className="mt-1">
+              Every so often the scene interrupts itself. Wolf Attack! can happen on the Nature Trail, a little
+              more often once it gets dark. She sees it first. You get one chance to try to drive it off. If you
+              write that try as failing — it isn’t working, the wolf doesn’t care, it keeps coming — she counts the
+              effort and sprays anyway. A try that holds counts for a little more. If she sprays the wolf, you
+              catch the edge of it, and Accidentally Skunked asks whether you are disgusted, understanding, or into
+              it. Each of them takes that differently.
+            </p>
+          </section>
+          <section>
             <h3 className="font-display text-base text-fg">Trust and Bonding</h3>
             <p className="mt-1">
               Trust is how you treat the skunkgirl parts of her. Bonding is whether you actually get along.
@@ -107,8 +120,8 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
               Ronnie runs track, lifts at the campus gym, and teaches at Second Wind on Tuesday, Wednesday,
               Thursday, and Saturday afternoons. She is proud of her gas, not embarrassed, and makes it a
               competition. Play along and she likes you more. Up to three girls can share a scene.
-              The place you start decides who you meet first. The gym is mostly Ronnie. The library leans Izzy. Neko Shelf is mostly Izzy. Hearth & Hobby, the furniture showroom,
-              and the Italian restaurant are mostly Victoria. Line & Lumen is Victoria's desk on weekday
+              A new game starts Monday morning. The place you start sets who you are likely to meet. The gym is mostly Ronnie. The library leans Izzy. Neko Shelf is mostly Izzy. Hearth & Hobby leans Victoria.
+              If she has class and you met her off campus, ask. She will say she is between classes. Line & Lumen is Victoria's desk on weekday
               afternoons. She'll talk design there, and not much else. Izzy is on campus in the morning and
               at Trailhead Outfitters on Monday, Wednesday, and Friday afternoons. Other times, she wanders.
               If you name one of them, she answers. "You guys" or "ladies" invites both. An unaddressed girl
@@ -127,7 +140,7 @@ export function HowToPlay({ tone }: { tone?: "title" }) {
           <section>
             <h3 className="font-display text-base text-fg">The day</h3>
             <p className="mt-1">
-              A new game starts Monday afternoon. The day and the time sit at the top left: Morning, Afternoon,
+              A new game starts Monday morning. The day and the time sit at the top left: Morning, Afternoon,
               Evening, Night. Every ten replies from them moves the clock, wherever you already are. What you
               type does not count until she answers, so a scheduled goodbye is not cut off by the hour. You only
               change places when you travel alone, when she accepts an invite, or when you confirm a date

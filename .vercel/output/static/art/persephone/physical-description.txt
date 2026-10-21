@@ -1,0 +1,74 @@
+
+Overview
+A female skunk-taur ("scentaur") — a centaur-analogue whose animal half is a scaled-up striped skunk rather than a horse. She is a single continuous organism with two distinct halves joined at the waist, not a rider or a fused pair. Her build reads soft, plush and gentle rather than athletic: a petite, curvy human upper body carried on a heavy, barrel-chested quadruped frame. Her color identity is high-contrast: luminous silver-white hair and pale skin against jet-black fur and bold ivory striping, with vivid blue eyes as the focal point.
+Stat block
+Attribute	Value
+Total standing height (crown)	~1.95 m / 6 ft 5 in
+Skunk shoulder height	~1.15 m / 3 ft 9 in
+Human half length (waist join → crown)	~0.75 m / 2 ft 6 in
+Skunk body length (chest → rump)	~1.5 m / 4 ft 11 in
+Tail length (base → tip, following curve)	~1.6 m / 5 ft 3 in
+Total nose-to-tail span	~3.1 m / 10 ft 2 in
+Mass	~270–300 kg / 600–660 lb
+Bust	FF cup; ~80 cm underbust, ~110 cm bust
+Waist	~70 cm, soft and gently tapered
+Shoulder width	~40 cm, narrower than her ribcage is deep
+Legs	Four; two human arms, zero human legs
+Head and face
+Young adult woman's face, soft rounded jawline and small chin.
+Large, wide-set eyes in bright cerulean blue with lighter rim highlights and dark, defined upper lash lines. Calm, slightly distant gaze with a faintly downturned, pouty small mouth — a neutral, almost shy resting expression.
+Pale silver-white eyebrows, thin and low-contrast against the skin.
+Light peach skin with a warm undertone, smooth and matte.
+Freckles dusted generously across both cheeks and over the bridge of her nose — irregular soft tan speckling, roughly a dozen per cheek, fading toward the jaw and temples.
+Hair
+Floor-length, perfectly straight platinum silver-white hair with a cool grey shadow tone — an ethereal, near-luminous elven white.
+Blunt, straight-cut fringe across the forehead, sitting just above the brows.
+Long face-framing side locks that fall forward over both temples, completely covering the sides of her head where human ears would sit.
+The mass continues down in two thick sheets over her shoulders, past her chest and waist, running alongside the skunk's flank and trailing almost to the ground behind her. In total, hair reaches roughly 1.4 m in length.
+Ears — the design rule
+Exactly two ears, both skunk. Rounded, thick, furry black ears set high on the crown and tilted slightly outward, with pale pink inner-ear lining. Fully visible above the hair.
+No human ears and no elf ears. The temple region is deliberately blanketed by hair so no secondary ear pair ever shows. This is the defining anatomical rule of the character.
+Human upper body
+Slender, soft shoulders with rounded deltoids and minimal muscle definition.
+Both bare arms hang relaxed at her sides, slightly away from the torso, elbows just barely bent, fingers loosely curled. Soft, smooth forearms and wrists, small hands.
+Full, heavy, rounded FF bust sitting unbound and topless — a wide soft undercurve, natural weight and slight outward set, small pale-pink nipples. The bust is clearly wider than her shoulders and the dominant mass of the human half.
+Ribcage narrow, waist soft with a gentle inward taper and slight love-handle fullness.
+Bare midriff with a soft, untoned belly, a subtle forward pouch, and a small oval navel set slightly low. No abdominal definition anywhere.
+The human half is deliberately compact — a short torso, so the transition arrives quickly.
+The join
+Her human skin ends just below the navel, where the white chest fur of the skunk rises to meet it in a ragged, spiky, black-tipped fringe of tufts.
+The boundary is scalloped and organic, highest at the center and sides, so her lower belly sits in a cradle of fur rather than meeting a clean seam.
+Below that line, the white fur becomes a large fluffy bib covering the skunk's chest and running down between the front legs — broad, plush, and edged in black guard hairs.
+No human hips and no human legs exist below the join; the waist is the last human feature.
+Skunk body
+Massive, deep-chested, heavy-boned quadruped anatomy, roughly pony-scale.
+Broad, powerful shoulders at the join, wide ribcage, thick loins, heavy rounded haunches.
+Glossy jet-black fur over the whole body, with a broad ivory-white dorsal stripe running from the shoulders down the spine to the tail base.
+Fur rendered in sharp, spiky cel-shaded tufts along the flanks, elbows, haunches, chest edge, and ankles — giving a dense, bristly, wild texture against the smooth human skin.
+Four sturdy black legs, ending in broad plantigrade skunk paws with long curved dark claws — five prominent claws visible per front paw, splayed for digging.
+Scent glands implied at the rear beneath the tail base, consistent with skunk anatomy.
+Tail
+The signature feature: an enormous, plush, banded skunk tail roughly as long as the entire body and thicker than her torso.
+Rises high from the rump and curls into a dramatic spiral loop behind and above her, the tip sweeping back down — a held-high, alert, banner-like pose.
+Broad alternating black and white bands, four to five white bands visible, soft-edged and extremely fluffy with spiky fur tips.
+The tail's spiral apex rises above the crown of her head, making it the tallest point of the silhouette.
+Palette
+Zone	Color
+Hair	Near-white platinum, #F2F2F5 light → #C9CBD4 shadow
+Skin	Pale peach, #F3D3BC
+Eyes	Bright azure, #4EA8DE
+Freckles	Soft tan, #D9A183
+Skunk fur black	#14141A → #2A2A33 highlight
+Skunk fur white	Ivory #F5F2EA → cream #E8E2D4 shadow
+Inner ear / nipples	Pale pink, #E8A0A8
+Posture and bearing
+Standing square and settled on all fours, three-quarter view, skunk body in left-facing profile with the tail arcing to the right. Weight evenly distributed on all four legs, tail held high in a proud, alert curl. Bearing is gentle and understated — soft-faced and plush-bodied, but with a heavy frame that gives her real physical presence.
+Rendering style
+Cel-shaded anime illustration: crisp black linework, flat base colors with clean two-tone shading, glossy highlights on the hair and fur, spiky tuft edges, and a soft contact shadow on a plain white studio ground.
+Design rules to preserve
+Rounded furry black skunk ears on the crown — never pointed, never elven.
+No visible human or elf ears; the temple region stays hair-covered.
+Bare midriff with a soft, untoned belly and visible navel.
+Human arms only — no human legs, no extra limbs.
+Topless by default; FF bust; broad white chest bib below the join.
+Tail always huge, banded, plush and held high.

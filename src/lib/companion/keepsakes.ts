@@ -80,6 +80,26 @@ export const KEEPSAKES: Keepsake[] = [
     expression: "shy",
     image: "/art/keepsakes/ronnie-lane.png",
   },
+  {
+    id: "mira-mixtape",
+    girl: "mira",
+    tier: 1,
+    name: "Mixtape of her favorite songs",
+    blurb: "She plays it off as self-promotion. It is not another EP. These are the songs she actually loves, and she hopes you like them.",
+    line: "Play it. Or don't. They're the ones I put on when nobody is asking me to be a brand.",
+    expression: "shy",
+    image: "/art/keepsakes/mira-mixtape.jpg",
+  },
+  {
+    id: "mira-rehearsals",
+    girl: "mira",
+    tier: 2,
+    name: "USB of her private dance rehearsals",
+    blurb: "At-home routines she does not post. More personal than the public work. Handing them over is trust, not a content drop.",
+    line: "These don't go online. Don't you put them online either.",
+    expression: "thinking",
+    image: "/art/keepsakes/mira-rehearsals.jpg",
+  },
 ];
 
 const BY_ID = new Map(KEEPSAKES.map((item) => [item.id, item]));
@@ -89,9 +109,8 @@ export function keepsakeById(id: string | null | undefined) {
   return BY_ID.get(id) ?? null;
 }
 
-/** The apartment painting is 1600×900. The cabinet and its twelve cubbies are painted at these pixels. */
-export const APARTMENT_PX = { w: 1600, h: 900 };
-export const SHELF_LAYOUT = { x: 718, y: 296, w: 164, h: 138, pad: 8, gap: 4, cols: 4, rows: 3 };
+/** The apartment painting is 1792×1008. Twelve equal slots inside the glass cabinet. */
+export const APARTMENT_PX = { w: 1792, h: 1008 };
 
 export interface ShelfCubby {
   x: number;
@@ -100,22 +119,24 @@ export interface ShelfCubby {
   h: number;
 }
 
+/** Row-major, left to right, top to bottom. Same size in every pane, measured on the painting. */
+const CABINET_SLOTS: ShelfCubby[] = [
+  { x: 692, y: 178, w: 172, h: 156 },
+  { x: 893, y: 178, w: 172, h: 156 },
+  { x: 1098, y: 178, w: 172, h: 156 },
+  { x: 1307, y: 178, w: 172, h: 156 },
+  { x: 692, y: 370, w: 172, h: 156 },
+  { x: 893, y: 370, w: 172, h: 156 },
+  { x: 1098, y: 370, w: 172, h: 156 },
+  { x: 1307, y: 370, w: 172, h: 156 },
+  { x: 692, y: 560, w: 172, h: 156 },
+  { x: 893, y: 560, w: 172, h: 156 },
+  { x: 1098, y: 560, w: 172, h: 156 },
+  { x: 1307, y: 560, w: 172, h: 156 },
+];
+
 export function shelfCubbies(): ShelfCubby[] {
-  const { x, y, w, h, pad, gap, cols, rows } = SHELF_LAYOUT;
-  const slotW = (w - pad * 2 - gap * (cols - 1)) / cols;
-  const slotH = (h - pad * 2 - gap * (rows - 1)) / rows;
-  const spots: ShelfCubby[] = [];
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      spots.push({
-        x: x + pad + col * (slotW + gap),
-        y: y + pad + row * (slotH + gap),
-        w: slotW,
-        h: slotH,
-      });
-    }
-  }
-  return spots;
+  return CABINET_SLOTS.map((spot) => ({ ...spot }));
 }
 
 /**
@@ -155,7 +176,7 @@ export interface KeepsakeOffer {
   changed: boolean;
 }
 
-const ROLL_ORDER: GirlId[] = ["izzy", "victoria", "ronnie"];
+const ROLL_ORDER: GirlId[] = ["izzy", "victoria", "ronnie", "mira"];
 
 /**
  * First time each present girl is in the scene today, roll once.

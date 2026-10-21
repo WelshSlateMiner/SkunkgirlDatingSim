@@ -108,13 +108,12 @@ export function SprayOverlay() {
   const kind = useCompanion((s) => s.sprayKind);
   const focus = useCompanion((s) => (s.focus ?? "izzy") as GirlId);
   const stored = useCompanion((s) => s.sprayPrompts);
-  const resolved = useCompanion((s) => s.flags.intimateSprayResolved);
 
   if (spotlight) return null;
   const prompts: SprayPrompt[] =
     stored?.length
       ? stored
-      : sprayed && kind !== "none" && !(kind === "consensual" && resolved)
+      : sprayed && kind !== "none"
         ? [{ girl: focus, kind }]
         : [];
   if (!prompts.length) return null;

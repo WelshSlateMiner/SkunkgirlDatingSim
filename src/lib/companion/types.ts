@@ -59,12 +59,13 @@ export type LocationId =
   | "gym"
   | "yogaStudio"
   | "field"
-  | "ronnieDorm";
+  | "ronnieDorm"
+  | "miraDorm";
 
 export type PlayerGender = "male" | "female";
 export type PlayerFartRole = "into" | "not";
 export type GameMode = "slow" | "casual";
-export type GirlId = "izzy" | "victoria" | "ronnie";
+export type GirlId = "izzy" | "victoria" | "ronnie" | "mira";
 export type RelationshipType = "mono" | "harem";
 
 export interface GirlCard {
@@ -74,6 +75,8 @@ export interface GirlCard {
   bond: Bond;
   romanceOffered: boolean;
   romanceAccepted: boolean;
+  /** She said yes thinking it was only the two of you. Cleared once she learns otherwise. */
+  assumedExclusive?: boolean;
   knowsAboutSpray: boolean;
   scentInterest: boolean;
   dates: number;
@@ -195,6 +198,7 @@ export interface ScentFrom {
   izzy: number;
   victoria: number;
   ronnie: number;
+  mira: number;
 }
 
 /** She asked about the smell and may press once. */
@@ -237,6 +241,8 @@ export interface ChatMessage {
   bondingDelta?: number;
   /** Set on a third-or-later girl's spray line. */
   sprayKind?: SprayKind;
+  /** Gland points this spray spent. 1, 2, or 3. Stink added is ten times this. */
+  sprayLevel?: 1 | 2 | 3;
   fx?: FxEvent;
   at: number;
 }
@@ -265,8 +271,24 @@ export interface GameFlags {
   nicknamesOff: boolean;
   /** They have shown they want her farts and/or spray, not just her. */
   scentInterest: boolean;
+  /** Victoria remembers they acted aroused by an accidental spray. Not an intimacy unlock. */
+  vickyScentCurious: boolean;
   /** A sexual scene is in progress. Night will not cut it off. */
   intimateScene: boolean;
+}
+
+export interface LiveEvent {
+  id: "wolf";
+  phase: "threat" | "skunked" | "dare" | "clear";
+  /** Girls who were in the scene when it started. */
+  girls: GirlId[];
+  wolf: "snarl" | "sprayed" | "retreat" | "off";
+  /** Girls who actually sprayed the wolf (and therefore the player). */
+  sprayers: GirlId[];
+  /** Girls threatening a dominant spray after Accidentally Skunked. Empty until that beat. */
+  darers?: GirlId[];
+  /** Debug accidental spray has no wolf. Omitted means the trail attack. */
+  cause?: "wolf" | "accident";
 }
 
 export interface GameState {
@@ -380,7 +402,7 @@ export interface GameState {
   stinkAsked: Partial<Record<GirlId, number>>;
   /** Smell question still open. Null once the subject changes. */
   stinkTalk: StinkTalk | null;
-  /** Showers already taken today. Two is the cap. */
+  /** Showers taken today. There is no cap. Each one spends half a period. */
   showersToday: number;
   /** Increments each calendar day. */
   daySerial: number;
@@ -394,6 +416,14 @@ export interface GameState {
   keepsakes: string[];
   /** daySerial of the last first-meeting roll for that girl. */
   seenDay: Partial<Record<GirlId, number>>;
+  /** A rare scripted incident. Null when nothing is interrupting the scene. */
+  incident: LiveEvent | null;
+  /** Directed lines to Mira today. The day field drops yesterday's count. */
+  attention?: { day: number; mira: number };
+  /** Girl-to-girl opinions, 1–10. Not shown on the card. */
+  opinions?: Partial<Record<GirlId, Partial<Record<GirlId, number>>>>;
+  /** How much positive opinion each directed pair has already gained today. Keys are `izzy>victoria`. */
+  opinionGain?: Record<string, number>;
 }
 
 export interface IzzyTurn {
@@ -410,6 +440,8 @@ export interface IzzyTurn {
   romanceOffer?: boolean;
   sprayed?: boolean;
   sprayKind?: SprayKind | null;
+  /** 1, 2, or 3 gland points. Omitted means 1. */
+  sprayLevel?: number | null;
   pendingIntimateSpray?: boolean;
   /** The other woman, when both are in the scene. */
   otherDialogue?: string;
@@ -419,6 +451,7 @@ export interface IzzyTurn {
   otherFx?: FxEvent;
   /** Hers alone. She can dominant-spray while the other intimate-sprays. */
   otherSprayKind?: SprayKind | null;
+  otherSprayLevel?: number | null;
   /** A third girl and beyond (see scene.ts). */
   extras?: SceneVoice<string>[];
   /** Ronnie only: how the player took gas this turn. Scales her trust (RONNIE_FART_REACTIONS). */

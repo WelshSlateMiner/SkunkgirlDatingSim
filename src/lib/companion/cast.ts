@@ -20,46 +20,47 @@ import { MAX_SCENE_GIRLS, sceneOrder, sceneOthers } from "./scene";
 import { dutyOf } from "./outing";
 import { RONNIE_HAUNTS } from "./ronnie-bio";
 
-export const GIRLS: GirlId[] = ["izzy", "victoria", "ronnie"];
+export const GIRLS: GirlId[] = ["izzy", "victoria", "ronnie", "mira"];
 
 const AFFINITY: Record<LocationId, Record<GirlId, number>> = {
-  library: { izzy: 70, victoria: 70, ronnie: 50 },
-  studyHall: { izzy: 78, victoria: 42, ronnie: 40 },
-  classroom: { izzy: 88, victoria: 8, ronnie: 55 },
-  cafe: { izzy: 58, victoria: 48, ronnie: 62 },
-  campus: { izzy: 84, victoria: 12, ronnie: 64 },
-  trail: { izzy: 76, victoria: 22, ronnie: 72 },
-  dorm: { izzy: 100, victoria: 0, ronnie: 0 },
-  mexican: { izzy: 82, victoria: 28, ronnie: 30 },
-  burger: { izzy: 64, victoria: 16, ronnie: 28 },
-  mall: { izzy: 50, victoria: 52, ronnie: 30 },
-  gameStore: { izzy: 74, victoria: 18, ronnie: 12 },
-  foodCourt: { izzy: 56, victoria: 30, ronnie: 30 },
-  fashion: { izzy: 40, victoria: 64, ronnie: 18 },
-  makeup: { izzy: 32, victoria: 58, ronnie: 10 },
-  collectibles: { izzy: 76, victoria: 28, ronnie: 40 },
-  trendy: { izzy: 68, victoria: 18, ronnie: 60 },
-  perfume: { izzy: 22, victoria: 92, ronnie: 6 },
-  theater: { izzy: 52, victoria: 48, ronnie: 56 },
-  animeStore: { izzy: 96, victoria: 14, ronnie: 38 },
-  tabletop: { izzy: 72, victoria: 24, ronnie: 14 },
-  grocery: { izzy: 38, victoria: 74, ronnie: 24 },
-  naturalFoods: { izzy: 34, victoria: 56, ronnie: 66 },
-  sportingGoods: { izzy: 70, victoria: 18, ronnie: 82 },
-  apartment: { izzy: 40, victoria: 40, ronnie: 30 },
-  vickyLiving: { izzy: 0, victoria: 100, ronnie: 20 },
-  vickyBedroom: { izzy: 0, victoria: 100, ronnie: 0 },
-  craftStore: { izzy: 18, victoria: 96, ronnie: 30 },
-  italian: { izzy: 34, victoria: 90, ronnie: 20 },
-  furniture: { izzy: 14, victoria: 96, ronnie: 22 },
-  firm: { izzy: 8, victoria: 98, ronnie: 0 },
-  gym: { izzy: 82, victoria: 12, ronnie: 96 },
-  yogaStudio: { izzy: 24, victoria: 36, ronnie: 92 },
-  field: { izzy: 74, victoria: 14, ronnie: 94 },
-  ronnieDorm: { izzy: 0, victoria: 0, ronnie: 100 },
+  library: { izzy: 70, victoria: 70, ronnie: 50, mira: 68 },
+  studyHall: { izzy: 78, victoria: 42, ronnie: 40, mira: 64 },
+  classroom: { izzy: 88, victoria: 8, ronnie: 55, mira: 50 },
+  cafe: { izzy: 58, victoria: 48, ronnie: 62, mira: 46 },
+  campus: { izzy: 84, victoria: 12, ronnie: 64, mira: 40 },
+  trail: { izzy: 76, victoria: 22, ronnie: 72, mira: 16 },
+  dorm: { izzy: 100, victoria: 0, ronnie: 0, mira: 0 },
+  mexican: { izzy: 82, victoria: 28, ronnie: 30, mira: 58 },
+  burger: { izzy: 64, victoria: 16, ronnie: 28, mira: 8 },
+  mall: { izzy: 50, victoria: 52, ronnie: 30, mira: 52 },
+  gameStore: { izzy: 74, victoria: 18, ronnie: 12, mira: 12 },
+  foodCourt: { izzy: 56, victoria: 30, ronnie: 30, mira: 8 },
+  fashion: { izzy: 40, victoria: 64, ronnie: 18, mira: 72 },
+  makeup: { izzy: 32, victoria: 58, ronnie: 10, mira: 80 },
+  collectibles: { izzy: 76, victoria: 28, ronnie: 40, mira: 60 },
+  trendy: { izzy: 68, victoria: 18, ronnie: 60, mira: 58 },
+  perfume: { izzy: 22, victoria: 92, ronnie: 6, mira: 84 },
+  theater: { izzy: 52, victoria: 48, ronnie: 56, mira: 74 },
+  animeStore: { izzy: 96, victoria: 14, ronnie: 38, mira: 76 },
+  tabletop: { izzy: 72, victoria: 24, ronnie: 14, mira: 12 },
+  grocery: { izzy: 38, victoria: 74, ronnie: 24, mira: 18 },
+  naturalFoods: { izzy: 34, victoria: 56, ronnie: 66, mira: 64 },
+  sportingGoods: { izzy: 70, victoria: 18, ronnie: 82, mira: 10 },
+  apartment: { izzy: 40, victoria: 40, ronnie: 30, mira: 24 },
+  vickyLiving: { izzy: 0, victoria: 100, ronnie: 20, mira: 0 },
+  vickyBedroom: { izzy: 0, victoria: 100, ronnie: 0, mira: 0 },
+  craftStore: { izzy: 18, victoria: 96, ronnie: 30, mira: 22 },
+  italian: { izzy: 34, victoria: 90, ronnie: 20, mira: 62 },
+  furniture: { izzy: 14, victoria: 96, ronnie: 22, mira: 16 },
+  firm: { izzy: 8, victoria: 98, ronnie: 0, mira: 0 },
+  gym: { izzy: 82, victoria: 12, ronnie: 96, mira: 70 },
+  yogaStudio: { izzy: 24, victoria: 36, ronnie: 92, mira: 90 },
+  field: { izzy: 74, victoria: 14, ronnie: 94, mira: 12 },
+  ronnieDorm: { izzy: 0, victoria: 0, ronnie: 100, mira: 0 },
+  miraDorm: { izzy: 0, victoria: 0, ronnie: 0, mira: 100 },
 };
 
-const PRIVATE = new Set<LocationId>(["dorm", "apartment", "vickyLiving", "vickyBedroom", "ronnieDorm"]);
+const PRIVATE = new Set<LocationId>(["dorm", "apartment", "vickyLiving", "vickyBedroom", "ronnieDorm", "miraDorm"]);
 
 /**
  * The other girl in this scene: the first one after the focus in scene order.
@@ -72,11 +73,11 @@ export function otherGirl(id: GirlId, present?: readonly GirlId[]): GirlId {
 }
 
 export function girlName(id: GirlId) {
-  return id === "victoria" ? "Victoria" : id === "ronnie" ? "Ronnie" : "Izzy";
+  return id === "victoria" ? "Victoria" : id === "ronnie" ? "Ronnie" : id === "mira" ? "Mira" : "Izzy";
 }
 
 export function girlShort(id: GirlId) {
-  return id === "victoria" ? "Vicky" : id === "ronnie" ? "Ronnie" : "Izzy";
+  return id === "victoria" ? "Vicky" : id === "ronnie" ? "Ronnie" : id === "mira" ? "Mira" : "Izzy";
 }
 
 export function speakerRole(id: GirlId): GirlId {
@@ -84,7 +85,7 @@ export function speakerRole(id: GirlId): GirlId {
 }
 
 export function herHome(id: GirlId): LocationId {
-  return id === "victoria" ? "vickyLiving" : id === "ronnie" ? "ronnieDorm" : "dorm";
+  return id === "victoria" ? "vickyLiving" : id === "ronnie" ? "ronnieDorm" : id === "mira" ? "miraDorm" : "dorm";
 }
 
 export function isPrivatePlace(id: LocationId | null | undefined) {
@@ -95,6 +96,7 @@ export function ownsHome(id: LocationId): GirlId | null {
   if (id === "dorm") return "izzy";
   if (id === "vickyLiving" || id === "vickyBedroom") return "victoria";
   if (id === "ronnieDorm") return "ronnie";
+  if (id === "miraDorm") return "mira";
   return null;
 }
 
@@ -136,6 +138,7 @@ export function blankRoster(): Roster {
     izzy: blankCard("casual"),
     victoria: blankCard("work"),
     ronnie: blankCard("casual"),
+    mira: blankCard("casual"),
   };
 }
 
@@ -146,7 +149,7 @@ export function initialCast(focus: GirlId = "izzy") {
     met: true,
     trust: 6,
     bonding: 4,
-    expression: focus === "victoria" ? "shy" : focus === "ronnie" ? "happy" : "embarrassed",
+    expression: focus === "victoria" ? "shy" : focus === "ronnie" ? "happy" : focus === "mira" ? "idle" : "embarrassed",
   };
   return {
     relationshipType: "mono" as RelationshipType,
@@ -164,12 +167,12 @@ export function initialCast(focus: GirlId = "izzy") {
 
 /** First-meeting odds per start location, in percent (design table, not derived from affinity). */
 export const START_ODDS: Partial<Record<LocationId, Record<GirlId, number>>> = {
-  library: { izzy: 50, victoria: 25, ronnie: 25 },
-  studyHall: { izzy: 50, victoria: 10, ronnie: 40 },
-  trail: { izzy: 45, victoria: 10, ronnie: 45 },
-  animeStore: { izzy: 60, victoria: 10, ronnie: 30 },
-  craftStore: { izzy: 20, victoria: 50, ronnie: 30 },
-  gym: { izzy: 10, victoria: 30, ronnie: 60 },
+  library: { izzy: 40, victoria: 20, ronnie: 20, mira: 20 },
+  studyHall: { izzy: 40, victoria: 10, ronnie: 20, mira: 30 },
+  trail: { izzy: 40, victoria: 10, ronnie: 40, mira: 10 },
+  animeStore: { izzy: 50, victoria: 10, ronnie: 15, mira: 25 },
+  craftStore: { izzy: 15, victoria: 45, ronnie: 25, mira: 15 },
+  gym: { izzy: 5, victoria: 10, ronnie: 60, mira: 25 },
 };
 
 function startWeights(place: LocationId): number[] {
@@ -189,11 +192,14 @@ export function rollGirl(place: LocationId, roll = Math.random()): GirlId {
   return GIRLS[GIRLS.length - 1]!;
 }
 
-/** Chance of meeting each girl first at a start location. */
 export function meetOdds(place: LocationId): Record<GirlId, number> {
   const w = startWeights(place);
   const total = Math.max(1, w.reduce((sum, x) => sum + x, 0));
-  return { izzy: w[0]! / total, victoria: w[1]! / total, ronnie: w[2]! / total };
+  const out = {} as Record<GirlId, number>;
+  GIRLS.forEach((girl, i) => {
+    out[girl] = w[i]! / total;
+  });
+  return out;
 }
 
 export function morningSpots(other: GirlId, avoid: LocationId | null): LocationId[] {
@@ -324,6 +330,10 @@ export function romanceBlocked(state: Pick<GameState, "focus" | "relationshipTyp
   if (focus === "victoria") {
     const need = state.relationshipType === "harem" ? 82 : 72;
     if (trust < 100 || bonding < need) return true;
+    if (state.gameMode === "slow" && dates < 3) return true;
+  }
+  if (focus === "mira") {
+    if (trust < 90 || bonding < 90) return true;
     if (state.gameMode === "slow" && dates < 3) return true;
   }
   return false;
@@ -549,6 +559,29 @@ export function victoriaOpening(place: LocationId): { narrator: string; first: s
         second: "I ordered like I might not be alone. That was optimism or habit. You can tell me which after the bread.",
       },
     ],
+    gym: [
+      {
+        narrator:
+          "The campus gym smells like rubber and iron until a richer note cuts through it. A tall skunk-neko woman in a tan blouse and pencil skirt is at the water fountain, glasses on, not dressed for a set. She does not pretend the musk is the chalk.",
+        first:
+          "I walked through the wrong door. I'm Victoria. I wanted the design studio and I found barbells. The smell is mine. Don't make it a tour.",
+        second: "If you know the hallway that gets me out without a second lap, say so. I'll be by the fountain, overdressed.",
+      },
+      {
+        narrator:
+          "She has a portfolio under one arm and heels that do not belong on a rubber floor. Office clothes, a skunk tail kept off the mats. The musk got here before she decided what to do with her face.",
+        first:
+          "Don't. I know. Victoria. I cut across the gym because the quad was a crowd. My body filed a complaint in the doorway. You can keep lifting.",
+        second: "I'll be gone in a minute. Don't point, and don't offer me a spot. I am not here for the bar.",
+      },
+      {
+        narrator:
+          "Between the racks, a woman who just left a client meeting is losing an argument with her phone. Blouse, skirt, glasses. The air behind her is skunk. She looks up like you opened a door she meant to keep shut.",
+        first:
+          "Hello. Victoria. Vicky, if we are going to share a weight room I did not mean to enter. I let one go. I'd rather say it than watch you guess at the mats.",
+        second: "Take the bench. I'll take the door. That's as fair as these shoes get.",
+      },
+    ],
   };
   const fallback = [
     {
@@ -610,8 +643,8 @@ export function seedMeeting(
     met: true,
     trust: 6,
     bonding: 4,
-    expression: girl === "victoria" ? "shy" : girl === "ronnie" ? "idle" : "embarrassed",
-    outfit: girl === "victoria" ? "work" : girl === "ronnie" ? "casual" : state.outfit,
+    expression: girl === "victoria" ? "shy" : girl === "ronnie" || girl === "mira" ? "idle" : "embarrassed",
+    outfit: girl === "victoria" ? "work" : girl === "ronnie" || girl === "mira" ? "casual" : state.outfit,
   };
   if (girl === "izzy") {
     roster.izzy = { ...roster.izzy, trust: state.trust, bonding: state.bonding, expression: state.expression, outfit: state.outfit };
@@ -629,14 +662,14 @@ export function seedMeeting(
       affairKnown: false,
     };
   }
-  const lines = girl === "ronnie" ? ronnieOpening(place) : victoriaOpening(place);
+  const lines = girl === "ronnie" ? ronnieOpening(place) : girl === "mira" ? miraOpening(place) : victoriaOpening(place);
   const messages: GameState["messages"] = [
     { id: uid(), role: "narrator", at: Date.now(), text: lines.narrator },
     {
       id: uid(),
       role: girl,
       at: Date.now() + 1,
-      expression: girl === "ronnie" ? "happy" : "embarrassed",
+      expression: girl === "ronnie" ? "happy" : girl === "mira" ? "idle" : "embarrassed",
       text: oneGreeting(lines.first, lines.second),
     },
   ];
@@ -655,11 +688,171 @@ export function seedMeeting(
     trust: 6,
     bonding: 4,
     bond: "stranger",
-    outfit: girl === "ronnie" ? "casual" : "work",
-    expression: girl === "ronnie" ? "idle" : "shy",
+    outfit: girl === "ronnie" || girl === "mira" ? "casual" : "work",
+    expression: girl === "ronnie" || girl === "mira" ? "idle" : "shy",
     izzyHere: true,
     messages,
   };
+}
+
+/** First-meet lines for Mira. Kuudere, idol set, one skunk tail. */
+export function miraOpening(place: LocationId): { narrator: string; first: string; second: string } {
+  const named: Partial<Record<LocationId, { narrator: string; first: string; second: string }[]>> = {
+    library: [
+      {
+        narrator:
+          "The biography aisle. A slender skunkgirl in a black beret, plaid crop, and pleated skirt is reading a pop-star life like it is a contract. Crimson streaks, one black tail with a broad white stripe. She does not look up until the page is finished.",
+        first: "Mira. I'm not signing anything, and I'm not doing a photo. If you need the chair, there are others.",
+        second: "Pop biographies. I'm comparing how they picked a name. Mine isn't ready. Don't suggest one.",
+      },
+      {
+        narrator:
+          "She has three biographies open and none of them are for class. Beret, plaid, one skunk tail laid along the chair so it doesn't knock the stack. She notices you on the second look, not the first.",
+        first: "Mira. If you need a recommendation, I don't do those out loud. The quiet aisle is that way.",
+        second: "I'm working. Not on a paper. On a problem. You can sit if you can be furniture.",
+      },
+      {
+        narrator:
+          "A slender skunkgirl turns a page with one finger and keeps the other hand on her beret, like the library might try to take it. Plaid skirt, striped socks, tail low. The musk is small and she does not apologize for it.",
+        first: "You're in my light. Mira. Step left. The book isn't a conversation.",
+        second: "If you came to ask what I'm reading, it's a life I haven't earned yet. That's all you get.",
+      },
+    ],
+    studyHall: [
+      {
+        narrator:
+          "A green lamp, a closed textbook, and a skunkgirl in the idol outfit deciding whether the textbook deserves to be open. Beret, arm tassels, striped socks. Her tail rests along the chair instead of up.",
+        first: "Mira. Performing arts. This is the part where I decide which class is worth my morning. You can sit. Quietly.",
+        second: "If you came to talk about a stage name, I don't have one. That's the whole problem.",
+      },
+      {
+        narrator:
+          "Study hall, back row. She has earbuds in and a notebook that is not notes. Plaid, beret, one tail kept off the aisle. She pulls one bud when your chair moves.",
+        first: "Mira. I'm not studying. I'm counting. Don't ask what. The lamp isn't an invitation.",
+        second: "If this table is yours, say so. If it isn't, sit and don't fill the quiet.",
+      },
+      {
+        narrator:
+          "She is the stillest person under the lamps. Idol skirt, combat boots that don't match the room, a skunk tail that flicks once and stops. She looks at you like attendance.",
+        first: "You're late for a class I'm not teaching. Mira. Sit or keep walking. Both are quiet options.",
+        second: "I skipped the part where I pretend to want help. I don't. The chair is free. That's it.",
+      },
+    ],
+    trail: [
+      {
+        narrator:
+          "The Nature Trail is a strange place for a beret and combat boots. She's on the path anyway, phone lowered, one fluffy skunk tail held so it doesn't drag. She looks mildly offended by the dirt.",
+        first: "Mira. I took a wrong turn out of a shot. Don't film me. This is not the content.",
+        second: "If you're going back toward campus, walk. I'm not staying out here to become a nature documentary.",
+      },
+      {
+        narrator:
+          "Pine shade, and a skunkgirl who dressed for a stage and got a path. Plaid skirt, beret, tail carried high enough to clear the mud. She stops when she sees you and does not smile.",
+        first: "Don't say it's pretty. Mira. I know what a trail is. I don't need a guide, and I don't need a photo.",
+        second: "I'm walking back. You can be ahead of me or behind me. Not beside me explaining birds.",
+      },
+      {
+        narrator:
+          "She is standing on the boards like the woods booked her without asking. One black tail, white stripe, boots that have already lost. The musk is faint and she looks annoyed that the air noticed.",
+        first: "Mira. This was supposed to be a shortcut to somewhere with a floor. It isn't. Keep your voice down. The trees aren't an audience.",
+        second: "If you know the way that isn't uphill, use fewer words than that sentence.",
+      },
+    ],
+    animeStore: [
+      {
+        narrator:
+          "Neko Shelf. A skunkgirl in plaid and a beret is comparing idol albums, ears through the hat, tail out from the skirt. She holds a figure box like she is grading it.",
+        first: "Mira. If you're here for the loud boxes, they're that way. I'm looking at the ones that actually charted.",
+        second: "Don't recommend me a group. I already know which ones are doing it right.",
+      },
+      {
+        narrator:
+          "She has an album facedown so the price doesn't show, and a look that says she already decided. Beret, tassels, one skunk tail clear of the spinner rack.",
+        first: "Mira. I'm not staff. If you need a recommendation, read the back. I came for one thing and I found it.",
+        second: "You can stand there. Don't narrate the outfit. I can hear you thinking it.",
+      },
+      {
+        narrator:
+          "The new-release wall. She checks a tracklist the way other people check a contract, then notices you in the reflection of the case. Plaid, crimson streaks, tail low.",
+        first: "You're in the glass. Mira. Move. I'm not a meet-and-greet, and this isn't a signing.",
+        second: "If you know this group, don't quiz me. If you don't, the shelf will survive without either of us talking.",
+      },
+    ],
+    craftStore: [
+      {
+        narrator:
+          "Hearth & Hobby. She looks like she wandered into the wrong aisle on purpose and is now committed. Plaid skirt, ring-light complexion, one skunk tail kept clear of the ribbon spools.",
+        first: "Mira. I'm not a regular. I wanted a trim for a costume and the internet lied about the aisle.",
+        second: "If you know where the black ribbon is, say so. If you don't, I'm still looking.",
+      },
+      {
+        narrator:
+          "Dried flowers, hot glue, and a skunkgirl who is treating a bolt of black fabric like a mistake she intends to finish. Beret on, tail off the table.",
+        first: "Don't help unless you were asked. Mira. I can read a label. I just don't like what it says.",
+        second: "Costume trim. Not a hobby. If you're shopping for a wreath, that's the other side of me.",
+      },
+      {
+        narrator:
+          "She holds a card of buttons up to the light and rejects it without a change of face. Plaid crop, pleated skirt, one hooded-skunk tail. The craft store did not get a smile.",
+        first: "Mira. Wrong size. Wrong color. I'm still here because leaving empty looks like I didn't try.",
+        second: "If you work here, black, narrow, matte. If you don't, you can walk. I'm not lost. I'm annoyed.",
+      },
+    ],
+    gym: [
+      {
+        narrator:
+          "The campus gym, mirror wall. A slender skunkgirl in the idol outfit has her phone on a low tripod and is not lifting anything. She checks the frame, notices you in it, and does not smile.",
+        first: "Mira. You're in the shot. Step left. This isn't a collab.",
+        second: "It's a clip. That's all you need to know. The gym is a background.",
+      },
+      {
+        narrator:
+          "She is using the mirror, not the bar. Beret off for once, hair down, plaid still on, one tail held so it reads in the glass. She sees you enter the reflection and waits.",
+        first: "Don't walk through. Mira. I need the mirror for ten seconds. You can have it when the phone is down.",
+        second: "I'm not training. I'm checking a line. If you came to lift, the racks are behind you.",
+      },
+      {
+        narrator:
+          "Afternoon, almost empty. A skunkgirl in the idol set stands on a mat like it is a mark, phone lowered, tail still. The rubber smell doesn't cover her. She isn't embarrassed. She's busy.",
+        first: "Mira. Count's off. Don't talk over it. I'll be a person again in a minute.",
+        second: "If you want the mat, wait. If you want a conversation, it isn't this one.",
+      },
+    ],
+  };
+  const fallback = [
+    {
+      narrator:
+        "A slender skunkgirl in a black beret and a red plaid set turns just enough to see who stopped. Long black hair, crimson streaks, one hooded-skunk tail. She looks at you the way a headliner looks at a cue she didn't ask for.",
+      first: "Mira. If you know me, you know the accounts. If you don't, this is the in-person version, and it is less patient.",
+      second: "You can talk. Don't waste it on a compliment I can get from a comment section.",
+    },
+    {
+      narrator:
+        "She was already in the room. Beret, plaid, one tail kept clear of whatever she was standing next to. She finishes a thought before she spends one on you.",
+      first: "Mira. I didn't ask for an entrance. If you have a reason, use it. If you don't, the door still works.",
+      second: "I'm not performing. That's later. This is just me, and I'm busy.",
+    },
+    {
+      narrator:
+        "Crimson streaks, combat boots, a skunk tail that doesn't match the polite version of the room. She looks at you once, the way she looks at a cue she might ignore.",
+      first: "You're staring. Mira. Blink or talk. I don't do the third thing, where you wait for me to carry it.",
+      second: "If this is about a show, I don't have a name for it yet. Don't help.",
+    },
+  ];
+  return pickOne(named[place] ?? fallback);
+}
+
+export function miraDropIn(placeName: string): { narrator: string; line: string } {
+  return pickOne([
+    {
+      narrator: `${placeName}. A skunkgirl in the idol beret is already here, tail low, checking her reflection in something that isn't a mirror.`,
+      line: "Mira. I was here first. Don't make it a scene unless you can carry one.",
+    },
+    {
+      narrator: `${placeName}. She clocks you, adjusts a tassel, and does not pretend she was waiting.`,
+      line: "Hm. Mira. If this is about a dance class, Second Wind has a schedule. If it isn't, talk.",
+    },
+  ]);
 }
 
 /** First-meet lines for Ronnie. Written for the activation; the doc has none. Rainbow Dash + Kim Possible. */
@@ -678,6 +871,12 @@ export function ronnieOpening(place: LocationId): { narrator: string; first: str
         first: "Ha! Personal best on that one too. Relax, it's just my body working. Protein and fiber, baby. I'm Ronnie.",
         second: "New here? I can show you the racks. Fair warning, I'm going to make it a competition.",
       },
+      {
+        narrator:
+          "The rack by the mirrors is hers for the moment. Blonde ponytail, white track top, blue trunks, smartwatch going. She finishes a set, lets one go without looking sorry, and grins when she catches you in the glass.",
+        first: "Hey. Ronnie. That was the set, not the greeting. The greeting is: you new, or you just bad at pretending you didn't hear that?",
+        second: "Plates are free. If you need a spot I'll do it, but I'm gonna count out loud and I'm gonna win.",
+      },
     ],
     field: [
       {
@@ -686,13 +885,37 @@ export function ronnieOpening(place: LocationId): { narrator: string; first: str
         first: "Hey! You were timing me, right? Tell me that was under seventy. I'm Ronnie. Track team.",
         second: "If you're running, I'll pace you. If you're not, you can hold my water and tell me I'm amazing.",
       },
+      {
+        narrator:
+          "West Field, lane three. A blonde skunkgirl in a white track top and blue trunks is shaking out her hands like the race already happened. Tail high. She spots you on the grass and jogs over, musk a step behind.",
+        first: "You the timer or the audience? I'm Ronnie. Either way, don't stand in lane four. I drift.",
+        second: "Warm-up fart. That's a technical term. You can stay on the infield if you can handle a winner.",
+      },
+      {
+        narrator:
+          "The track is mostly empty. She is not. Ponytail, smartwatch, athletic kit, a skunk tail that flags every time she changes direction. She pulls up in front of you, breathing easy, grinning easier.",
+        first: "Ronnie. You're on my cooldown lap, which means you get the charming version. The smell is also the charming version.",
+        second: "If you run, I'll give you a pace. If you don't, move two feet left so I don't clothesline you. Politely.",
+      },
     ],
     trail: [
       {
         narrator:
-          "Halfway up a hill on the Nature Trail a blonde skunkgirl in olive cargo pants is crouched over a leaf, tail high, totally still. Then she pops up, beaming, and the breeze carries a very skunky note your way.",
+          "Halfway up a hill on the Nature Trail a blonde skunkgirl in a cropped white track top and blue running trunks is crouched over a leaf, ponytail up, tail high, totally still. Then she pops up, beaming, and the breeze carries a very skunky note your way.",
         first: "Don't step there, there's a mantis! Okay, wait, that smell's me, sorry not sorry. I'm Ronnie.",
         second: "I do hill repeats up here and bug spotting on the way down. You can tag along if you can keep up.",
+      },
+      {
+        narrator:
+          "A straight stretch of the Nature Trail, and a blonde skunkgirl in a cropped white track top and blue running trunks is walking it backward, checking her watch. Tail up. When she turns, the breeze brings the skunk with her.",
+        first: "Oh, hey, don't dodge. I'm Ronnie. I was counting steps, not hiding. The smell's me. Trail tax.",
+        second: "You out here to run or to look at leaves? I can do both. Leaves lose.",
+      },
+      {
+        narrator:
+          "She comes around the bend at a jog that isn't showing off and then absolutely is. Ponytail, track kit, black-and-white tail streaming high. She slows when she sees you and the musk catches up a second late.",
+        first: "Ronnie. Track. I thought this loop was empty, which is why I didn't hold that one. You can laugh. I already did.",
+        second: "If you're going up the hill, I'll pace you for free. If you're going down, save me a bug. I collect those. Not in a jar. In my head.",
       },
     ],
     yogaStudio: [
@@ -701,6 +924,98 @@ export function ronnieOpening(place: LocationId): { narrator: string; first: str
           "Second Wind. A blonde skunkgirl in track kit is rolling out mats at the front of the room, smartwatch on, ponytail high. Somebody in the back lets one slip during a stretch, and she just laughs.",
         first: "See? Body's working. That's the whole point. I'm Ronnie, I teach here. You here for class?",
         second: "Grab a mat. I go easy on first-timers for exactly one pose.",
+      },
+      {
+        narrator:
+          "Second Wind, before the room fills. Ronnie is in track kit, not a costume, barefoot on a mat she just snapped flat. Ponytail high, tail higher. She looks up and owns the faint skunk in the studio air.",
+        first: "Class isn't for twenty minutes, so you get the pre-game. I'm Ronnie. I teach. The smell is me warming up. Don't make it weirder than it is.",
+        second: "Shoes off if you're staying. Shoes on if you're lost. Both are valid. Only one of them gets a good spot.",
+      },
+      {
+        narrator:
+          "She is writing the pose order on a little board and talking to herself about hips. Blonde, athletic, skunk tail curled up so it stays off the mats. She notices you in the mirror and turns, already mid-smile.",
+        first: "Hey. Ronnie. If you're here for the gentle class, that's me, and I am only gentle on purpose. Yeah, I let one go. Bodies work.",
+        second: "Grab a block if you need it. Don't grab my mat. I already farted on the air rights.",
+      },
+    ],
+    library: [
+      {
+        narrator:
+          "The quiet floor. A blonde skunkgirl in a backwards cap and a Love Stinks tank has a health-sciences text open and is not reading it. Cargo pants, chunky boots, tail taking up the aisle. She looks up like the library started it.",
+        first: "Yeah, I know. Ronnie. I came in for one chapter and my stomach filed a louder one. You can sit. I'm not the librarian.",
+        second: "If you need this table, take the end that isn't me. I'll be done being academic in, like, four minutes.",
+      },
+      {
+        narrator:
+          "Someone dragged a protein bar into the stacks and is treating it like research. Blonde, skunk ears, baggy cargos, a big black-and-white tail. The musk is not the old paper. She grins when you notice.",
+        first: "Caught. I'm Ronnie. Veronica on the syllabus, Ronnie if you want me to answer. I farted. The book didn't.",
+        second: "You looking for a subject or a seat? I've got opinions on both and a time limit on the second.",
+      },
+      {
+        narrator:
+          "She has one boot up on the chair rung and a notebook full of sets, not citations. Backwards cap, tank, cargo pants. A skunky note hangs in the aisle. She doesn't lower her voice for it.",
+        first: "Hey. New person. I'm Ronnie. Don't do the library whisper on my account. I already lost that fight with my own gut.",
+        second: "Health sci, track, future gym. That's the bio. You can have a shorter one if you sit down.",
+      },
+    ],
+    studyHall: [
+      {
+        narrator:
+          "Green lamp, open notebook, a blonde skunkgirl who has written 'quad day' where a thesis should be. Love Stinks tank, cargos, tail draped off the chair. The musk says she stopped holding it when the hall looked empty.",
+        first: "Ha. Okay. Ronnie. I thought I had the row. I didn't. You can pretend that was a chair. It wasn't.",
+        second: "I'm supposed to be studying joints. I am studying joints. I'm also a person with a digestive system. Sit if you can multitask.",
+      },
+      {
+        narrator:
+          "Study hall, back corner. She is highlighting like the marker owes her money, ponytail through a backwards cap, cargo pockets full of something that crinkles. She clocks you and does not hide the smell.",
+        first: "Hey. I'm Ronnie. If you need quiet, I'm the wrong table, and I already know why. The fart was mine. The notes are also mine. Don't take either.",
+        second: "There's a window row if your lungs file a complaint. I'll still be here being impressive.",
+      },
+      {
+        narrator:
+          "A smartwatch buzzes. She silences it with her chin because both hands are on a diagram of a knee. Blonde, skunk tail up, tomboy clothes that did not dress for a library. She looks over, bright.",
+        first: "Ronnie. Don't mind the air. I held it through a lab and the hall is where I lost. You sitting or touring?",
+        second: "If this is your usual spot, say so. I'll move. I'll also race you to the better lamp.",
+      },
+    ],
+    animeStore: [
+      {
+        narrator:
+          "Neko Shelf. She looks like she was dared to come in and then decided to win. Backwards cap, Love Stinks tank, cargo pants, a skunk tail knocking a poster. She is holding a figure box at arm's length.",
+        first: "Okay, which of these is the one people actually want? I'm Ronnie. This is a gift, not a personality. The smell's me, not the plastic.",
+        second: "Point me at the right shelf and I'll get out of your aisle. Or stay. I'm fun. The box is not.",
+      },
+      {
+        narrator:
+          "She is parked in front of a running-anime display like it owes her a PR. Blonde ponytail, chunky boots, tail high. A skunky note cuts the new-plastic air. She laughs before you can make a face.",
+        first: "Yeah, I heard it too. Ronnie. I came in for a friend's birthday and my body made it about me. Classic.",
+        second: "If you know this show, help. If you don't, stand there and look impressed. I accept both.",
+      },
+      {
+        narrator:
+          "The keychain wall. A blonde skunkgirl in cargos is comparing two of them like a coach comparing split times. She notices you, pockets neither, and owns the musk without a warm-up.",
+        first: "Hey. Ronnie. Don't recommend me the cute one. I need the one that survives a gym bag. And yeah, that was me.",
+        second: "I'll be five minutes. Less if you actually know what you're looking at. More if you make it a bit.",
+      },
+    ],
+    craftStore: [
+      {
+        narrator:
+          "Hearth & Hobby. Dried flowers, hot glue, and a blonde skunkgirl in a backwards cap who is clearly not a regular. Love Stinks tank, cargo pants, tail careful around the ribbon. She looks relieved to see a person who also might be lost.",
+        first: "Tell me this aisle has something that isn't flowers. I'm Ronnie. I need a patch for a gym bag and the internet said 'craft store' like that was a plan.",
+        second: "The smell's me. Sorry-not-sorry. If you know patches, talk. If you know wreaths, that's the other Ronnie, and she doesn't exist.",
+      },
+      {
+        narrator:
+          "She has a bolt of blue fabric over one shoulder and no idea what to do with it. Chunky boots, cargos, skunk ears, a grin that got here before the apology. The musk is not potpourri.",
+        first: "Ha. Ronnie. I picked this up because it was the color of my trunks and now I'm in a committed relationship with a mistake. You shop here on purpose?",
+        second: "I'll put it back if you tell me where 'back' is. Deal? I'll even hold the fart until the parking lot. No promises. I already used today's.",
+      },
+      {
+        narrator:
+          "End of the ribbon aisle. She is reading a label out loud, quietly, like the words might be a rep scheme. Blonde, tomboy, big black-and-white tail. She sees you and drops the whisper.",
+        first: "Oh good, a witness. I'm Ronnie. I was sent for 'black elastic' and I have found twelve things that are not that. Also I farted. The elastic didn't.",
+        second: "Stay if you want. I'm competitive about leaving with the right thing. You can be on my team.",
       },
     ],
   };
@@ -737,6 +1052,11 @@ export function duetFallback(other: GirlId, met: boolean) {
     return met
       ? "Ronnie bounces on her toes, tail up. \"Hey. Still here. Don't make me compete for attention, because I will win.\""
       : "Ronnie grins and sticks out a hand. \"Ronnie. Track, health sci, gym rat. Don't stop on my account.\"";
+  }
+  if (other === "mira") {
+    return met
+      ? "Mira doesn't look over right away. \"I'm here. Don't narrate me.\""
+      : "Mira turns just enough. \"Mira. If this is a scene, I'm not in it until I say so.\"";
   }
   if (other === "victoria") {
     return met

@@ -31,7 +31,8 @@ const DROPS = [
 /** Oily ink on the lens. The pose stays clear, then the spray hits the glass and drips off. */
 export function LensCoat() {
   const pulse = useCompanion((s) => s.fxPulse);
-  const spray = pulse.kind === "spray" || pulse.otherKind === "spray";
+  const extraSpray = Object.values(pulse.extraKinds ?? {}).includes("spray");
+  const spray = pulse.kind === "spray" || pulse.otherKind === "spray" || extraSpray;
   const [phase, setPhase] = useState<"off" | "coat" | "drip">("off");
 
   useEffect(() => {

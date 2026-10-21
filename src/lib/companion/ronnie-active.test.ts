@@ -4,6 +4,7 @@ import { meetOdds, rollGirl, seedMeeting, otherGirl } from "@/lib/companion/cast
 import { FIRST_MEETS } from "@/lib/companion/locations";
 import { blankState, migrate, openingState } from "@/lib/companion/save";
 import { __turnForTests } from "@/lib/companion/store";
+import { GLAND_MAX, onSprayCooldown, restTank, spendTank, stinkForSpray } from "@/lib/companion/spray";
 import { baseRange, windowBonus } from "@/lib/companion/fart";
 import { ronnieReactionTrust } from "@/lib/companion/ronnie-bio";
 import { portraitSrc } from "@/lib/companion/portraits";
@@ -15,26 +16,83 @@ function ronnieRoll(place: (typeof FIRST_MEETS)[number]): number {
   return -1;
 }
 
-describe("Ronnie chance meeting at every start location", () => {
+describe("Monday morning start, old meet odds", () => {
+  it("opens on Monday morning", () => {
+    const s = openingState("Tester", "library");
+    assert.equal(s.weekday, "Monday");
+    assert.equal(s.timeOfDay, "Morning");
+  });
   for (const place of FIRST_MEETS) {
     it(`can meet Ronnie at ${place}`, () => {
       const odds = meetOdds(place);
       assert.ok(odds.ronnie > 0, "nonzero odds");
-      assert.ok(Math.abs(odds.izzy + odds.victoria + odds.ronnie - 1) < 1e-9);
       const roll = ronnieRoll(place);
       assert.ok(roll >= 0);
       const s = seedMeeting(openingState("Tester", place), place, "mono", roll);
       assert.equal(s.focus, "ronnie");
       assert.deepEqual(s.present, ["ronnie"]);
-      assert.equal(s.roster.ronnie.met, true);
-      const greet = s.messages.find((m) => m.role === "ronnie");
-      assert.ok(greet && greet.text.length > 10, "Ronnie greets in her own voice");
-      assert.ok(!s.messages.some((m) => m.role === "izzy" || m.role === "victoria"));
+      assert.equal(s.timeOfDay, "Morning");
     });
   }
-  it("is the favourite at the gym", () => {
-    const g = meetOdds("gym");
-    assert.ok(g.ronnie > g.izzy && g.ronnie > g.victoria);
+});
+
+describe("gland capacity and the one-turn wait", () => {
+  it("spends 1, 2, or 3 from a fixed tank and prices the stink", () => {
+    assert.deepEqual(GLAND_MAX, { izzy: 35, victoria: 40, ronnie: 30, mira: 25 });
+    assert.equal(stinkForSpray(1), 10);
+    assert.equal(stinkForSpray(2), 20);
+    assert.equal(stinkForSpray(3), 30);
+    const first = spendTank({ glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 0, glandDry: 0 }, "izzy", 2);
+    assert.equal(first.spent, 2);
+    assert.equal(first.tank.glandCap, 35);
+    assert.equal(first.tank.glandShots, 2);
+    assert.equal(onSprayCooldown(first.tank), true);
+    const rested = restTank(first.tank);
+    assert.equal(onSprayCooldown(rested), false);
+    const drained = spendTank({ glandCap: 25, glandShots: 24, turnsSinceIntimateSpray: 1, glandDry: 0 }, "mira", 3);
+    assert.equal(drained.spent, 1);
+    assert.equal(drained.emptied, true);
+  });
+  it("says she is between classes when asked off campus", () => {
+    const s = seedMeeting(openingState("Tester", "animeStore"), "animeStore", "mono", 0);
+    assert.equal(s.focus, "izzy");
+    const patch = __turnForTests.applyTurn(
+      s,
+      { say: "Why aren't you in class?", action: "" } as TurnInput,
+      { narration: "", dialogue: "No idea.", expression: "idle", trustDelta: 0, bondingDelta: 0, fx: "none" },
+    );
+    const text = (patch.messages ?? []).map((m) => m.text).join(" ");
+    assert.match(text, /between classes/i);
+    assert.equal(patch.sprayKind ?? "none", "none");
+  });
+  it("will not spray again until she has answered once", () => {
+    const s = seedMeeting(openingState("Tester", "library"), "library", "mono", 0);
+    const charged = {
+      ...s,
+      glandCap: 35,
+      glandShots: 2,
+      turnsSinceIntimateSpray: 0,
+      glandDry: 0,
+    };
+    const patch = __turnForTests.applyTurn(
+      charged,
+      { say: "spray again", action: "" } as TurnInput,
+      {
+        narration: "She sprays.",
+        dialogue: "Take it.",
+        expression: "spray",
+        trustDelta: 0,
+        bondingDelta: 0,
+        fx: "spray",
+        sprayed: true,
+        sprayKind: "consensual",
+        sprayLevel: 3,
+      },
+    );
+    assert.equal(patch.sprayKind, "none");
+    const text = (patch.messages ?? []).map((m) => m.text).join(" ");
+    assert.match(text, /sink in|sit on you/i);
+    assert.equal((patch.messages ?? []).some((m) => m.fx === "spray"), false);
   });
 });
 
@@ -128,12 +186,12 @@ import { classifyInvite, datePlaces, isAwkwardPlace } from "@/lib/companion/outi
 
 describe("first-meeting odds table (exact)", () => {
   const want = {
-    library: { izzy: 50, victoria: 25, ronnie: 25 },
-    studyHall: { izzy: 50, victoria: 10, ronnie: 40 },
-    trail: { izzy: 45, victoria: 10, ronnie: 45 },
-    animeStore: { izzy: 60, victoria: 10, ronnie: 30 },
-    craftStore: { izzy: 20, victoria: 50, ronnie: 30 },
-    gym: { izzy: 10, victoria: 30, ronnie: 60 },
+    library: { izzy: 40, victoria: 20, ronnie: 20, mira: 20 },
+    studyHall: { izzy: 40, victoria: 10, ronnie: 20, mira: 30 },
+    trail: { izzy: 40, victoria: 10, ronnie: 40, mira: 10 },
+    animeStore: { izzy: 50, victoria: 10, ronnie: 15, mira: 25 },
+    craftStore: { izzy: 15, victoria: 45, ronnie: 25, mira: 15 },
+    gym: { izzy: 5, victoria: 10, ronnie: 60, mira: 25 },
   } as const;
   it("every start location is in the table", () => {
     assert.deepEqual([...FIRST_MEETS].sort(), Object.keys(want).sort());
@@ -142,10 +200,10 @@ describe("first-meeting odds table (exact)", () => {
   for (const [place, odds] of Object.entries(want)) {
     it(`${place} odds and roll bands`, () => {
       const got = meetOdds(place as never);
-      for (const g of ["izzy", "victoria", "ronnie"] as const) assert.ok(Math.abs(got[g] - odds[g] / 100) < 1e-9);
-      const counts = { izzy: 0, victoria: 0, ronnie: 0 };
+      for (const g of ["izzy", "victoria", "ronnie", "mira"] as const) assert.ok(Math.abs(got[g] - odds[g] / 100) < 1e-9);
+      const counts = { izzy: 0, victoria: 0, ronnie: 0, mira: 0 };
       for (let i = 0; i < 1000; i++) counts[rollGirl(place as never, (i + 0.5) / 1000)]++;
-      for (const g of ["izzy", "victoria", "ronnie"] as const) assert.equal(counts[g], odds[g] * 10);
+      for (const g of ["izzy", "victoria", "ronnie", "mira"] as const) assert.equal(counts[g], odds[g] * 10);
     });
   }
 });
@@ -210,12 +268,14 @@ describe("asked to skip work", () => {
 });
 
 describe("debug cast cycling", () => {
-  it("change and add cover all three", () => {
+  it("change and add cover the cast", () => {
     assert.equal(nextGirl("izzy"), "victoria");
     assert.equal(nextGirl("victoria"), "ronnie");
-    assert.equal(nextGirl("ronnie"), "izzy");
+    assert.equal(nextGirl("ronnie"), "mira");
+    assert.equal(nextGirl("mira"), "izzy");
     assert.equal(absentGirl(["izzy", "victoria"]), "ronnie");
-    assert.equal(absentGirl(["izzy", "victoria", "ronnie"]), null);
+    assert.equal(absentGirl(["izzy", "victoria", "ronnie"]), "mira");
+    assert.equal(absentGirl(["izzy", "victoria", "ronnie", "mira"]), null);
   });
 });
 

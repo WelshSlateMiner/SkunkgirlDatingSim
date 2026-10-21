@@ -2,7 +2,7 @@ import type { Expression, FxEvent, GameState, GirlCard, GirlId, IzzyTurn, Locati
 import { isPrivatePlace } from "./cast";
 import { intimacyCall } from "./intimacy";
 import { placeOf } from "./locations";
-import { ronnieInstructing } from "./yoga";
+import { sceneClassBonus } from "./yoga";
 import { anotherGirlFarted } from "./scene";
 
 const FART_RE =
@@ -64,9 +64,10 @@ export function withStop(stops: LocationId[], place: LocationId): LocationId[] {
   return [...stops, place];
 }
 
-/** Izzy starts at 2. Victoria starts at 1. Trust above 20 opens one more number. Ronnie is 1-3 flat. Intimacy adds two. */
+/** Izzy starts at 2. Victoria starts at 1. Trust above 20 opens one more number. Ronnie is 1-3 flat. Mira is 1-2 flat. Intimacy adds two. */
 export function baseRange(girl: GirlId, trust: number): number {
   if (girl === "ronnie") return RONNIE_BASE_RANGE;
+  if (girl === "mira") return 2;
   const trusted = trust > 20;
   if (girl === "victoria") return trusted ? 2 : 1;
   return trusted ? 3 : 2;
@@ -168,6 +169,20 @@ export function promptedFartMiss(girl: GirlId | "ronnie"): {
       },
     ]);
   }
+  if (girl === "mira") {
+    return pickLine([
+      {
+        narration: "She doesn't try twice. One hand leaves her stomach.",
+        dialogue: "Nothing's queued. I'm not going to strain for a room.",
+        expression: "thinking",
+      },
+      {
+        narration: "She checks, finds nothing, and looks faintly annoyed at the ask.",
+        dialogue: "I'm out of gas. Don't dare me when there isn't one.",
+        expression: "suspicious",
+      },
+    ]);
+  }
   return pickLine([
     {
       narration: "She grins, gives it a real try, and comes up empty. Ears twitch.",
@@ -204,7 +219,7 @@ export function nextDebt(debt: number, farted: boolean): number {
 
 export function clearFed(roster: Roster): Roster {
   const next = { ...roster };
-  for (const girl of ["izzy", "victoria", "ronnie"] as const) {
+  for (const girl of ["izzy", "victoria", "ronnie", "mira"] as const) {
     const card = next[girl];
     if (!card) continue;
     if (!card.fartDebt && !(card.fedStops?.length)) continue;
@@ -223,7 +238,7 @@ export function settleGuts(
   let next = dayReset ? clearFed(roster) : { ...roster };
   const here = new Set(present);
   const did = new Set(farted);
-  for (const girl of ["izzy", "victoria", "ronnie"] as const) {
+  for (const girl of ["izzy", "victoria", "ronnie", "mira"] as const) {
     const card = next[girl];
     if (!card) continue;
     if (dayReset && !here.has(girl) && !did.has(girl)) continue;
@@ -276,7 +291,11 @@ export function shapeSpontaneousFart(
     return { fx: "fart", ...withSlip(girl, narration, dialogue) };
   }
   let span = rangeSpan(girl, trust, stops, debt, place, intimate, bonus);
-  if (mode === "prompt") span = Math.max(0, span + promptModifier(girl, place));
+  if (mode === "prompt") {
+    const adjusted = span + promptModifier(girl, place);
+    // A public penalty can shrink Victoria's window. It cannot close one that was already open.
+    span = span > 0 ? Math.max(1, adjusted) : Math.max(0, adjusted);
+  }
   const face = roll ?? rollD12();
   if (dieHits(span, face)) return { fx: "fart", ...withSlip(girl, narration, dialogue) };
   if (mode === "prompt") {
@@ -302,7 +321,7 @@ export function windowBonus(
   state: Pick<GameState, "location" | "weekday" | "timeOfDay" | "present" | "izzyHere" | "sceneFarts">,
   girl: GirlId,
 ): number {
-  const yoga = yogaClassBonus(state.location, ronnieInstructing(state));
+  const yoga = sceneClassBonus(state);
   const rival = girl === "ronnie" && ronnieRivalHeld(anotherGirlFarted(state.sceneFarts ?? [], "ronnie"), (state.present ?? []).filter((g) => g !== "ronnie").length, false) ? 1 : 0;
   return yoga + rival;
 }
@@ -319,14 +338,14 @@ export function gutBrief(state: GameState): string {
       const max = rangeMax(girl, trust, stops, intimate, windowBonus(state, girl));
       const span = Math.max(0, max - readDebt(card));
       const window = span > 0 ? `This reply hits on 1-${span}.` : "This reply's window is closed, so an unasked fart cannot hit.";
-      const who = girl === "victoria" ? "Victoria" : girl === "ronnie" ? "Ronnie" : "Izzy";
+      const who = girl === "victoria" ? "Victoria" : girl === "ronnie" ? "Ronnie" : girl === "mira" ? "Mira" : "Izzy";
       const meals = stops.length ? stops.map((id) => placeOf(id).name).join(", ") : "no food stop yet today";
       const table =
         state.location === "mexican"
           ? " A fart in this restaurant uses a large clip with no moan."
           : "";
       const room = intimate ? " Intimacy is raising today's max by two. That bonus leaves when the scene does." : "";
-      return `GUT ${who}: d12. ${window} Today's max is 1-${max}.${room} Do not set fx fart and do not describe letting one go, even if they just asked. The game rolls. A direct ask uses this same window for one roll only, then the modifier is gone: Izzy +1, Victoria -2 if the place is public, Ronnie +2. Prompts do not stack. A hit still narrows the next reply by one (Ronnie: by two). A miss does not fart, and she explains in her own voice. A quiet reply opens the next window by one, back toward the max. Food today: ${meals}. Each different place that sells food is +1 once. Osteria Vale is +1. Casa Luna is +2. Repeats do not stack.${table}`;
+      return `GUT ${who}: d12. ${window} Today's max is 1-${max}.${room} Do not set fx fart and do not describe letting one go, even if they just asked. The game rolls. A direct ask uses this same window for one roll only, then the modifier is gone: Izzy +1, Victoria -2 if the place is public (an open window still hits on a 1), Ronnie +2, Mira none. Prompts do not stack. A hit still narrows the next reply by one (Ronnie: by two). A miss does not fart, and she explains in her own voice. A quiet reply opens the next window by one, back toward the max. Food today: ${meals}. Each different place that sells food is +1 once. Osteria Vale is +1. Casa Luna is +2. Repeats do not stack.${table}`;
     })
     .join("\n");
 }

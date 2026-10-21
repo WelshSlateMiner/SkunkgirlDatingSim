@@ -1,3 +1,4 @@
+import { MIRA_INSTRUCTOR, MIRA_SCHEDULE } from "./mira-bio";
 import { RONNIE_INSTRUCTOR, RONNIE_SCHEDULE } from "./ronnie-bio";
 import type { GameState, TimeOfDay, Weekday } from "./types";
 import { sceneHas } from "./scene";
@@ -22,8 +23,38 @@ export function ronnieInstructing(
   return sceneHas(state, "ronnie");
 }
 
-/** Prompt guidance for her while teaching. Empty when she is not teaching. */
+export function miraOnClock(weekday: Weekday, time: TimeOfDay): boolean {
+  return (MIRA_SCHEDULE.work.days as readonly Weekday[]).includes(weekday) && time === MIRA_SCHEDULE.work.time;
+}
+
+export function miraInstructing(
+  state: Pick<GameState, "location" | "weekday" | "timeOfDay" | "present" | "izzyHere">,
+): boolean {
+  if (state.location !== MIRA_SCHEDULE.work.place) return false;
+  if (!miraOnClock(state.weekday, state.timeOfDay)) return false;
+  return sceneHas(state, "mira");
+}
+
+/** At most one class bonus in a scene. Ronnie's yoga and Mira's dance do not stack. */
+export function cappedClassBonus(parts: readonly number[]) {
+  const on = parts.reduce((sum, n) => sum + (n > 0 ? 1 : 0), 0);
+  return Math.min(1, on);
+}
+
+export function sceneClassBonus(state: Parameters<typeof ronnieInstructing>[0]) {
+  return cappedClassBonus([ronnieInstructing(state) ? 1 : 0, miraInstructing(state) ? 1 : 0]);
+}
 export function instructorBrief(state: Parameters<typeof ronnieInstructing>[0]): string {
+  if (miraInstructing(state)) {
+    return [
+      "MIRA ON THE CLOCK:",
+      MIRA_INSTRUCTOR.role,
+      MIRA_INSTRUCTOR.player,
+      MIRA_INSTRUCTOR.farts,
+      MIRA_INSTRUCTOR.limits,
+      "Every skunkgirl in this class gets +1 on her fart window. If Ronnie's yoga bonus would also apply, the room still only gets one +1.",
+    ].join(" ");
+  }
   if (!ronnieInstructing(state)) return "";
   return [
     "RONNIE ON THE CLOCK:",
@@ -31,6 +62,6 @@ export function instructorBrief(state: Parameters<typeof ronnieInstructing>[0]):
     RONNIE_INSTRUCTOR.player,
     RONNIE_INSTRUCTOR.farts,
     RONNIE_INSTRUCTOR.limits,
-    "Every skunkgirl in this class gets +1 on her fart window.",
+    "Every skunkgirl in this class gets +1 on her fart window. If another class is in the same scene, the room still only gets one +1.",
   ].join(" ");
 }

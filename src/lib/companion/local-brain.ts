@@ -114,6 +114,31 @@ function pick<T>(arr: T[]) {
   return arr[Math.floor(Math.random() * arr.length)] as T;
 }
 
+function earlyStay(place: string, id: string) {
+  if (id === "library" || id === "studyHall") {
+    return pick([
+      `You can sit. I was already in the middle of something at ${place}, and I'll keep talking if you stay.`,
+      "You're not plugging your nose. That's new. I'll try not to make it weird. I will fail a little.",
+    ]);
+  }
+  if (id === "trail") {
+    return pick([
+      "You didn't turn around. The trail's big enough that you could have. I'll walk if you walk.",
+      "Most people speed up when they catch me out here. You didn't. I don't know what to do with that except keep going.",
+    ]);
+  }
+  if (id === "gym" || id === "field" || id === "yogaStudio") {
+    return pick([
+      `You stayed. ${place} is a loud room to decide I'm fine, but I'll take it.`,
+      "Most people find another bench. You didn't. You can stay. I'll talk if you want.",
+    ]);
+  }
+  return pick([
+    `You're still here. At ${place}. I was braced for the exit. You can stay.`,
+    `Okay. You didn't bail. ${place} is a weird place to decide I'm fine, but I'll take it.`,
+  ]);
+}
+
 const RONNIE_STOP = new Set([
   "that",
   "this",
@@ -249,6 +274,13 @@ function ronnieChime(text: string, met: boolean) {
   return met
     ? "Still here. Say it to me if you want my answer, not a copy of hers."
     : "Ronnie. Track, health sciences. Don't stop. Just don't forget I'm in the room.";
+}
+
+function miraChime(text: string, met: boolean) {
+  if (/\b(stage name|idol name)\b/.test(text)) return "I don't have a stage name. Don't offer one.";
+  if (/\b(ronnie|yoga)\b/.test(text)) return "Ronnie teaches yoga. I teach the count. Different shift.";
+  if (/\b(izzy|isabella)\b/.test(text)) return "Izzy can want to be friends. I'm not there yet.";
+  return met ? "I'm still here. Say it to me if you want my answer." : "Mira. Don't talk around me.";
 }
 
 function previewMeter(state: GameState, current: number, delta: number) {
@@ -468,7 +500,7 @@ function withOther(state: GameState, input: TurnInput, turn: IzzyTurn): IzzyTurn
 
   return {
     ...turn,
-    otherDialogue: other === "ronnie" ? ronnieChime(text, Boolean(card?.met)) : duetFallback(other, Boolean(card?.met)),
+    otherDialogue: other === "ronnie" ? ronnieChime(text, Boolean(card?.met)) : other === "mira" ? miraChime(text, Boolean(card?.met)) : duetFallback(other, Boolean(card?.met)),
     otherExpression: card?.expression ?? "shy",
     otherTrustDelta: 0,
     otherBondingDelta: 1,
@@ -1039,7 +1071,7 @@ function localRonnieTurn(state: GameState, input: TurnInput): IzzyTurn {
     bondingDelta += 1;
   } else {
     const place = placeOf(state.location).name;
-    dialogue = `You're at ${place} with me and you haven't said the thing yet. I'm Ronnie. Give me a subject.`;
+    dialogue = `You're at ${place} with me and you haven't said the thing yet. Give me a subject.`;
     expression = "idle";
     trustDelta = 0;
     bondingDelta = 0;
@@ -1054,8 +1086,108 @@ function localRonnieTurn(state: GameState, input: TurnInput): IzzyTurn {
   });
 }
 
+/** Mira offline: cool, short, and not a walking clip. */
+function localMiraTurn(state: GameState, input: TurnInput): IzzyTurn {
+  const text = hay(input);
+  const pos = hits(text, POS);
+  const neg = hits(text, NEG);
+  const threat = hits(text, THREAT);
+  const gas = /fart|gas|toot|smell|stink|reek/.test(text);
+  const named = /\b(stage name|idol|j-?pop|dance|second wind|rehears|class)\b/.test(text);
+
+  if (threat && !/pat|spank|smack/.test(text)) {
+    const contact = /grab|punch|hit her|slap her|choke|kick her|shove/.test(text);
+    if (!contact) {
+      return withOther(state, input, {
+        narration: "Her ears pin. The tail lifts, already decided.",
+        dialogue: "Don't. I'm not guessing. Say you mean no harm, or I spray.",
+        expression: "suspicious",
+        trustDelta: -4,
+        bondingDelta: -2,
+        fx: "none",
+        sprayKind: "defensive",
+      });
+    }
+    return withOther(state, input, {
+      narration: "She doesn't wait. The tail is up and the shot is already in the air.",
+      dialogue: "You did that. This is what happens next.",
+      expression: "spray",
+      trustDelta: -16,
+      bondingDelta: -8,
+      fx: "spray",
+      sprayed: true,
+      sprayKind: "defensive",
+    });
+  }
+
+  if (gas && neg) {
+    return withOther(state, input, {
+      dialogue: "Don't make a scene about it. I'm a skunkgirl. That is not a performance for you.",
+      expression: "suspicious",
+      trustDelta: neg >= 2 ? -5 : -2,
+      bondingDelta: neg >= 2 ? -3 : -1,
+      fx: "none",
+      fartReaction: neg >= 2 ? "bigIssue" : "negative",
+    });
+  }
+
+  if (gas) {
+    return withOther(state, input, {
+      dialogue: "If there's anything, I decide. Don't dare me like I'm a clip.",
+      expression: "thinking",
+      trustDelta: -1,
+      bondingDelta: 0,
+      fx: "none",
+      fartReaction: "cool",
+    });
+  }
+
+  if (named && /stage name|what should i call|name idea/.test(text)) {
+    return withOther(state, input, {
+      dialogue: "I don't have a stage name. Don't offer one. It has to be perfect, and it isn't yet.",
+      expression: "thinking",
+      trustDelta: 0,
+      bondingDelta: 1,
+      fx: "none",
+    });
+  }
+
+  if (neg >= 1) {
+    return withOther(state, input, {
+      dialogue: "That was cheap. Try a sentence that isn't.",
+      expression: "suspicious",
+      trustDelta: -3,
+      bondingDelta: -2,
+      fx: "none",
+    });
+  }
+
+  if (pos) {
+    return withOther(state, input, {
+      dialogue: named
+        ? "Noted. The work comes first. You can stay if you can be quiet about it."
+        : "Noted. Don't get used to me saying that out loud.",
+      expression: "shy",
+      trustDelta: 2,
+      bondingDelta: 1,
+      fx: "none",
+    });
+  }
+
+  return withOther(state, input, {
+    dialogue: named
+      ? "I'm working. If you have a question about the count, ask it. If you don't, don't fill the silence."
+      : "I'm listening. Make it worth the time.",
+    expression: "idle",
+    trustDelta: 1,
+    bondingDelta: 0,
+    fx: "none",
+  });
+}
+
 function localFocusTurn(state: GameState, input: TurnInput): IzzyTurn {
   if ((state.focus ?? "izzy") === "ronnie") return localRonnieTurn(state, input);
+  if ((state.focus ?? "izzy") === "mira") return localMiraTurn(state, input);
   if ((state.focus ?? "izzy") === "victoria") return localVictoriaTurn(state, input);
   const text = hay(input);
   const pos = hits(text, POS);
@@ -1503,10 +1635,7 @@ function localFocusTurn(state: GameState, input: TurnInput): IzzyTurn {
     expression = "embarrassed";
     fx = "blush";
     narration = "She blinks at you like you might take it back.";
-    dialogue = pick([
-      `Hi. Izzy. I was deep in ${pick(["WWI logistics", "Versailles footnotes", "rail gauges"])}. If the aisle smells like a burrito lost a fight, that's on me.`,
-      "You're not plugging your nose. That's new. I'm Izzy. Great personality. Worse digestive tract.",
-    ]);
+    dialogue = earlyStay(loc.name, loc.id);
   } else if (interest) {
     expression = "infodump";
     dialogue = pick([
@@ -1519,7 +1648,7 @@ function localFocusTurn(state: GameState, input: TurnInput): IzzyTurn {
     fx = "blush";
     trustDelta = Math.max(trustDelta, 7);
     dialogue = pick([
-      "Most people invent a dentist appointment. So. Hi.",
+      "Most people invent a dentist appointment. You didn't. I don't know what to do with that except stay.",
       "Careful. If you're decent about it I get attached. That's a me problem.",
     ]);
   } else {
@@ -1581,11 +1710,11 @@ function localFocusTurn(state: GameState, input: TurnInput): IzzyTurn {
       const who = callThem(state.playerName, state.trust, Boolean(state.flags.nicknamesOff));
       const given = givenName(state.playerName) || state.playerName.trim();
       dialogue = pick([
-        `Be honest, ${who} — hanging around because you like me, or because the aisle's blocked?`,
-        "Book, burrito, or why people bail. You pick. I'll ramble either way.",
+        `Be honest, ${who} — hanging around because you like me, or because ${loc.name} was on the way?`,
+        `We're at ${loc.name}. Book, burrito, or why people bail. You pick. I'll ramble either way.`,
         state.trust >= 28 && who !== given
           ? `I started calling you ${who} in my head. Saying it out loud is worse, so I did it.`
-          : "Hi again. I have thoughts about this shelf if you want them.",
+          : `I had a thought about ${loc.name} if you want it. Or you can go first.`,
       ]);
     }
   }

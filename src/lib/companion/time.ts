@@ -24,6 +24,30 @@ export function advanceTime(time: TimeOfDay): { time: TimeOfDay; dayRoll: boolea
   return { time: "Morning", dayRoll: true };
 }
 
+/** Girl replies that fill one part of the day. A shower spends half of this. */
+export const PERIOD_TURNS = 10;
+export const SHOWER_TURNS = PERIOD_TURNS / 2;
+
+/** Spend replies against the clock. Crossing 0 moves one or more parts of the day. */
+export function spendTurns(left: number, spend: number, time: TimeOfDay, weekday: Weekday) {
+  let turns = Math.max(1, Math.round(left)) - Math.max(0, Math.round(spend));
+  let timeOfDay = time;
+  let day = weekday;
+  let periods = 0;
+  let dayRolls = 0;
+  while (turns <= 0) {
+    const next = advanceTime(timeOfDay);
+    timeOfDay = next.time;
+    if (next.dayRoll) {
+      day = nextWeekday(day);
+      dayRolls += 1;
+    }
+    periods += 1;
+    turns = PERIOD_TURNS + turns;
+  }
+  return { turnsUntilTime: turns, timeOfDay, weekday: day, periods, dayRolls };
+}
+
 export function nextWeekday(day: Weekday): Weekday {
   const i = WEEKDAYS.indexOf(day);
   return WEEKDAYS[(i + 1) % WEEKDAYS.length] ?? "Monday";

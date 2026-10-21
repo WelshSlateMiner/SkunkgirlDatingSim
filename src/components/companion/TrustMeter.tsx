@@ -53,6 +53,7 @@ function Block({
   bond,
   dates,
   slow,
+  attention,
 }: {
   name: string;
   trust: number;
@@ -60,6 +61,7 @@ function Block({
   bond: Bond;
   dates: number;
   slow: boolean;
+  attention?: string | null;
 }) {
   return (
     <div className="min-w-0 space-y-1.5">
@@ -69,6 +71,7 @@ function Block({
       </p>
       <Bar label="Trust" value={trust} min={0} max={100} tone="trust" />
       <Bar label="Bonding" value={bonding} min={0} max={100} tone="bond" />
+      {attention ? <p className="text-[10px] uppercase tracking-[0.12em] text-subtle">{attention}</p> : null}
       {slow ? (
         <p className="text-[10px] uppercase tracking-[0.14em] text-subtle">Dates: {Math.min(3, dates)}/3</p>
       ) : null}
@@ -87,8 +90,18 @@ export function TrustMeter() {
   const roster = useCompanion((s) => s.roster);
   const order: GirlId[] = sceneOrder(present ?? []);
   const slow = mode === "slow";
+  const attention = useCompanion((s) => s.attention);
+  const day = useCompanion((s) => s.daySerial ?? 0);
+  const attentionLine = (id: GirlId, cardBond: Bond, accepted: boolean) => {
+    if (id !== "mira") return null;
+    if (cardBond !== "romantic" && !accepted) return null;
+    const n = attention?.day === day ? attention.mira : 0;
+    const word = n >= 10 ? "kept" : n >= 6 ? "noticed" : n >= 3 ? "thin" : "starving";
+    return `Attention ${n}/10 · ${word}`;
+  };
 
   if (order.length < 2) {
+    const card = roster?.[focus];
     return (
       <Block
         name={girlShort(focus)}
@@ -97,6 +110,7 @@ export function TrustMeter() {
         bond={bond}
         dates={dates ?? 0}
         slow={slow}
+        attention={attentionLine(focus, bond, Boolean(card?.romanceAccepted))}
       />
     );
   }
@@ -106,15 +120,17 @@ export function TrustMeter() {
       {order.map((id) => {
         const card = roster?.[id];
         const live = id === focus;
+        const shownBond = live ? bond : (card?.bond ?? "stranger");
         return (
           <Block
             key={id}
             name={girlShort(id)}
             trust={live ? trust : (card?.trust ?? 0)}
             bonding={live ? bonding : (card?.bonding ?? 0)}
-            bond={live ? bond : (card?.bond ?? "stranger")}
+            bond={shownBond}
             dates={live ? (dates ?? 0) : (card?.dates ?? 0)}
             slow={slow}
+            attention={attentionLine(id, shownBond, Boolean(card?.romanceAccepted))}
           />
         );
       })}

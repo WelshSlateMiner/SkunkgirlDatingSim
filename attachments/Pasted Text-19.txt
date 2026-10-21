@@ -1,0 +1,13 @@
+Revert the changes to the first meet probability table. Return the chances to meet each girl in a new game to the previous standard. When a girl who has class is met at an off campus location in a new game, she will mention she’s between classes if asked. 
+
+New spray mechanics. Each girl character has a gland capacity. Each spray will use either 1, 2, or 3 capacity. Total capacity varies between each girl. A level 1 spray uses 1 capacity and adds ten points to the stink meter. A level 2 spray uses 2 capacity and adds 20 points to the stink meter. A level 3 spray uses 3 capacity and adds 30 points to the stink meter. 
+Izzy has gland capacity of 35.
+Vicky has gland capacity of 40.
+Ronnie has gland capacity of 30.
+Mira has gland capacity of 25.
+Sprays occur when triggered by the character's internal reasoning and logic based on the current context of the situation they’re in and the current interaction with the player. Each spray type is linked to an emotion. Intimate, Dominant, Angry, and Defensive, only occur as appropriate in relation to the emotion the skunkgirl character should be feeling at the present moment based on the context of the situation and the interaction of the player. A skunkgirl must wait at least one full turn by sending a non-spray response to the player’s post-spray input before she can spray again. If prompted to immediately spray again after a prior turn contained a spray, she will explain in her own voice that she is preparing her body to do so. 
+Izzy is excited to do it and is letting the prior spray sink in first so she can watch its effects on the player. 
+Vicky is preparing her glands for an even bigger spray to see how much of mommy’s stink the player can really handle. 
+Ronnie is amazed you could want more and she asks if you’re really sure because you already fucking stink, and there’s so much more where that came from. 
+Mira is a little shy but she enjoys the feeling of being loved for what she is capable of and will prepare another blast if the player is sure.
+ Those are the baseline emotions the skunkgirl characters should express when replying to a prompt for another spray before she is ready.
