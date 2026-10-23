@@ -5,6 +5,7 @@ import { FIRST_MEETS } from "@/lib/companion/locations";
 import { blankState, migrate, openingState } from "@/lib/companion/save";
 import { __turnForTests } from "@/lib/companion/store";
 import { GLAND_MAX, onSprayCooldown, restTank, spendTank, stinkForSpray } from "@/lib/companion/spray";
+import { fartFactBrief, gutBrief, rollSceneFarts, shapeSpontaneousFart } from "@/lib/companion/fart";
 import { baseRange, windowBonus } from "@/lib/companion/fart";
 import { ronnieReactionTrust } from "@/lib/companion/ronnie-bio";
 import { portraitSrc } from "@/lib/companion/portraits";
@@ -34,6 +35,72 @@ describe("Monday morning start, old meet odds", () => {
       assert.equal(s.timeOfDay, "Morning");
     });
   }
+});
+
+describe("the fart is rolled before she speaks", () => {
+  it("a 1 hits Izzy's opening window and a 12 misses", () => {
+    const state = openingState("Tester", "library");
+    const input = { say: "Hey.", action: "" } as TurnInput;
+    const hit = rollSceneFarts(state, input, { izzy: 1 });
+    const miss = rollSceneFarts(state, input, { izzy: 12 });
+    assert.equal(hit.izzy?.hit, true);
+    assert.equal(miss.izzy?.hit, false);
+    assert.match(gutBrief({ ...state, fartPlan: hit }), /Izzy: farted/);
+    assert.match(fartFactBrief(miss), /Izzy: did not fart/);
+  });
+  it("a miss strips a fart she already wrote, and a hit adds one if she forgot", () => {
+    const miss = shapeSpontaneousFart(
+      "izzy",
+      6,
+      "library",
+      [],
+      0,
+      "fart",
+      "She lets one rip.",
+      "Take that fart.",
+      "roll",
+      undefined,
+      false,
+      0,
+      false,
+    );
+    assert.equal(miss.fx, "none");
+    assert.equal(/fart/i.test(`${miss.narration} ${miss.dialogue}`), false);
+    const hit = shapeSpontaneousFart(
+      "izzy",
+      6,
+      "library",
+      [],
+      0,
+      "none",
+      "",
+      "What did you want?",
+      "roll",
+      undefined,
+      false,
+      0,
+      true,
+    );
+    assert.equal(hit.fx, "fart");
+    assert.match(`${hit.narration} ${hit.dialogue}`, /slips out|gets out/i);
+  });
+  it("the turn uses the roll it was given, not a second die", () => {
+    const state = { ...openingState("Tester", "library"), fartPlan: { izzy: { hit: false, face: 12, span: 2, kind: "roll" as const } } };
+    const turned = __turnForTests.applyFartDice(
+      state,
+      { say: "Hey.", action: "" } as TurnInput,
+      {
+        narration: "She farts anyway.",
+        dialogue: "Big fart.",
+        expression: "happy",
+        trustDelta: 0,
+        bondingDelta: 0,
+        fx: "fart",
+      },
+    );
+    assert.equal(turned.fx, "none");
+    assert.equal(/fart/i.test(`${turned.narration} ${turned.dialogue}`), false);
+  });
 });
 
 describe("gland capacity and the one-turn wait", () => {

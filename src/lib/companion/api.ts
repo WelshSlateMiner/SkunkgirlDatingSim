@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { GameState, IzzyTurn, TurnInput } from "./types";
 import { resolveFx } from "./fart";
+import { REPLY_DELTA_MAX, REPLY_DELTA_MIN } from "./trust";
 import { asLocationId } from "./locations";
 import { asOutfitId } from "./portraits";
 import { stateBlock, systemPrompt } from "./prompts";
@@ -68,8 +69,8 @@ function coerceTurn(raw: unknown): IzzyTurn {
     otherExpression: EXPRESSIONS.has(String(o.otherExpression ?? ""))
       ? (String(o.otherExpression) as IzzyTurn["expression"])
       : undefined,
-    otherTrustDelta: Math.max(-12, Math.min(8, Math.round(Number(o.otherTrustDelta ?? 0) || 0))),
-    otherBondingDelta: Math.max(-12, Math.min(8, Math.round(Number(o.otherBondingDelta ?? 0) || 0))),
+    otherTrustDelta: Math.max(REPLY_DELTA_MIN, Math.min(REPLY_DELTA_MAX, Math.round(Number(o.otherTrustDelta ?? 0) || 0))),
+    otherBondingDelta: Math.max(REPLY_DELTA_MIN, Math.min(REPLY_DELTA_MAX, Math.round(Number(o.otherBondingDelta ?? 0) || 0))),
     otherFx: (["none", "fart", "spray", "blush", "hearts", "laugh"].includes(String(o.otherFx ?? ""))
       ? String(o.otherFx)
       : "none") as IzzyTurn["fx"],

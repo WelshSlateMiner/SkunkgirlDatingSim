@@ -10,7 +10,6 @@ export interface GiftDef {
   izzy: GiftReception;
   victoria: GiftReception;
   ronnie: GiftReception;
-  /** Dormant. Mira is not a GirlId, and dates do not read this. */
   mira: GiftReception;
 }
 

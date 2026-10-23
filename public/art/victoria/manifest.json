@@ -1,0 +1,26 @@
+{
+  "id": "victoria",
+  "name": "Victoria",
+  "short": "Vicky",
+  "active": true,
+  "note": "Office clothes live in office/. Gown sprays fall back to the angry face. Lingerie is its own folder.",
+  "outfits": {
+    "office": "Office blouse and pencil skirt",
+    "lingerie": "Black lace set",
+    "gown": "Royal blue evening gown"
+  },
+  "expressions": [
+    "embarrassed",
+    "happy",
+    "idle",
+    "flirty",
+    "laughing",
+    "suspicious",
+    "shy",
+    "angry",
+    "infodump",
+    "aroused",
+    "thinking",
+    "scheming"
+  ]
+}

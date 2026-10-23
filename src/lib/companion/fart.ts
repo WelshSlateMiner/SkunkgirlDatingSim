@@ -1,9 +1,10 @@
-import type { Expression, FxEvent, GameState, GirlCard, GirlId, IzzyTurn, LocationId, Roster, TurnInput } from "./types";
+import type { Expression, FartFact, FxEvent, GameState, GirlCard, GirlId, IzzyTurn, LocationId, Roster, TurnInput } from "./types";
 import { isPrivatePlace } from "./cast";
-import { intimacyCall } from "./intimacy";
+import { indulgesPublicFart, intimacyCall, playfulPublicAsk, scentRelentless } from "./intimacy";
 import { placeOf } from "./locations";
 import { sceneClassBonus } from "./yoga";
 import { anotherGirlFarted } from "./scene";
+import { addressedGirls, dutyOf } from "./outing";
 
 const FART_RE =
   /\b(fart(?:ed|ing|s)?|toot(?:ed|ing|s)?|poot(?:ed|ing|s)?|flatulence|flatu(?:s|lent)|passed (?:gas|wind)|passing gas|rips? (?:one|it|a)|ripped (?:one|it|a)|let(?:s|ting)?(?: one| it)? (?:rip|go|slip|out)|a (?:quiet |wet |little |soft |short |unbothered )?(?:puff|toot|brap)\b|puffs?\b|puffed\b|lift(?:s|ed|ing)? (?:a |her )?cheek|unclench(?:ed|es|ing)?|couldn'?t hold it|hold it in|from (?:her )?behind|digestive tract|stomach (?:voted|joined|won|made)|beans? (?:hit|landed|won)|season(?:ed)? .{0,24}(?:aisle|shelf|store)|gassed (?:the |this )?|that one had architecture|aisle will never recover|open a window for the civilians|lean(?:s|ed)? .{0,40}(?:cheek|rip|toot|fart))\b|p+f+t+|br+a+p+|thbb?t+|pbb+t+|\*+[^*]{0,40}(fart|toot|poot|pfft|brap|puff)[^*]{0,40}\*+/i;
@@ -285,6 +286,8 @@ export function shapeSpontaneousFart(
   roll?: number,
   intimate = false,
   bonus = 0,
+  /** When set, the die already happened. True is a hit. False is a miss. */
+  preset?: boolean,
 ): { fx: FxEvent; narration: string; dialogue: string; expression?: Expression } {
   if (fx === "spray") return { fx, narration, dialogue };
   if (mode === "force") {
@@ -296,8 +299,8 @@ export function shapeSpontaneousFart(
     // A public penalty can shrink Victoria's window. It cannot close one that was already open.
     span = span > 0 ? Math.max(1, adjusted) : Math.max(0, adjusted);
   }
-  const face = roll ?? rollD12();
-  if (dieHits(span, face)) return { fx: "fart", ...withSlip(girl, narration, dialogue) };
+  const hit = typeof preset === "boolean" ? preset : dieHits(span, roll ?? rollD12());
+  if (hit) return { fx: "fart", ...withSlip(girl, narration, dialogue) };
   if (mode === "prompt") {
     const miss = promptedFartMiss(girl);
     const scrubbed = dropFartProse(girl, narration, dialogue);
@@ -326,6 +329,91 @@ export function windowBonus(
   return yoga + rival;
 }
 
+function girlLabel(girl: GirlId) {
+  if (girl === "victoria") return "Victoria";
+  if (girl === "ronnie") return "Ronnie";
+  if (girl === "mira") return "Mira";
+  return "Izzy";
+}
+
+/**
+ * Roll every girl in the room before anyone speaks.
+ * A scent hold, a closed public refusal, or a public yes is decided here too,
+ * so the prompt is not told a result the engine will cancel.
+ */
+export function rollSceneFarts(
+  state: GameState,
+  input: TurnInput,
+  faces?: Partial<Record<GirlId, number>>,
+): Partial<Record<GirlId, FartFact>> {
+  const present = state.izzyHere === false ? [] : (state.present ?? []);
+  const place = state.location;
+  const blob = `${input.say} ${input.action}`;
+  const asked = playerAskedFart(blob);
+  const named = asked ? addressedGirls(blob, present) : [];
+  const prompted = asked ? new Set<GirlId>(named.length ? named : present) : null;
+  const intimate = sceneIsIntimate(state, input);
+  const call = intimacyCall(state, input);
+  const held = Boolean(call.scene && (state.scentHold ?? 0) > 0 && !call.release && !scentRelentless(state, input));
+  const focus = state.focus ?? "izzy";
+  const publicAsk = !asked && playfulPublicAsk(blob) && !isPrivatePlace(place) && !scentRelentless(state, input);
+  const out: Partial<Record<GirlId, FartFact>> = {};
+  for (const girl of present) {
+    const card = state.roster?.[girl];
+    const trust = girl === focus ? state.trust : (card?.trust ?? 0);
+    let span = rangeSpan(girl, trust, readStops(card), readDebt(card), place, intimate, windowBonus(state, girl));
+    if (prompted?.has(girl)) {
+      const adjusted = span + promptModifier(girl, place);
+      span = span > 0 ? Math.max(1, adjusted) : Math.max(0, adjusted);
+    }
+    if (held) {
+      out[girl] = { hit: false, face: 0, span, kind: "hold" };
+      continue;
+    }
+    if (publicAsk && girl === focus) {
+      const onDuty = dutyOf(girl, state.weekday, state.timeOfDay) !== "free";
+      const company = present.includes("izzy") && present.includes("victoria");
+      if (indulgesPublicFart(girl, place, trust, company, onDuty)) {
+        out[girl] = { hit: true, face: 1, span: Math.max(span, 1), kind: "public-yes" };
+        continue;
+      }
+      if (span < 1) {
+        out[girl] = { hit: false, face: 12, span, kind: "public-no" };
+        continue;
+      }
+    }
+    const face = faces?.[girl] ?? rollD12();
+    const kind = prompted?.has(girl) ? "prompt" : "roll";
+    out[girl] = { hit: dieHits(span, face), face, span, kind };
+  }
+  return out;
+}
+
+export function fartFactBrief(plan: GameState["fartPlan"]): string {
+  if (!plan) return "";
+  const lines: string[] = [];
+  for (const girl of ["izzy", "victoria", "ronnie", "mira"] as const) {
+    const fact = plan[girl];
+    if (!fact) continue;
+    const who = girlLabel(girl);
+    if (fact.kind === "hold") {
+      lines.push(`${who}: did not fart. The last one is still landing. Do not describe another. fx is not fart.`);
+    } else if (fact.kind === "public-no") {
+      lines.push(`${who}: did not fart. Nothing is queued, and she will not invent one in this public room. If they asked, say that in her own voice. Do not describe gas leaving her.`);
+    } else if (!fact.hit && fact.kind === "prompt") {
+      lines.push(`${who}: did not fart. They asked and she is empty. She says so in her own voice. Do not describe one leaving her. fx is not fart.`);
+    } else if (!fact.hit) {
+      lines.push(`${who}: did not fart. Do not describe one, a slip, or gas leaving her. fx is not fart.`);
+    } else if (fact.kind === "public-yes") {
+      lines.push(`${who}: farted. She agreed to it here. Mention it in her own voice while answering what they just said. fx fart.`);
+    } else {
+      lines.push(`${who}: farted. Mention it in her own voice, in this place, as part of answering them. fx fart.`);
+    }
+  }
+  if (!lines.length) return "";
+  return `\nFART THIS TURN, already rolled. This is a fact. Do not contradict it. A spray this turn voids her fart: if she sprays, do not also narrate the fart. Setting testId to fart-test means she does fart, even if her line above said she did not.\n${lines.join("\n")}`;
+}
+
 export function gutBrief(state: GameState): string {
   const present = state.izzyHere === false ? [] : (state.present ?? []);
   const girls = (present.length ? present : [state.focus ?? "izzy"]) as GirlId[];
@@ -345,9 +433,9 @@ export function gutBrief(state: GameState): string {
           ? " A fart in this restaurant uses a large clip with no moan."
           : "";
       const room = intimate ? " Intimacy is raising today's max by two. That bonus leaves when the scene does." : "";
-      return `GUT ${who}: d12. ${window} Today's max is 1-${max}.${room} Do not set fx fart and do not describe letting one go, even if they just asked. The game rolls. A direct ask uses this same window for one roll only, then the modifier is gone: Izzy +1, Victoria -2 if the place is public (an open window still hits on a 1), Ronnie +2, Mira none. Prompts do not stack. A hit still narrows the next reply by one (Ronnie: by two). A miss does not fart, and she explains in her own voice. A quiet reply opens the next window by one, back toward the max. Food today: ${meals}. Each different place that sells food is +1 once. Osteria Vale is +1. Casa Luna is +2. Repeats do not stack.${table}`;
+      return `GUT ${who}: d12. ${window} Today's max is 1-${max}.${room} Do not decide this reply's fart yourself. If FART THIS TURN is below, that roll already happened: mention it only when her line says she farted, and never when it says she did not. If that block is missing, do not set fx fart and do not describe letting one go. A direct ask uses this same window for one roll only, then the modifier is gone: Izzy +1, Victoria -2 if the place is public (an open window still hits on a 1), Ronnie +2, Mira none. Prompts do not stack. A hit still narrows the next reply by one (Ronnie: by two). A miss does not fart, and she explains in her own voice. A quiet reply opens the next window by one, back toward the max. Food today: ${meals}. Each different place that sells food is +1 once. Osteria Vale is +1. Casa Luna is +2. Repeats do not stack.${table}`;
     })
-    .join("\n");
+    .join("\n") + fartFactBrief(state.fartPlan);
 }
 
 /** Drop a fart the body did not actually release, without claiming the tank is empty. */
@@ -365,12 +453,7 @@ export function dropFartProse(girl: GirlId, narration: string, dialogue: string)
     dialogue: kept || (girl === "victoria" ? "I'm listening. Go on." : "I'm here. Keep going."),
   };
 }
-/*
- * Ronnie's gut. Dormant: she is not a GirlId yet, so nothing in a turn calls these.
- * They are the rules from the dev doc, ready to wire in when she joins the roster.
- */
-
-/** Her default window is 1-3. Same food, intimacy, and yoga bonuses as the other girls. */
+/** Ronnie's streak. A fart narrows her next window by two. A quiet reply opens it by one. She is on the roster; settleGuts calls this. */
 export const RONNIE_BASE_RANGE = 3;
 
 /** Each fart in a row narrows her next window by two, not one. Each quiet reply opens it back by one. */
@@ -397,33 +480,9 @@ export function yogaClassBonus(place: LocationId, instructing: boolean): number 
   return place === "yogaStudio" && instructing ? 1 : 0;
 }
 
-export function ronnieRangeSpan(opts: {
-  stops: LocationId[];
-  debt: number;
-  place: LocationId;
-  intimate?: boolean;
-  rivalHeld?: boolean;
-  instructing?: boolean;
-  prompted?: boolean;
-}): number {
-  const stops = withStop(opts.stops, opts.place);
-  const food = stops.reduce((sum, place) => sum + foodBonus(place), 0);
-  const max =
-    RONNIE_BASE_RANGE +
-    food +
-    (opts.intimate ? 2 : 0) +
-    (opts.rivalHeld ? 1 : 0) +
-    yogaClassBonus(opts.place, Boolean(opts.instructing));
-  const span = max - Math.max(0, opts.debt) + (opts.prompted ? promptModifier("ronnie", opts.place) : 0);
-  return Math.max(0, span);
-}
-
+/** Public: every casual fart, plus intimate farts with no moan up to size 2. Semi-private and private: anything goes. */
 export type RonnieFartKind = "casual" | "intimate";
 
-/**
- * Public: every casual fart, plus intimate farts with no moan up to size 2.
- * Semi-private and private: anything goes, and she laughs after. Strangers do not change this.
- */
 export function ronnieFartAllowed(place: LocationId, kind: RonnieFartKind, size: number, moan: boolean): boolean {
   if (isPrivatePlace(place)) return true;
   if (kind === "casual") return true;

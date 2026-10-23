@@ -11,7 +11,7 @@ import {
 } from "./debug";
 import { fartClipAt, fartSizeFor, pickFartSrc } from "./audio";
 import { ronnieReactionTrust } from "./ronnie-bio";
-import { clearFed, intimateFetishFart, mentionsFart, playerAskedFart, rangeSpan, readDebt, readStops, resolveFx, sceneIsIntimate, settleGuts, shapeSpontaneousFart, windowBonus } from "./fart";
+import { clearFed, dropFartProse, intimateFetishFart, mentionsFart, playerAskedFart, rangeSpan, readDebt, readStops, resolveFx, rollSceneFarts, sceneIsIntimate, settleGuts, shapeSpontaneousFart, windowBonus } from "./fart";
 import {
   holdCopy,
   indulgesPublicFart,
@@ -374,6 +374,7 @@ function asGameState(s: CompanionStore): GameState {
       ...(typeof s.seenDay?.mira === "number" ? { mira: s.seenDay.mira } : {}),
     },
     incident: parseIncident(s.incident),
+    heldGiftId: typeof s.heldGiftId === "string" && s.heldGiftId ? s.heldGiftId : null,
   };
 }
 
@@ -605,7 +606,18 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
     if (prompted?.has(girl)) return "prompt";
     return "roll";
   };
-  if (present.includes(focus) && next.fx !== "spray" && !next.sprayed) {
+  if (present.includes(focus) && (next.fx === "spray" || next.sprayed)) {
+    const before = `${next.narration ?? ""} ${next.dialogue ?? ""}`;
+    const scrubbed = dropFartProse(focus, next.narration ?? "", next.dialogue ?? "");
+    const stock = scrubbed.dialogue === "I'm here. Keep going." || scrubbed.dialogue === "I'm listening. Go on.";
+    const keep = stock && /spray/i.test(before);
+    next = {
+      ...next,
+      fx: "spray",
+      narration: keep ? next.narration : scrubbed.narration,
+      dialogue: keep ? (next.dialogue ?? "") : scrubbed.dialogue,
+    };
+  } else if (present.includes(focus)) {
     const card = state.roster?.[focus];
     const shaped = shapeSpontaneousFart(
       focus,
@@ -620,6 +632,7 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       undefined,
       intimate,
       windowBonus(state, focus),
+      state.fartPlan?.[focus]?.hit,
     );
     next = {
       ...next,
@@ -645,6 +658,7 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
       undefined,
       intimate,
       windowBonus(state, other),
+      state.fartPlan?.[other]?.hit,
     );
     let otherDialogue = shaped.dialogue;
     if (shaped.fx === "fart" && !mentionsFart(otherDialogue)) {
@@ -689,6 +703,7 @@ function applyFartDice(state: GameState, input: TurnInput, turn: IzzyTurn): Izzy
         undefined,
         intimate,
         windowBonus(state, girl),
+        state.fartPlan?.[girl]?.hit,
       );
       if (shaped.fx !== "fart" && voice.fx !== "fart" && modeFor(girl) !== "prompt" && at < 0) continue;
       const updated = {
@@ -719,6 +734,7 @@ async function runTurn(
     if (named.length === 1 && named[0] !== snapshot.focus) {
       snapshot = pullFocus(snapshot, named[0]);
     }
+    snapshot = { ...snapshot, fartPlan: rollSceneFarts(snapshot, payload) };
     try {
       const remote = await askIzzy({
         data: {
@@ -1245,9 +1261,9 @@ function takeOne(items: string[], id: string | null | undefined) {
   return items.filter((_, index) => index !== at);
 }
 
-function giveBack(items: string[], id: string | null | undefined, held: boolean | undefined) {
-  if (!id || held !== true) return items;
-  return [...items, id];
+function releaseGift(items: string[], held: string | null, id: string | null | undefined) {
+  if (!id || held !== id) return { inventory: items, heldGiftId: held };
+  return { inventory: [...items, id], heldGiftId: null };
 }
 
 function snapshotOf(state: CompanionStore): GameState {
@@ -1476,6 +1492,7 @@ function applyTurn(
   let dateDraft = state.dateDraft ?? null;
   let money = state.money ?? 100;
   let inventory = [...(state.inventory ?? [])];
+  let heldGiftId = state.heldGiftId ?? null;
   let activeDate = state.activeDate ? { ...state.activeDate } : null;
   let scheduledDate = state.scheduledDate ?? null;
   let dateReview = state.dateReview ?? null;
@@ -1513,7 +1530,7 @@ function applyTurn(
       giftTrust = reaction.delta.trust;
       giftBond = reaction.delta.bonding;
       giftSpeechLine = reaction.speech;
-      activeDate = { ...activeDate, presented: true, giftHeld: true };
+      activeDate = { ...activeDate, presented: true };
     }
   }
   if (activeDate) {
@@ -1872,7 +1889,8 @@ function applyTurn(
     if (!yes) {
       const card = roster[focusNow];
       const span = rangeSpan(focusNow, trust, readStops(card), readDebt(card), nextLocation, false, windowBonus(state, focusNow));
-      if (span < 1) {
+      const stillClaims = mentionsFart(`${dialogue} ${narration}`);
+      if (span < 1 && (!state.fartPlan || stillClaims)) {
         const said = recentLines(state.messages, focusNow);
         const copy = publicFartNo(focusNow, said);
         narration = copy.narration;
@@ -1880,7 +1898,7 @@ function applyTurn(
         expression = copy.expression;
         forcedFx = "none";
       }
-    } else if (!tried) {
+    } else if (!tried && !state.fartPlan?.[focusNow]?.hit) {
       const copy = publicFartYes(focusNow, company);
       narration = copy.narration;
       dialogue = copy.dialogue;
@@ -2372,6 +2390,7 @@ function applyTurn(
             });
             dateReview = review;
             activeDate = null;
+            heldGiftId = null;
           } else {
             activeDate = { ...activeDate, cyclesLeft: left };
           }
@@ -2383,7 +2402,11 @@ function applyTurn(
             ...grudge,
             [hurt]: { place: scheduledDate.place, day: prevDay, time: prevTime },
           };
-          if (scheduledDate.giftId) inventory = giveBack(inventory, scheduledDate.giftId, scheduledDate.giftHeld);
+          if (scheduledDate.giftId && heldGiftId === scheduledDate.giftId) {
+            const back = releaseGift(inventory, heldGiftId, scheduledDate.giftId);
+            inventory = back.inventory;
+            heldGiftId = back.heldGiftId;
+          }
           if (hurt === focusNow) {
             trust = dropTrust;
             bonding = dropBond;
@@ -2774,6 +2797,7 @@ function applyTurn(
     debugOutfitLock: traveled ? false : state.debugOutfitLock,
     money,
     inventory,
+    heldGiftId,
     dateDraft,
     scheduledDate,
     activeDate,
@@ -3758,6 +3782,7 @@ function runTimeSkip(state: GameState, kind: "read" | "study"): Partial<Companio
   let dateReview: GameState["dateReview"] = state.dateReview;
   let scheduledDate = state.scheduledDate;
   let inventory = [...(state.inventory ?? [])];
+  let heldGiftId = state.heldGiftId ?? null;
   let grudge = { ...(state.grudge ?? {}) };
   let pendingInvite = state.pendingInvite;
   const pace = paceFrom(state);
@@ -3782,6 +3807,7 @@ function runTimeSkip(state: GameState, kind: "read" | "study"): Partial<Companio
       });
       dateReview = review;
       activeDate = null;
+      heldGiftId = null;
     } else {
       activeDate = { ...activeDate, cyclesLeft: left };
     }
@@ -3792,7 +3818,11 @@ function runTimeSkip(state: GameState, kind: "read" | "study"): Partial<Companio
     const dropTrust = applyTrust(baseTrust, -30, pace);
     const dropBond = applyBonding(baseBond, -24, pace);
     grudge = { ...grudge, [hurt]: { place: scheduledDate.place, day: prevDay, time: prevTime } };
-    if (scheduledDate.giftId) inventory = giveBack(inventory, scheduledDate.giftId, scheduledDate.giftHeld);
+    if (scheduledDate.giftId && heldGiftId === scheduledDate.giftId) {
+      const back = releaseGift(inventory, heldGiftId, scheduledDate.giftId);
+      inventory = back.inventory;
+      heldGiftId = back.heldGiftId;
+    }
     if (hurt === focus) {
       trust = dropTrust;
       bonding = dropBond;
@@ -3956,6 +3986,7 @@ function runTimeSkip(state: GameState, kind: "read" | "study"): Partial<Companio
     dateReview,
     scheduledDate,
     inventory,
+    heldGiftId,
     grudge,
     pendingInvite,
     sceneTurns: 0,
@@ -4284,7 +4315,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const thought = turn.thought?.trim() ?? "";
     let beats = turn.beats?.length ? turn.beats.map((beat) => ({ ...beat })) : undefined;
     const pendingGift =
-      state.activeDate && !state.activeDate.presented && state.activeDate.giftHeld
+      state.activeDate && !state.activeDate.presented && state.heldGiftId === state.activeDate.giftId
         ? giftReaction(state.activeDate)
         : null;
     if (pendingGift) {
@@ -4964,7 +4995,6 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         place: draft.place,
         day: draft.day,
         giftId,
-        giftHeld: false,
       },
       present: [] as GirlId[],
       izzyHere: false,
@@ -5010,15 +5040,15 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const where = placeOf(plan.place);
     const voice = speakerRole(plan.girl);
     let inventory = [...(state.inventory ?? [])];
-    let giftHeld = plan.giftHeld === true;
-    if (!giftHeld && plan.giftId) {
+    let heldGiftId = state.heldGiftId;
+    if (!heldGiftId && plan.giftId) {
       const nextBag = takeOne(inventory, plan.giftId);
       if (nextBag.length !== inventory.length) {
         inventory = nextBag;
-        giftHeld = true;
+        heldGiftId = plan.giftId;
       }
     }
-    const giftName = giftHeld ? (giftById(plan.giftId)?.name ?? "") : "";
+    const giftName = heldGiftId === plan.giftId ? (giftById(plan.giftId)?.name ?? "") : "";
     const messages = [
       ...state.messages,
       {
@@ -5041,6 +5071,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
     const patch = {
       ...arrived,
       inventory,
+      heldGiftId,
       location: plan.place,
       present: [plan.girl] as GirlId[],
       izzyHere: true,
@@ -5050,7 +5081,6 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
         nth: plan.nth,
         place: plan.place,
         giftId: plan.giftId,
-        giftHeld,
         cyclesLeft: cyclesFor(plan.nth),
         startTrust: arrived.trust,
         startBonding: arrived.bonding,
@@ -5095,7 +5125,7 @@ export const useCompanion = create<CompanionStore>((set, get) => ({
       messages,
       roster,
       scheduledDate: null,
-      inventory: giveBack(state.inventory ?? [], plan.giftId, plan.giftHeld),
+      ...releaseGift(state.inventory ?? [], state.heldGiftId, plan.giftId),
       grudge: {
         ...state.grudge,
         [girl]: { place: plan.place, day: state.weekday, time: state.timeOfDay },

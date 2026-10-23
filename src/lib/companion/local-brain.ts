@@ -11,6 +11,7 @@ import {
 } from "./spray";
 import { bothHere, duetFallback, otherGirl, romanceBlocked } from "./cast";
 import { addressedGirls, dutyOf, isGroupAddress } from "./outing";
+import { REPLY_DELTA_MAX, REPLY_DELTA_MIN } from "./trust";
 import { localSceneExtras, sceneGirls } from "./scene";
 import {
   holdCopy,
@@ -722,7 +723,7 @@ function localVictoriaTurn(state: GameState, input: TurnInput): IzzyTurn {
     bondingDelta = -3;
   }
   if (!input.say && !input.action) trustDelta = 0;
-  trustDelta = Math.max(-12, Math.min(8, trustDelta));
+  trustDelta = Math.max(REPLY_DELTA_MIN, Math.min(REPLY_DELTA_MAX, trustDelta));
   bondingDelta = Math.max(-8, Math.min(8, bondingDelta));
 
   const nextTrust = previewMeter(state, state.trust, trustDelta);

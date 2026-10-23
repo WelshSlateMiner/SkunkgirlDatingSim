@@ -1,0 +1,25 @@
+{
+  "id": "mira",
+  "name": "Mira",
+  "short": "Mira",
+  "active": true,
+  "note": "Kiss-cut PNG. Plaid-plus is the idol set. Private is the Calvin Klein set. Reference sheets stay beside the folders.",
+  "outfits": {
+    "plaid": "JPOP idol set",
+    "private": "Calvin Klein set"
+  },
+  "expressions": [
+    "embarrassed",
+    "happy",
+    "idle",
+    "flirty",
+    "laughing",
+    "suspicious",
+    "shy",
+    "angry",
+    "infodump",
+    "aroused",
+    "thinking",
+    "scheming"
+  ]
+}

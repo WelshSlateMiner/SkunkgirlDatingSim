@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { promptModifier, rangeMax, ronnieFartAllowed, ronnieNextDebt, ronnieRangeSpan, ronnieRivalHeld, yogaClassBonus } from "./fart.ts";
+import { promptModifier, rangeMax, rangeSpan, ronnieFartAllowed, ronnieNextDebt, ronnieRivalHeld, yogaClassBonus } from "./fart.ts";
 import { ronnieInstructing, ronnieOnClock } from "./yoga.ts";
 
 describe("Ronnie fart rules", () => {
@@ -11,8 +11,8 @@ describe("Ronnie fart rules", () => {
     assert.equal(ronnieNextDebt(0, false), 0);
   });
   it("builds her span", () => {
-    assert.equal(ronnieRangeSpan({ stops: [], debt: 0, place: "gym" }), 3);
-    assert.equal(ronnieRangeSpan({ stops: [], debt: 0, place: "gym", prompted: true, rivalHeld: true }), 6);
+    assert.equal(rangeSpan("ronnie", 10, [], 0, "gym"), 3);
+    assert.equal(rangeSpan("ronnie", 10, [], 0, "gym", false, 1) + promptModifier("ronnie", "gym"), 6);
     assert.equal(promptModifier("ronnie", "gym"), 2);
   });
   it("holds the rival bonus until she is alone", () => {

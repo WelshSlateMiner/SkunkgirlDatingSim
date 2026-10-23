@@ -259,9 +259,9 @@ changes. Revive, reboot-wipe and the `startup.sh` worked example:
    background; leave it up. Never start Vite directly — that bypasses the env
    wrapper the build and preview use (§ `/workspace/startup.sh`).
 5. **As soon as the source is stable, background the build gates.** Kick off
-   `npm run build` and `npm run typecheck` **in parallel, in background
+   `npm run build`, `npm run typecheck`, and `npm test` **in parallel, in background
    terminals**, and do step 7 against the dev server while they run — the
-   critical path is max(build, browser QA), not the sum. Both must pass before
+   critical path is max(build, browser QA), not the sum. All three must pass before
    you finish.
 6. **Brand-asset pass — a subagent, never waited for.** Custom-card app per
    the **`og`** skill (games of every kind, whimsical/creative apps,
@@ -327,7 +327,7 @@ in-browser say so and ship the best web-only build.
 
 ### Quality bar
 
-- **`npm run build` and `npm run typecheck` pass**, and a real browser
+- **`npm run build`, `npm run typecheck`, and `npm test` pass**, and a real browser
   render check on **dev and on the built output** shows content with a clean
   console.
 - Cohesive UI per **`design-ui`** (tokens, no-slop rules); no broken imports.

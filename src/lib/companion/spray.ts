@@ -217,6 +217,9 @@ export const GLAND_MAX: Record<GirlId, number> = {
   mira: 25,
 };
 
+/** Turns a girl stays empty after the tank hits zero. */
+export const GLAND_DRY_TURNS = 12;
+
 /** A spray spends 1, 2, or 3. Stink added is ten points per point spent. */
 export function clampSprayLevel(level: unknown): 1 | 2 | 3 {
   const n = typeof level === "number" ? Math.round(level) : 1;
@@ -269,7 +272,7 @@ export function spendTank(
   const left = cap - shots;
   if (left <= 0) {
     return {
-      tank: { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 0, glandDry: 12 },
+      tank: { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 0, glandDry: GLAND_DRY_TURNS },
       emptied: true,
       spent: 0,
     };
@@ -278,7 +281,7 @@ export function spendTank(
   shots += spent;
   if (shots >= cap) {
     return {
-      tank: { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 0, glandDry: 12 },
+      tank: { glandCap: 0, glandShots: 0, turnsSinceIntimateSpray: 0, glandDry: GLAND_DRY_TURNS },
       emptied: true,
       spent,
     };

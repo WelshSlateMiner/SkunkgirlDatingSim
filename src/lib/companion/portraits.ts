@@ -2,117 +2,28 @@ import type { Expression, GameFlags, GirlId, LocationId, OutfitId, SprayKind } f
 import { ronnieSrc } from "./ronnie-art";
 import { miraSrc } from "./mira-art";
 
-const CASUAL: Record<Expression, string> = {
-  embarrassed: "/art/izzy/embarrassed.webp",
-  happy: "/art/izzy/happy.webp",
-  idle: "/art/izzy/happy.webp",
-  flirty: "/art/izzy/flirty.webp",
-  laughing: "/art/izzy/laughing.webp",
-  suspicious: "/art/izzy/suspicious.webp",
-  shy: "/art/izzy/shy.webp",
-  angry: "/art/izzy/angry.webp",
-  infodump: "/art/izzy/infodump.webp",
-  aroused: "/art/izzy/aroused.webp",
-  thinking: "/art/izzy/thinking.webp",
-  scheming: "/art/izzy/scheming.webp",
-  spray: "/art/izzy/spray-angry-casual.webp",
+const IZZY_OUTFITS: OutfitId[] = ["casual", "lounge", "campus", "work", "dress", "sleep", "lingerie", "asuka", "mymy"];
+
+const SPRAY_FILE: Record<Exclude<SprayKind, "none">, string> = {
+  angry: "spray-angry",
+  consensual: "spray-consent",
+  defensive: "spray-defensive",
+  dominant: "spray-dominant",
 };
 
-const OUTFIT_IDLE: Record<OutfitId, string> = {
-  casual: "/art/izzy/happy.webp",
-  lounge: "/art/izzy/lounge.webp",
-  campus: "/art/izzy/campus.webp",
-  work: "/art/izzy/work.webp",
-  dress: "/art/izzy/dress.webp",
-  sleep: "/art/izzy/sleep.webp",
-  lingerie: "/art/izzy/lingerie.webp",
-  asuka: "/art/izzy/asuka.webp",
-  mymy: "/art/izzy/mymy.webp",
-};
-
-const SPRAY_ANGRY: Record<OutfitId, string> = {
-  casual: "/art/izzy/spray-angry-casual.webp",
-  lounge: "/art/izzy/spray-angry-lounge.webp",
-  campus: "/art/izzy/spray-angry-campus.webp",
-  work: "/art/izzy/spray-angry-work.webp",
-  dress: "/art/izzy/spray-angry-dress.webp",
-  sleep: "/art/izzy/spray-angry-sleep.webp",
-  lingerie: "/art/izzy/spray-angry-lingerie.webp",
-  asuka: "/art/izzy/asuka-flirty.webp",
-  mymy: "/art/izzy/mymy-flirty.webp",
-};
-
-const SPRAY_CONSENT: Record<OutfitId, string> = {
-  casual: "/art/izzy/spray-consent-casual.webp",
-  lounge: "/art/izzy/spray-consent-lounge.webp",
-  campus: "/art/izzy/spray-consent-campus.webp",
-  work: "/art/izzy/spray-consent-work.webp",
-  dress: "/art/izzy/spray-consent-dress.webp",
-  sleep: "/art/izzy/spray-consent-sleep.webp",
-  lingerie: "/art/izzy/spray-consent-lingerie.webp",
-  asuka: "/art/izzy/asuka-flirty.webp",
-  mymy: "/art/izzy/mymy-flirty.webp",
-};
-
-const SPRAY_DEFENSIVE: Record<OutfitId, string> = {
-  casual: "/art/izzy/spray-defensive-casual.webp",
-  lounge: "/art/izzy/spray-defensive-lounge.webp",
-  campus: "/art/izzy/spray-defensive-campus.webp",
-  work: "/art/izzy/spray-defensive-work.webp",
-  dress: "/art/izzy/spray-defensive-dress.webp",
-  sleep: "/art/izzy/spray-defensive-sleep.webp",
-  lingerie: "/art/izzy/spray-defensive-lingerie.webp",
-  asuka: "/art/izzy/spray-defensive-asuka.webp",
-  mymy: "/art/izzy/mymy-flirty.webp",
-};
-
-const SPRAY_DOMINANT = "/art/izzy/spray-dominant.webp";
-
-export function sprayPortraitSrc(outfit: OutfitId, kind: SprayKind) {
-  if (kind === "dominant") return SPRAY_DOMINANT;
-  if (kind === "consensual") return SPRAY_CONSENT[outfit] ?? SPRAY_CONSENT.casual;
-  if (kind === "defensive") return SPRAY_DEFENSIVE[outfit] ?? SPRAY_DEFENSIVE.casual;
-  return SPRAY_ANGRY[outfit] ?? SPRAY_ANGRY.casual;
+function izzyFile(outfit: OutfitId, expression: Expression) {
+  return `/art/izzy/${outfit}/${expression}.webp`;
 }
 
-const VICTORIA: Record<Expression, string> = {
-  embarrassed: "/art/victoria/embarrassed.webp",
-  happy: "/art/victoria/happy.webp",
-  idle: "/art/victoria/idle.webp",
-  flirty: "/art/victoria/flirty.webp",
-  laughing: "/art/victoria/laughing.webp",
-  suspicious: "/art/victoria/suspicious.webp",
-  shy: "/art/victoria/shy.webp",
-  angry: "/art/victoria/angry.webp",
-  infodump: "/art/victoria/infodump.webp",
-  aroused: "/art/victoria/aroused.webp",
-  thinking: "/art/victoria/thinking.webp",
-  scheming: "/art/victoria/scheming.webp",
-  spray: "/art/victoria/spray.webp",
-};
+export function sprayPortraitSrc(outfit: OutfitId, kind: SprayKind) {
+  const file = kind === "none" ? "spray-angry" : SPRAY_FILE[kind];
+  const folder = IZZY_OUTFITS.includes(outfit) ? outfit : "casual";
+  return `/art/izzy/${folder}/${file}.webp`;
+}
 
-const VICTORIA_LINGERIE: Record<Expression, string> = {
-  embarrassed: "/art/victoria/lingerie/embarrassed.webp",
-  happy: "/art/victoria/lingerie/happy.webp",
-  idle: "/art/victoria/lingerie/idle.webp",
-  flirty: "/art/victoria/lingerie/flirty.webp",
-  laughing: "/art/victoria/lingerie/laughing.webp",
-  suspicious: "/art/victoria/lingerie/suspicious.webp",
-  shy: "/art/victoria/lingerie/shy.webp",
-  angry: "/art/victoria/lingerie/angry.webp",
-  infodump: "/art/victoria/lingerie/infodump.webp",
-  aroused: "/art/victoria/lingerie/aroused.webp",
-  thinking: "/art/victoria/lingerie/thinking.webp",
-  scheming: "/art/victoria/lingerie/scheming.webp",
-  spray: "/art/victoria/lingerie/spray.webp",
-};
-
-const VICTORIA_LINGERIE_SPRAY: Record<Exclude<SprayKind, "none">, string> = {
-  angry: "/art/victoria/lingerie/spray-angry.webp",
-  consensual: "/art/victoria/lingerie/spray-consent.webp",
-  defensive: "/art/victoria/lingerie/spray-defensive.webp",
-  dominant: "/art/victoria/lingerie/spray-dominant.webp",
-};
+function victoriaFile(folder: "office" | "lingerie" | "gown", expression: Expression) {
+  return `/art/victoria/${folder}/${expression}.webp`;
+}
 
 /** Home, the player's apartment, or any intimate scene. Not the office. */
 export function victoriaLingerieOn(locationId: string, intimate: boolean) {
@@ -129,28 +40,6 @@ export function victoriaGownOn(locationId: string | undefined) {
   return locationId === "italian";
 }
 
-const VICTORIA_GOWN: Record<Expression, string> = {
-  embarrassed: "/art/victoria/gown/embarrassed.webp",
-  happy: "/art/victoria/gown/happy.webp",
-  idle: "/art/victoria/gown/idle.webp",
-  flirty: "/art/victoria/gown/flirty.webp",
-  laughing: "/art/victoria/gown/laughing.webp",
-  suspicious: "/art/victoria/gown/suspicious.webp",
-  shy: "/art/victoria/gown/shy.webp",
-  angry: "/art/victoria/gown/angry.webp",
-  infodump: "/art/victoria/gown/infodump.webp",
-  aroused: "/art/victoria/gown/aroused.webp",
-  thinking: "/art/victoria/gown/thinking.webp",
-  scheming: "/art/victoria/gown/scheming.webp",
-  spray: "/art/victoria/gown/angry.webp",
-};
-const VICTORIA_SPRAY: Record<Exclude<SprayKind, "none">, string> = {
-  angry: "/art/victoria/spray-angry.webp",
-  consensual: "/art/victoria/spray-consent.webp",
-  defensive: "/art/victoria/spray-defensive.webp",
-  dominant: "/art/victoria/spray-dominant.webp",
-};
-
 export function portraitSrc(
   outfit: OutfitId,
   expression: Expression,
@@ -161,42 +50,25 @@ export function portraitSrc(
   instructing = false,
   dating = false,
 ) {
-  // Ronnie ignores the Izzy outfit ids and has no lingerie art: her look follows the location, unless she is on a date.
   if (girl === "ronnie") return ronnieSrc(expression, sprayKind, place, instructing, dating);
   if (girl === "mira") return miraSrc(expression, sprayKind, place, dating);
   if (girl === "victoria") {
     if (lingerie && !dating) {
-      if (sprayKind !== "none") return VICTORIA_LINGERIE_SPRAY[sprayKind];
-      if (expression === "spray") return VICTORIA_LINGERIE.spray;
-      return VICTORIA_LINGERIE[expression] ?? VICTORIA_LINGERIE.idle;
+      if (sprayKind !== "none") return `/art/victoria/lingerie/${SPRAY_FILE[sprayKind]}.webp`;
+      return victoriaFile("lingerie", expression);
     }
     if (dating || victoriaGownOn(place)) {
-      if (sprayKind !== "none" || expression === "spray") return VICTORIA_GOWN.angry;
-      return VICTORIA_GOWN[expression] ?? VICTORIA_GOWN.idle;
+      // The gown set has no spray drawings. The angry face is the fallback.
+      if (sprayKind !== "none" || expression === "spray") return victoriaFile("gown", "angry");
+      return victoriaFile("gown", expression);
     }
-    if (sprayKind !== "none") return VICTORIA_SPRAY[sprayKind];
-    if (expression === "spray") return VICTORIA.spray;
-    return VICTORIA[expression] ?? VICTORIA.happy;
+    if (sprayKind !== "none") return `/art/victoria/office/${SPRAY_FILE[sprayKind]}.webp`;
+    if (expression === "spray") return "/art/victoria/office/spray.webp";
+    return victoriaFile("office", expression);
   }
   if (sprayKind !== "none") return sprayPortraitSrc(outfit, sprayKind);
   if (expression === "spray") return sprayPortraitSrc(outfit, "angry");
-  if (outfit === "asuka" || outfit === "mymy") {
-    const file = outfit === "asuka" ? "asuka" : "mymy";
-    if (
-      expression === "flirty" ||
-      expression === "laughing" ||
-      expression === "aroused" ||
-      expression === "scheming"
-    ) {
-      return `/art/izzy/${file}-flirty.webp`;
-    }
-    return `/art/izzy/${file}.webp`;
-  }
-  if (outfit === "casual") return CASUAL[expression] ?? CASUAL.happy;
-  if (expression !== "happy" && expression !== "idle") {
-    return `/art/izzy/${outfit}-${expression}.webp`;
-  }
-  return OUTFIT_IDLE[outfit] ?? CASUAL.happy;
+  return izzyFile(outfit, expression);
 }
 
 export const OUTFIT_LABEL: Record<OutfitId, string> = {

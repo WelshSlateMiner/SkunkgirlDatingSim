@@ -66,10 +66,7 @@ export const MIRA_OUTFITS = {
   dateOutfit: null,
 } as const;
 
-/**
- * The room is drawn. It is still not a LocationId, so nobody can travel or shower there.
- * Shower joins the location when she is activated and the id is registered.
- */
+/** Her dorm is a location. Travel and the shower use it. */
 export const MIRA_DORM = {
   futureId: "miraDorm",
   built: true,
@@ -328,8 +325,7 @@ export const MIRA_OTHERS = {
 } as const;
 
 /**
- * Starting familiarity, not affection. The live three use the same numbers in opinions.ts.
- * Her row and the column about her wait here until she is a GirlId.
+ * Starting familiarity. The live opinions are in opinions.ts. These numbers match that table.
  */
 export const MIRA_OPINIONS = {
   note: "Familiarity. Vicky and Ronnie are high because they already know each other. Mira and Ronnie are decent because of mutual respect at Second Wind. Mira has not warmed to Izzy. Izzy wants to, and is still intimidated.",
@@ -339,17 +335,12 @@ export const MIRA_OPINIONS = {
   ronnie: { victoria: 8, izzy: 4, mira: 5 },
 } as const;
 
-/** Still unset. Activation must not invent these. */
-export const MIRA_GLAND = "Same session size as the others: a roll from 8 to 14, peaked at 11. Spray kinds follow the shared rules." as const;
+/** Live gland cap is GLAND_MAX.mira in spray.ts (25). This note is not read by a turn. */
+export const MIRA_GLAND = "Fixed capacity 25. A spray spends 1, 2, or 3. Empty glands wait out GLAND_DRY_TURNS." as const;
 
 export const MIRA_OPEN = [
-  "No surname. The stage name is unset on purpose. She has not chosen one, and she treats the choice as career-defining.",
-  "No separate dance kit and no date outfit. Dates stay in the plaid-plus idol set until one is drawn.",
-  "The dorm is drawn at /art/places/miraDorm.jpg and is not a LocationId. Travel and the shower wait until she is active.",
-  "Her two keepsakes are drawn and are not in the live keepsake list. The mira column on shop gifts is not read by dates.",
-  "She is not a GirlId. The attention count is not on a card yet. The shortfall is still 'up to 5' with no exact curve.",
-  "The 5% morning skip is not on the live schedule.",
-  "Start-location odds are untouched.",
-  "Public fart penalty and the bad-date bonding shift are specified and not applied, because she cannot be asked yet.",
-  "Four people in one room is still impossible. The pathway talk with Ronnie and Victoria waits on that, or on a sequence of scenes.",
+  "She is a GirlId. Speaker, roster card, glands, romance, and schedule are live.",
+  "No surname. The stage name is unset on purpose.",
+  "Dates stay in the plaid-plus idol set. Private art is the Calvin Klein set at her dorm and the apartment.",
+  "Her dorm is a location. Gifts read the mira column.",
 ] as const;

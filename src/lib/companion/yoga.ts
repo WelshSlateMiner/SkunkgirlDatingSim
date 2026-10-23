@@ -3,11 +3,7 @@ import { RONNIE_INSTRUCTOR, RONNIE_SCHEDULE } from "./ronnie-bio";
 import type { GameState, TimeOfDay, Weekday } from "./types";
 import { sceneHas } from "./scene";
 
-/**
- * Ronnie on the clock at Second Wind.
- * Dormant: Ronnie can never be in `present` yet, so ronnieInstructing is always false today
- * and the class bonus never applies to Izzy or Victoria.
- */
+/** Ronnie on the clock at Second Wind. The class bonus applies when she is teaching and the player is there. */
 
 /** Her teaching block from the schedule. */
 export function ronnieOnClock(weekday: Weekday, time: TimeOfDay): boolean {

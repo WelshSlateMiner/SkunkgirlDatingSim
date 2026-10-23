@@ -1,0 +1,32 @@
+{
+  "id": "izzy",
+  "name": "Isabella",
+  "short": "Izzy",
+  "active": true,
+  "note": "One folder per outfit. idle in casual is the happy drawing. Asuka and Mymy reuse one drawing across several faces.",
+  "outfits": {
+    "casual": "Lil' Stinker set",
+    "lounge": "Lounge hoodie",
+    "campus": "Campus hoodie",
+    "work": "Trailhead vest",
+    "dress": "Red date dress",
+    "sleep": "Sleep shirt",
+    "lingerie": "After hours",
+    "asuka": "Unit-02 night",
+    "mymy": "Mymy cosplay"
+  },
+  "expressions": [
+    "embarrassed",
+    "happy",
+    "idle",
+    "flirty",
+    "laughing",
+    "suspicious",
+    "shy",
+    "angry",
+    "infodump",
+    "aroused",
+    "thinking",
+    "scheming"
+  ]
+}

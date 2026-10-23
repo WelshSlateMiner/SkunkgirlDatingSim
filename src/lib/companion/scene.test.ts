@@ -15,7 +15,7 @@ import {
   sceneVoices,
 } from "./scene.ts";
 
-// A temporary third girl. Not Ronnie, not a GirlId, never in the game.
+// Unknown ids sort last. The cast itself is GirlId.
 type Fixture = "izzy" | "victoria" | "fixture";
 const three: Fixture[] = ["fixture", "victoria", "izzy"];
 

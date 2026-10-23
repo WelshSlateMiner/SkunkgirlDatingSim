@@ -105,6 +105,14 @@ export interface QueuedMeet {
 
 export type Bond = "stranger" | "acquaintance" | "friend" | "close" | "romantic";
 
+/** One girl's fart for this reply. Rolled before she speaks. */
+export interface FartFact {
+  hit: boolean;
+  face: number;
+  span: number;
+  kind: "roll" | "prompt" | "public-yes" | "public-no" | "hold";
+}
+
 export type FxEvent = "none" | "fart" | "spray" | "blush" | "hearts" | "laugh";
 
 export type SprayKind = "none" | "angry" | "consensual" | "defensive" | "dominant";
@@ -141,8 +149,6 @@ export interface ScheduledDate {
   place: LocationId;
   day: Weekday;
   giftId: string;
-  /** True once this copy has already left the bag. */
-  giftHeld?: boolean;
 }
 
 export interface ActiveDate {
@@ -156,8 +162,6 @@ export interface ActiveDate {
   farts: number;
   presented: boolean;
   smell: SmellStance;
-  /** True once this copy has already left the bag. */
-  giftHeld?: boolean;
 }
 
 export interface DateReview {
@@ -354,6 +358,11 @@ export interface GameState {
   timeOfDay: TimeOfDay;
   /** Turns Izzy must let a fart or spray land before another. 0 = clear. */
   scentHold: number;
+  /**
+   * This turn's fart roll, set before the model speaks. Not saved.
+   * Effects follow this, not the wording.
+   */
+  fartPlan?: Partial<Record<GirlId, FartFact>>;
   /** Skunkgirl replies left before the clock moves. Her goodbye does not spend the last one. */
   turnsUntilTime: number;
   dayPhase: DayPhase;
@@ -372,6 +381,8 @@ export interface GameState {
   debugOutfitLock: boolean;
   money: number;
   inventory: string[];
+  /** The gift copy that has left the bag for the current date. Null if it is still packed, or already given. */
+  heldGiftId: string | null;
   dateDraft: DateDraft | null;
   scheduledDate: ScheduledDate | null;
   activeDate: ActiveDate | null;

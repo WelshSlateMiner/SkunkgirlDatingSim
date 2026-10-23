@@ -6,6 +6,9 @@ export const TRUST_MIN = -25;
 export const TRUST_MAX = 100;
 export const BONDING_MIN = 0;
 export const BONDING_MAX = 100;
+/** One reply can move a side character's meters this far. */
+export const REPLY_DELTA_MIN = -12;
+export const REPLY_DELTA_MAX = 8;
 
 export type Pace = { mode: GameMode; dates: number };
 

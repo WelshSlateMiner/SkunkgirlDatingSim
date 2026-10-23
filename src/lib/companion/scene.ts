@@ -1,11 +1,12 @@
 import type { Expression, FxEvent, GameState, GirlId } from "./types";
+import { REPLY_DELTA_MAX, REPLY_DELTA_MIN } from "./trust";
 
 /**
  * Scene infrastructure for up to three skunkgirls at once.
  * Izzy, Victoria, Ronnie, and Mira can all be in `present`. A scene never holds more than three.
  */
 
-export type SceneGirl = GirlId | "ronnie";
+export type SceneGirl = GirlId;
 
 export const MAX_SCENE_GIRLS = 3;
 
@@ -150,7 +151,7 @@ export function parseExtras(raw: unknown): SceneVoice<string>[] | undefined {
     if (!item || typeof item !== "object") continue;
     const o = item as Record<string, unknown>;
     if (typeof o.girl !== "string") continue;
-    const clip = (n: unknown) => Math.max(-12, Math.min(8, Math.round(Number(n ?? 0) || 0)));
+    const clip = (n: unknown) => Math.max(REPLY_DELTA_MIN, Math.min(REPLY_DELTA_MAX, Math.round(Number(n ?? 0) || 0)));
     out.push({
       girl: o.girl.toLowerCase(),
       dialogue: typeof o.dialogue === "string" ? o.dialogue.slice(0, 900) : "",

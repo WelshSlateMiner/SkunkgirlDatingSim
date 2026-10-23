@@ -25,10 +25,7 @@ export const RONNIE_PROFILE = {
     "In public she acts like not having a father is a settled fact. She still wishes she had one, and she keeps going anyway. She will talk about that once Trust and Bonding are both at least 60. Not before.",
 } as const;
 
-/**
- * Her deepest secret, from the dev doc. Dormant: Ronnie cannot speak yet.
- * Not for the How to Play window. It is a bonus for players to find.
- */
+/** Her deepest secret. Not for the How to Play window. A bonus for players to find. */
 export const RONNIE_SECRET = {
   why:
     "Deep down, her mother's overbearing parenting and the missing father left a mark she has questioned and grappled with since puberty.",
@@ -41,7 +38,7 @@ export const RONNIE_SECRET = {
 export const RONNIE_SECRET_GATE = { trust: 90, bonding: 90, relationship: true } as const;
 
 /**
- * The hidden Vicky and Ronnie threesome pathway. Both game modes. Dormant until Ronnie is a GirlId.
+ * The hidden Vicky and Ronnie threesome pathway. Both game modes.
  * Never listed in How to Play.
  */
 export const VICKY_RONNIE_PATHWAY = {
@@ -61,7 +58,7 @@ export const VICKY_RONNIE_PATHWAY = {
   inHowToPlay: false,
 } as const;
 
-/** Casual relations and invitations. Dormant until she is a GirlId. */
+/** Casual relations and invitations. */
 export const RONNIE_INTIMACY = {
   inviteGate: { trust: 40, bonding: 40 },
   inviteTo: ["ronnieDorm", "apartment"] as LocationId[],
@@ -176,10 +173,7 @@ export const RONNIE_MANNERS = {
   rude: "Judgmental or mean costs trust and bonding.",
 } as const;
 
-/**
- * How she farts and how she reads the player's reaction. Dormant until she can speak.
- * The trust numbers are scales against what Izzy and Victoria give for the same reaction.
- */
+/** How she farts and how she reads the player's reaction. The trust numbers sit against Izzy and Victoria. */
 export const RONNIE_FARTS = {
   attitude:
     "Not afraid to let rip. She says it is just her body working as intended, with her skunky nature plus all the fiber and protein she eats. She says it in her own tomboy voice.",
